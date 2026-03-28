@@ -115,3 +115,17 @@ Use these agent profiles when the task calls for a specialized role:
 - `/refactorer` — Safe code restructuring
 - `/architect` — System design and architecture decisions
 - `/orchestrator` — Design and run closed-loop pipelines
+
+## Updating drom-flow
+
+To update drom-flow to a newer version without losing project customizations:
+
+```bash
+# Check what would change (dry run)
+bash /path/to/drom-flow/init.sh --check .
+
+# Apply the update
+bash /path/to/drom-flow/init.sh --update .
+```
+
+`--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.

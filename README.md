@@ -44,6 +44,30 @@ bash /path/to/drom-flow/init.sh /path/to/my-project
 
 Files that already exist won't be overwritten. Safe to re-run.
 
+### Updating an existing installation
+
+When drom-flow has a new version, update your projects without losing customizations:
+
+```bash
+# Check what would change (dry run)
+bash /path/to/drom-flow/init.sh --check /path/to/my-project
+
+# Apply the update
+bash /path/to/drom-flow/init.sh --update /path/to/my-project
+```
+
+`--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** your project-specific files:
+
+| Protected (never overwritten) | Updated (replaced with latest) |
+|---|---|
+| `CLAUDE.md` | `.claude/hooks/*` |
+| `context/MEMORY.md` | `.claude/skills/*` |
+| `context/DECISIONS.md` | `.claude/settings.json` |
+| `context/CONVENTIONS.md` | `workflows/*` |
+| `scripts/orchestrate.sh` | `VERSION` |
+
+Your plans in `drom-plans/`, reports in `reports/`, and any other project files are also untouched.
+
 ### What gets installed
 
 ```

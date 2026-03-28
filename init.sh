@@ -152,6 +152,56 @@ if [ -f "$SCRIPT_DIR/VERSION" ] && ! [ "$SCRIPT_DIR/VERSION" -ef "$TARGET_DIR/VE
   echo "  copy: VERSION"
 fi
 
+# --- Merge missing sections into CLAUDE.md on update ---
+if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
+  appended=0
+  # Each entry: "heading to grep for" | "section content to append"
+  # We check if the heading exists in the user's CLAUDE.md; if not, extract and append it
+  sections=(
+    "## Plan Protocol"
+    "## Updating drom-flow"
+  )
+  # Also check that drom-plans is in File Organization
+  if ! grep -q "drom-plans/" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
+    # Find the File Organization section and append the line
+    if grep -q "## File Organization" "$TARGET_DIR/CLAUDE.md"; then
+      sed -i '/## File Organization/,/^##/{/^- Use `config\//a\- Use `drom-plans/` for execution plans (chapter-based, with progress tracking)
+}' "$TARGET_DIR/CLAUDE.md"
+      echo "  merge:   CLAUDE.md — added drom-plans/ to File Organization"
+      appended=$((appended + 1))
+    fi
+  fi
+
+  for section_heading in "${sections[@]}"; do
+    if ! grep -qF "$section_heading" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
+      # Extract section from template: from heading to next ## or EOF
+      section_content=$(awk -v h="$section_heading" '
+        $0 == h { found=1 }
+        found && /^## / && $0 != h { exit }
+        found { print }
+      ' "$TEMPLATE_DIR/CLAUDE.md")
+      if [ -n "$section_content" ]; then
+        printf "\n%s\n" "$section_content" >> "$TARGET_DIR/CLAUDE.md"
+        echo "  merge:   CLAUDE.md — added $section_heading"
+        appended=$((appended + 1))
+      fi
+    fi
+  done
+
+  # Ensure the drom-flow branding is in the title line
+  if ! head -1 "$TARGET_DIR/CLAUDE.md" | grep -q "drom-flow" 2>/dev/null; then
+    sed -i '1s/^# .*/# drom-flow — Project Configuration/' "$TARGET_DIR/CLAUDE.md"
+    # Add description line after title if not present
+    if ! grep -q "drom-flow.*is active" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
+      sed -i '1a\\n> **drom-flow** is active in this project. It provides workflows, parallel agent orchestration, closed-loop pipelines, persistent memory, chapter-based execution plans, and lifecycle hooks.' "$TARGET_DIR/CLAUDE.md"
+    fi
+    echo "  merge:   CLAUDE.md — added drom-flow branding"
+    appended=$((appended + 1))
+  fi
+
+  [ "$appended" -gt 0 ] && echo "  ($appended section(s) merged into CLAUDE.md)"
+fi
+
 # Make scripts executable
 chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
 chmod +x "$TARGET_DIR/scripts/"*.sh 2>/dev/null || true

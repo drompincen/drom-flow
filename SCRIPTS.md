@@ -55,11 +55,66 @@ echo "{\"type\":\"edit\",\"file\":\"$file_path\",\"timestamp\":$timestamp}" >> "
 # When .claude/.state/javaducker.conf does not exist, all functions return false.
 
 JAVADUCKER_CONF="${CLAUDE_PROJECT_DIR:-.}/.claude/.state/javaducker.conf"
+JAVADUCKER_SHARED=""
+
+# Discover a shared JavaDucker instance from ancestor projects or running servers
+javaducker_discover() {
+  local dir
+  dir="$(cd "${CLAUDE_PROJECT_DIR:-.}" && pwd)"
+
+  # Phase 1: Walk up looking for an ancestor's javaducker.conf
+  local parent
+  parent="$(dirname "$dir")"
+  while [ "$parent" != "/" ]; do
+    if [ -f "$parent/.claude/.state/javaducker.conf" ]; then
+      JAVADUCKER_CONF="$parent/.claude/.state/javaducker.conf"
+      JAVADUCKER_SHARED="$parent"
+      return 0
+    fi
+    parent="$(dirname "$parent")"
+  done
+
+  # Phase 2: Scan ports for a running JavaDucker (fast /dev/tcp pre-filter)
+  # Use /api/info (returns app name) or /api/stats (returns artifact_count)
+  # to positively identify JavaDucker and avoid false positives from other apps.
+  local port resp
+  for port in $(seq 8080 8180); do
+    if (echo >/dev/tcp/localhost/$port) 2>/dev/null; then
+      resp=$(curl -sf "http://localhost:$port/api/info" 2>/dev/null)
+      if echo "$resp" | grep -qi '"javaducker"'; then
+        JAVADUCKER_HTTP_PORT="$port"
+        JAVADUCKER_SHARED="localhost:$port"
+        return 0
+      fi
+      # Fallback: /api/stats is JavaDucker-specific (has artifact_count)
+      if curl -sf "http://localhost:$port/api/stats" 2>/dev/null | grep -q '"artifact_count"'; then
+        JAVADUCKER_HTTP_PORT="$port"
+        JAVADUCKER_SHARED="localhost:$port"
+        return 0
+      fi
+    fi
+  done
+
+  return 1
+}
+
+# Check if using a shared (non-local) JavaDucker instance
+javaducker_is_shared() {
+  [ -n "$JAVADUCKER_SHARED" ]
+}
 
 javaducker_available() {
-  [ -f "$JAVADUCKER_CONF" ] || return 1
-  . "$JAVADUCKER_CONF"
-  [ -n "$JAVADUCKER_ROOT" ]
+  # Check local config first
+  if [ -f "$JAVADUCKER_CONF" ]; then
+    . "$JAVADUCKER_CONF"
+    [ -n "$JAVADUCKER_ROOT" ] && return 0
+  fi
+  # Try discovering a shared instance
+  if javaducker_discover; then
+    [ -f "$JAVADUCKER_CONF" ] && . "$JAVADUCKER_CONF"
+    return 0
+  fi
+  return 1
 }
 
 javaducker_healthy() {
@@ -82,6 +137,11 @@ javaducker_find_free_port() {
 javaducker_start() {
   javaducker_available || return 1
   javaducker_healthy && return 0
+
+  # If using a shared instance, don't start — let the owning project handle it
+  if javaducker_is_shared; then
+    return 1
+  fi
 
   local db="${JAVADUCKER_DB:-${CLAUDE_PROJECT_DIR:-.}/.claude/.javaducker/javaducker.duckdb}"
   local intake="${JAVADUCKER_INTAKE:-${CLAUDE_PROJECT_DIR:-.}/.claude/.javaducker/intake}"
@@ -200,13 +260,21 @@ fi
 . "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
 if javaducker_available; then
   if javaducker_healthy; then
-    echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
-  else
-    echo "[JavaDucker: starting server...]"
-    if javaducker_start; then
-      echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
+    if javaducker_is_shared; then
+      echo "[JavaDucker: connected to shared instance (port ${JAVADUCKER_HTTP_PORT:-8080}, from ${JAVADUCKER_SHARED})]"
     else
-      echo "[JavaDucker: server starting in background — will be available shortly]"
+      echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
+    fi
+  else
+    if javaducker_is_shared; then
+      echo "[JavaDucker: shared instance not running (from ${JAVADUCKER_SHARED}) — start it from the owning project]"
+    else
+      echo "[JavaDucker: starting server...]"
+      if javaducker_start; then
+        echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
+      else
+        echo "[JavaDucker: server starting in background — will be available shortly]"
+      fi
     fi
   fi
 fi
@@ -351,7 +419,11 @@ mem="off"
 jd_icon=""
 . "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
 if javaducker_available; then
-  javaducker_healthy && jd_icon="JD" || jd_icon="JD(off)"
+  if javaducker_healthy; then
+    javaducker_is_shared && jd_icon="JD(shared)" || jd_icon="JD"
+  else
+    jd_icon="JD(off)"
+  fi
 fi
 
 status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • agents:$agents • mem:$mem"

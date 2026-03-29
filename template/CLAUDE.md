@@ -199,6 +199,8 @@ To remove: `/remove-javaducker`
 
 ## Updating drom-flow
 
+**Prerequisite:** If the drom-flow source directory does not contain `init.sh` (e.g., after downloading a new ZIP), generate scripts first by running `claude "Read start-here.md and follow the setup instructions"` in the drom-flow directory.
+
 When the user asks to update drom-flow (e.g., "update to latest drom-flow", "update drom-flow"):
 
 1. **Find the drom-flow source** — read `.claude/.state/drom-flow.conf` to get `DROM_FLOW_HOME`
@@ -223,6 +225,8 @@ bash "$DROM_FLOW_HOME/init.sh" --update .
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.
 
 ## Uninstalling drom-flow
+
+**Prerequisite:** If the drom-flow source directory does not contain `init.sh` (e.g., after downloading a new ZIP), generate scripts first by running `claude "Read start-here.md and follow the setup instructions"` in the drom-flow directory.
 
 When the user asks to uninstall drom-flow:
 

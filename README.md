@@ -30,6 +30,18 @@ In a QA pipeline for BPMN process diagrams, drom-flow's closed-loop workflow too
 
 ## Install
 
+### Step 1: Generate scripts (required once after download)
+
+Scripts are distributed as text in `SCRIPTS.md` to keep ZIP downloads firewall-friendly. Generate them first:
+
+```
+claude "Read start-here.md and follow the setup instructions"
+```
+
+Or copy them manually -- see `start-here.md` for details.
+
+### Step 2: Install into your project
+
 Run from your project root:
 
 ```bash
@@ -46,7 +58,9 @@ Files that already exist won't be overwritten. Safe to re-run.
 
 ### Updating an existing installation
 
-When drom-flow has a new version, update your projects without losing customizations:
+When drom-flow has a new version, update your projects without losing customizations.
+
+If you downloaded a new ZIP, generate scripts first (see Step 1 above), then:
 
 ```bash
 # Check what would change (dry run)

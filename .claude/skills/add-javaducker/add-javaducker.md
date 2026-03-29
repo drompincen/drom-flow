@@ -18,6 +18,13 @@ If the user doesn't provide a path, look for it in sibling directories:
 
 ## Setup Process
 
+0. **Check for existing instance** — before creating anything new:
+   - Walk up the directory tree from the project root looking for `.claude/.state/javaducker.conf` in any ancestor directory
+   - Also scan ports 8080-8180 for a running JavaDucker health endpoint (`curl -sf http://localhost:PORT/api/health`)
+   - If found, ask the user: "Found an existing JavaDucker instance at [location/port]. Use it? (Y/n)"
+   - If the user says yes: create a local `.claude/.state/javaducker.conf` pointing to the discovered instance (copy its JAVADUCKER_ROOT, JAVADUCKER_HTTP_PORT, JAVADUCKER_DB, JAVADUCKER_INTAKE values), then skip to step 6 (Register MCP server) and step 10 (Confirm). Do NOT start a new server or create a new database.
+   - If the user says no: proceed with fresh setup below.
+
 1. **Get the path** — ask the user or auto-detect from sibling directories
 
 2. **Validate** — confirm these files exist at the root:
@@ -112,3 +119,5 @@ To remove: use `/remove-javaducker`
 - `.mcp.json` and `.claude/.javaducker/` are gitignored (machine-specific)
 - The config is machine-specific — each developer runs `/add-javaducker` once
 - Multiple projects can run simultaneously — each gets its own port and database
+- Nested projects (root/p1, root/p2) can share a single JavaDucker instance — the hooks automatically discover ancestor instances on session start
+- When sharing, each project registers its own MCP server entry pointing to the shared port

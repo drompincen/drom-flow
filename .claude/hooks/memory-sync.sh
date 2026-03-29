@@ -46,20 +46,12 @@ fi
 . "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
 if javaducker_available; then
   if javaducker_healthy; then
-    echo "[JavaDucker: connected]"
+    echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
   else
-    # Auto-start the server in background
     echo "[JavaDucker: starting server...]"
-    nohup bash "${JAVADUCKER_ROOT}/run-server.sh" >/dev/null 2>&1 &
-    # Wait briefly for server to come up
-    for i in 1 2 3 4 5; do
-      sleep 1
-      if javaducker_healthy; then
-        echo "[JavaDucker: connected]"
-        break
-      fi
-    done
-    if ! javaducker_healthy; then
+    if javaducker_start; then
+      echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
+    else
       echo "[JavaDucker: server starting in background — will be available shortly]"
     fi
   fi

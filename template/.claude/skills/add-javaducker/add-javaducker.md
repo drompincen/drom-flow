@@ -19,19 +19,39 @@ If the user doesn't provide a path, look for it in sibling directories:
 ## Setup Process
 
 1. **Get the path** — ask the user or auto-detect from sibling directories
+
 2. **Validate** — confirm these files exist at the root:
    - `JavaDuckerMcpServer.java`
    - `run-mcp.sh`
    - `run-server.sh`
    If any are missing, stop and report the error.
 
-3. **Write config** — create `.claude/.state/javaducker.conf`:
+3. **Create local data directory** — create `.claude/.javaducker/` in the project root:
+   ```bash
+   mkdir -p .claude/.javaducker/intake
    ```
-   JAVADUCKER_ROOT=/absolute/path/to/javaducker
-   JAVADUCKER_HTTP_PORT=8080
+   This is where the DuckDB database and intake files live — per-project, gitignored.
+
+4. **Find a free port** — scan ports 8080-8180 to find one that's not in use:
+   ```bash
+   for port in $(seq 8080 8180); do
+     if ! (echo >/dev/tcp/localhost/$port) 2>/dev/null; then
+       echo "Using port $port"
+       break
+     fi
+   done
    ```
 
-4. **Register MCP server** — create or merge `.mcp.json` in the project root:
+5. **Write config** — create `.claude/.state/javaducker.conf`:
+   ```
+   JAVADUCKER_ROOT=/absolute/path/to/javaducker
+   JAVADUCKER_HTTP_PORT=<free port found in step 4>
+   JAVADUCKER_DB=/absolute/path/to/project/.claude/.javaducker/javaducker.duckdb
+   JAVADUCKER_INTAKE=/absolute/path/to/project/.claude/.javaducker/intake
+   ```
+   All paths must be absolute.
+
+6. **Register MCP server** — create or merge `.mcp.json` in the project root:
    ```json
    {
      "mcpServers": {
@@ -39,44 +59,47 @@ If the user doesn't provide a path, look for it in sibling directories:
          "command": "jbang",
          "args": ["JAVADUCKER_ROOT/JavaDuckerMcpServer.java"],
          "env": {
-           "PROJECT_ROOT": "JAVADUCKER_ROOT",
-           "HTTP_PORT": "8080"
+           "PROJECT_ROOT": "<project root absolute path>",
+           "HTTP_PORT": "<port from step 4>"
          }
        }
      }
    }
    ```
-   Replace `JAVADUCKER_ROOT` with the actual absolute path.
+   Replace placeholders with actual absolute paths and port.
 
    **If `.mcp.json` already exists**, read it first and merge the `javaducker` key into the existing `mcpServers` object. Do not overwrite other MCP servers.
 
-5. **Start the server** — launch the JavaDucker server in the background:
+7. **Start the server** — launch with project-local data paths:
    ```bash
-   nohup bash <JAVADUCKER_ROOT>/run-server.sh >/dev/null 2>&1 &
+   DB=<JAVADUCKER_DB> HTTP_PORT=<port> INTAKE_DIR=<JAVADUCKER_INTAKE> \
+     nohup bash <JAVADUCKER_ROOT>/run-server.sh >/dev/null 2>&1 &
    ```
-   Wait up to 10 seconds for it to become healthy (poll `/api/health`). The server auto-starts on future sessions via the memory-sync hook, so the user never needs to start it manually.
+   Wait up to 10 seconds for it to become healthy (poll `/api/health`). The server auto-starts on future sessions via the memory-sync hook using `javaducker_start()`.
 
-6. **Index the project** — once the server is healthy, index the current project:
+8. **Index the project** — once the server is healthy, use `javaducker_index_directory` with the project root. Or via CLI:
    ```bash
-   bash <JAVADUCKER_ROOT>/run-client.sh upload-dir --root <PROJECT_DIR> --ext .java,.xml,.md,.yml,.yaml,.json,.properties,.gradle,.kt,.py,.go,.rs,.ts,.js
+   bash <JAVADUCKER_ROOT>/run-client.sh --port <port> upload-dir --root <PROJECT_DIR> --ext .java,.xml,.md,.yml,.yaml,.json,.properties,.gradle,.kt,.py,.go,.rs,.ts,.js
    ```
-   This runs in the background. The user can start working immediately — results become searchable as they're indexed.
 
-7. **Index past sessions** (optional) — ask the user if they want to index past Claude Code sessions for this project. If yes, use `javaducker_index_sessions` with the project's sessions path (`~/.claude/projects/<hash>/`). This makes prior conversations searchable via `javaducker_search_sessions` and `javaducker_session_context`.
+9. **Index past sessions** (optional) — ask the user if they want to index past Claude Code sessions. If yes, use `javaducker_index_sessions`.
 
-8. **Confirm setup** — print a short confirmation:
-   ```
-   JavaDucker ready. Look for "JD" in the statusline.
-     Root:   /path/to/javaducker
-     Server: running (port 8080)
-     Index:  started for current project
-   ```
+10. **Confirm setup** — print a short confirmation:
+    ```
+    JavaDucker ready. Look for "JD" in the statusline.
+      Root:     /path/to/javaducker
+      Port:     <port>
+      Database: .claude/.javaducker/javaducker.duckdb
+      Intake:   .claude/.javaducker/intake/
+      Index:    started for current project
+    ```
 
 ## How it works for the user
 
 After setup, JavaDucker is invisible:
 - **Statusline** shows `JD` when active, `JD(off)` if the server is down
-- **Server auto-starts** on each session via the memory-sync hook
+- **Server auto-starts** on each session — finds a free port if the saved one is taken
+- **Data stays local** — each project has its own database in `.claude/.javaducker/`
 - **Edited files auto-index** via the post-edit hook
 - **All drom-flow skills** automatically use JavaDucker for deeper search when available
 - **No CLI commands needed** — everything happens through MCP tools and hooks
@@ -86,5 +109,6 @@ To remove: use `/remove-javaducker`
 ## Important notes
 
 - First MCP connection may take 10-20 seconds (jbang compiles the Java file on first run)
-- The `.mcp.json` file is gitignored (contains absolute paths)
+- `.mcp.json` and `.claude/.javaducker/` are gitignored (machine-specific)
 - The config is machine-specific — each developer runs `/add-javaducker` once
+- Multiple projects can run simultaneously — each gets its own port and database

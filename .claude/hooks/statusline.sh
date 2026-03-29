@@ -14,6 +14,9 @@ for vfile in "$DIR/VERSION" "$(dirname "${BASH_SOURCE[0]}")/../../../VERSION"; d
 done
 DROMFLOW_VERSION="${DROMFLOW_VERSION:-dev}"
 
+# --- Project root ---
+PROJECT_ROOT=$(basename "$(cd "$DIR" && pwd)")
+
 # --- Session elapsed time ---
 elapsed=""
 if [ -f "$STATE_DIR/session-start" ]; then
@@ -51,7 +54,7 @@ fi
 # --- Git info ---
 branch=$(git branch --show-current 2>/dev/null || echo "no-git")
 if [ "$branch" = "no-git" ]; then
-  nogit_status="drom-flow v$DROMFLOW_VERSION • [no-git] • ${elapsed:-0m0s}"
+  nogit_status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • [no-git] • ${elapsed:-0m0s}"
   [ -n "$plan_info" ] && nogit_status="$nogit_status • $plan_info"
   echo "$nogit_status"
   exit 0
@@ -92,7 +95,7 @@ if javaducker_available; then
   javaducker_healthy && jd_icon="JD" || jd_icon="JD(off)"
 fi
 
-status="drom-flow v$DROMFLOW_VERSION • $git_info • ${elapsed:-0m0s} • edits:$edits • agents:$agents • mem:$mem"
+status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • agents:$agents • mem:$mem"
 [ -n "$jd_icon" ] && status="$status • $jd_icon"
 [ -n "$plan_info" ] && status="$status • $plan_info"
 echo "$status"

@@ -298,6 +298,9 @@ done < <(find "$TEMPLATE_DIR" -type f -print0)
 # Create session state directory (ephemeral, not committed)
 mkdir -p "$TARGET_DIR/.claude/.state"
 
+# Save drom-flow source location so Claude can find it for future updates
+echo "DROM_FLOW_HOME=$SCRIPT_DIR" > "$TARGET_DIR/.claude/.state/drom-flow.conf"
+
 # Create plans directory
 mkdir -p "$TARGET_DIR/drom-plans"
 

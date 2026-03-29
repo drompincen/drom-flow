@@ -198,28 +198,35 @@ To remove: `/remove-javaducker`
 
 ## Updating drom-flow
 
-To update drom-flow to a newer version without losing project customizations:
+When the user asks to update drom-flow (e.g., "update to latest drom-flow", "update drom-flow"):
+
+1. **Find the drom-flow source** — read `.claude/.state/drom-flow.conf` to get `DROM_FLOW_HOME`
+2. **Pull latest** — run `git -C "$DROM_FLOW_HOME" pull` to fetch the newest version
+3. **Preview changes** — run `bash "$DROM_FLOW_HOME/init.sh" --check .` and show the user what would change
+4. **Apply the update** — run `bash "$DROM_FLOW_HOME/init.sh" --update .`
 
 ```bash
+# Read the saved drom-flow location
+source .claude/.state/drom-flow.conf
+
+# Pull latest
+git -C "$DROM_FLOW_HOME" pull
+
 # Check what would change (dry run)
-bash /path/to/drom-flow/init.sh --check .
+bash "$DROM_FLOW_HOME/init.sh" --check .
 
 # Apply the update
-bash /path/to/drom-flow/init.sh --update .
+bash "$DROM_FLOW_HOME/init.sh" --update .
 ```
 
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.
 
 ## Uninstalling drom-flow
 
-To remove drom-flow from a project while preserving your customizations:
+When the user asks to uninstall drom-flow:
 
-```bash
-# Check what would be removed (dry run)
-bash /path/to/drom-flow/init.sh --uninstall-check .
-
-# Remove drom-flow
-bash /path/to/drom-flow/init.sh --uninstall .
-```
+1. **Find the drom-flow source** — read `.claude/.state/drom-flow.conf` to get `DROM_FLOW_HOME`
+2. **Preview** — run `bash "$DROM_FLOW_HOME/init.sh" --uninstall-check .`
+3. **Uninstall** — run `bash "$DROM_FLOW_HOME/init.sh" --uninstall .`
 
 `--uninstall` removes all drom-flow managed files (hooks, skills, workflows, settings, VERSION) and cleans up empty directories and gitignore entries. It **never removes** user-owned files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`, or any plans in `drom-plans/`.

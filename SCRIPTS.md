@@ -676,7 +676,7 @@ if [ "$MODE" = "uninstall-check" ]; then
   fi
   echo ""
   echo "Gitignore entries that would be cleaned:"
-  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
+  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
     if [ -f "$TARGET_DIR/.gitignore" ] && grep -qF "$pattern" "$TARGET_DIR/.gitignore"; then
       echo "  clean:  $pattern"
     fi
@@ -740,7 +740,7 @@ if [ "$MODE" = "uninstall" ]; then
   gitignore="$TARGET_DIR/.gitignore"
   if [ -f "$gitignore" ]; then
     cleaned=0
-    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
+    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
       if grep -qF "$pattern" "$gitignore"; then
         sed -i "\|^${pattern}$|d" "$gitignore"
         cleaned=$((cleaned + 1))
@@ -816,6 +816,20 @@ fi
 copied=0
 updated=0
 skipped=0
+backed_up=0
+
+# Backup directory for files that will be overwritten
+BACKUP_DIR="$TARGET_DIR/setup-backup/$(date +%Y%m%d-%H%M%S)"
+
+backup_file() {
+  local rel="$1"
+  local src="$TARGET_DIR/$rel"
+  [ -f "$src" ] || return 0
+  local dest="$BACKUP_DIR/$rel"
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  backed_up=$((backed_up + 1))
+}
 
 while IFS= read -r -d '' file; do
   rel="${file#$TEMPLATE_DIR/}"
@@ -832,13 +846,17 @@ while IFS= read -r -d '' file; do
       elif diff -q "$file" "$target" > /dev/null 2>&1; then
         skipped=$((skipped + 1))
       else
+        backup_file "$rel"
         cp "$file" "$target"
-        echo "  update:  $rel"
+        echo "  update:  $rel (backed up)"
         updated=$((updated + 1))
       fi
     else
-      echo "  skip: $rel (already exists)"
-      skipped=$((skipped + 1))
+      # Fresh install — back up existing file before overwriting
+      backup_file "$rel"
+      cp "$file" "$target"
+      echo "  replace: $rel (backed up)"
+      copied=$((copied + 1))
     fi
   else
     cp "$file" "$target"
@@ -858,19 +876,24 @@ mkdir -p "$TARGET_DIR/drom-plans"
 
 # Add .state, edit-log, and .mcp.json to .gitignore if not already present
 gitignore="$TARGET_DIR/.gitignore"
-for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
+for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
   if [ ! -f "$gitignore" ] || ! grep -qF "$pattern" "$gitignore"; then
     echo "$pattern" >> "$gitignore"
   fi
 done
 
-# Copy VERSION file
+# Copy VERSION file (back up existing first)
 if [ -f "$SCRIPT_DIR/VERSION" ] && ! [ "$SCRIPT_DIR/VERSION" -ef "$TARGET_DIR/VERSION" ]; then
+  backup_file "VERSION"
   cp "$SCRIPT_DIR/VERSION" "$TARGET_DIR/VERSION"
   echo "  copy: VERSION"
 fi
 
 # --- Merge missing sections into CLAUDE.md on update ---
+# Back up CLAUDE.md before any modifications
+if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ]; then
+  backup_file "CLAUDE.md"
+fi
 if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
   appended=0
   # Each entry: "heading to grep for" | "section content to append"
@@ -925,6 +948,9 @@ chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
 chmod +x "$TARGET_DIR/scripts/"*.sh 2>/dev/null || true
 
 echo ""
+if [ "$backed_up" -gt 0 ]; then
+  echo "Backed up $backed_up file(s) to: $BACKUP_DIR"
+fi
 if [ "$MODE" = "update" ]; then
   echo "Done. Updated $updated files, copied $copied new, skipped $skipped unchanged/protected."
 else

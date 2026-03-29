@@ -2,3 +2,7 @@
 .claude/edit-log.jsonl
 .mcp.json
 .claude/.javaducker/
+*.png
+*.jpg
+*.jpeg
+*.gif

@@ -72,6 +72,7 @@ collect_managed_files() {
   # Ephemeral state
   [ -d "$target/.claude/.state" ] && managed+=(".claude/.state/")
   [ -f "$target/.claude/edit-log.jsonl" ] && managed+=(".claude/edit-log.jsonl")
+  [ -d "$target/.claude/.javaducker" ] && managed+=(".claude/.javaducker/")
   true
 }
 
@@ -89,6 +90,7 @@ MANAGED_DIRS=(
   ".claude/skills/reviewer"
   ".claude/skills/add-javaducker"
   ".claude/skills/remove-javaducker"
+  ".claude/.javaducker"
   ".claude/skills"
   ".claude/hooks"
   ".claude"
@@ -122,7 +124,7 @@ if [ "$MODE" = "uninstall-check" ]; then
   fi
   echo ""
   echo "Gitignore entries that would be cleaned:"
-  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
+  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
     if [ -f "$TARGET_DIR/.gitignore" ] && grep -qF "$pattern" "$TARGET_DIR/.gitignore"; then
       echo "  clean:  $pattern"
     fi
@@ -186,7 +188,7 @@ if [ "$MODE" = "uninstall" ]; then
   gitignore="$TARGET_DIR/.gitignore"
   if [ -f "$gitignore" ]; then
     cleaned=0
-    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
+    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
       if grep -qF "$pattern" "$gitignore"; then
         sed -i "\|^${pattern}$|d" "$gitignore"
         cleaned=$((cleaned + 1))
@@ -301,7 +303,7 @@ mkdir -p "$TARGET_DIR/drom-plans"
 
 # Add .state, edit-log, and .mcp.json to .gitignore if not already present
 gitignore="$TARGET_DIR/.gitignore"
-for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
+for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/"; do
   if [ ! -f "$gitignore" ] || ! grep -qF "$pattern" "$gitignore"; then
     echo "$pattern" >> "$gitignore"
   fi

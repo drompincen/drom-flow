@@ -13,6 +13,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/validate-plan.sh\"",
             "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/javaducker-index.sh\"",
+            "timeout": 3000
           }
         ]
       },

@@ -1,10 +1,12 @@
 #!/bin/bash
-# drom-flow init — install or update drom-flow in a project
+# drom-flow init — install, update, or uninstall drom-flow in a project
 #
 # Usage:
-#   bash init.sh [target-dir]            # Fresh install (skip existing files)
-#   bash init.sh --update [target-dir]   # Update drom-flow files, preserve user content
-#   bash init.sh --check [target-dir]    # Show what would be updated (dry run)
+#   bash init.sh [target-dir]              # Fresh install (skip existing files)
+#   bash init.sh --update [target-dir]     # Update drom-flow files, preserve user content
+#   bash init.sh --check [target-dir]      # Show what would be updated (dry run)
+#   bash init.sh --uninstall [target-dir]  # Remove drom-flow, preserve user content
+#   bash init.sh --uninstall-check [dir]   # Show what would be removed (dry run)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -17,6 +19,8 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --update) MODE="update"; shift ;;
     --check)  MODE="check"; shift ;;
+    --uninstall) MODE="uninstall"; shift ;;
+    --uninstall-check) MODE="uninstall-check"; shift ;;
     *)        TARGET_DIR="$1"; shift ;;
   esac
 done
@@ -50,6 +54,163 @@ if [ -f "$TARGET_DIR/VERSION" ]; then
   CURRENT_VERSION=$(tr -d '[:space:]' < "$TARGET_DIR/VERSION")
 fi
 NEW_VERSION=$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")
+
+# --- Uninstall: collect managed files ---
+# Managed files = everything from template/ that is NOT a user file, plus VERSION and .state/
+collect_managed_files() {
+  local target="$1"
+  managed=()
+  # Files from template
+  while IFS= read -r -d '' file; do
+    rel="${file#$TEMPLATE_DIR/}"
+    if ! is_user_file "$rel" && [ -f "$target/$rel" ]; then
+      managed+=("$rel")
+    fi
+  done < <(find "$TEMPLATE_DIR" -type f -print0)
+  # Extra managed files not in template/
+  [ -f "$target/VERSION" ] && managed+=("VERSION")
+  # Ephemeral state
+  [ -d "$target/.claude/.state" ] && managed+=(".claude/.state/")
+  [ -f "$target/.claude/edit-log.jsonl" ] && managed+=(".claude/edit-log.jsonl")
+  true
+}
+
+# Directories that drom-flow created (remove only if empty after cleanup)
+MANAGED_DIRS=(
+  "workflows"
+  "reports"
+  "drom-plans"
+  ".claude/skills/architect"
+  ".claude/skills/debugger"
+  ".claude/skills/implementer"
+  ".claude/skills/orchestrator"
+  ".claude/skills/planner"
+  ".claude/skills/refactorer"
+  ".claude/skills/reviewer"
+  ".claude/skills/add-javaducker"
+  ".claude/skills/remove-javaducker"
+  ".claude/skills"
+  ".claude/hooks"
+  ".claude"
+  "context"
+  "scripts"
+)
+
+if [ "$MODE" = "uninstall-check" ]; then
+  echo "drom-flow uninstall check for: $(cd "$TARGET_DIR" && pwd)"
+  echo "  Installed version: ${CURRENT_VERSION:-none}"
+  echo ""
+  collect_managed_files "$TARGET_DIR"
+  echo "Files that would be REMOVED (--uninstall):"
+  for rel in "${managed[@]}"; do
+    echo "  remove: $rel"
+  done
+  echo ""
+  echo "Directories that would be removed if empty:"
+  for d in "${MANAGED_DIRS[@]}"; do
+    [ -d "$TARGET_DIR/$d" ] && echo "  rmdir:  $d/"
+  done
+  echo ""
+  echo "Protected (NEVER removed):"
+  for uf in "${USER_FILES[@]}"; do
+    [ -f "$TARGET_DIR/$uf" ] && echo "  keep:   $uf"
+  done
+  # Plans
+  if [ -d "$TARGET_DIR/drom-plans" ]; then
+    plan_count=$(find "$TARGET_DIR/drom-plans" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+    [ "$plan_count" -gt 0 ] && echo "  keep:   drom-plans/ ($plan_count plan file(s))"
+  fi
+  echo ""
+  echo "Gitignore entries that would be cleaned:"
+  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
+    if [ -f "$TARGET_DIR/.gitignore" ] && grep -qF "$pattern" "$TARGET_DIR/.gitignore"; then
+      echo "  clean:  $pattern"
+    fi
+  done
+  exit 0
+fi
+
+if [ "$MODE" = "uninstall" ]; then
+  echo "Uninstalling drom-flow from: $(cd "$TARGET_DIR" && pwd)"
+  echo "  Version: ${CURRENT_VERSION:-unknown}"
+  echo ""
+
+  collect_managed_files "$TARGET_DIR"
+  removed=0
+  kept=0
+
+  # Remove managed files
+  for rel in "${managed[@]}"; do
+    target="$TARGET_DIR/$rel"
+    if [ -d "$target" ]; then
+      rm -rf "$target"
+      echo "  remove: $rel"
+      removed=$((removed + 1))
+    elif [ -f "$target" ]; then
+      rm -f "$target"
+      echo "  remove: $rel"
+      removed=$((removed + 1))
+    fi
+  done
+
+  # Show protected files
+  echo ""
+  echo "Protected (kept):"
+  for uf in "${USER_FILES[@]}"; do
+    if [ -f "$TARGET_DIR/$uf" ]; then
+      echo "  keep:   $uf"
+      kept=$((kept + 1))
+    fi
+  done
+  if [ -d "$TARGET_DIR/drom-plans" ]; then
+    plan_count=$(find "$TARGET_DIR/drom-plans" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$plan_count" -gt 0 ]; then
+      echo "  keep:   drom-plans/ ($plan_count plan file(s))"
+      kept=$((kept + plan_count))
+    fi
+  fi
+
+  # Clean up empty managed directories (order matters — children before parents)
+  echo ""
+  dir_removed=0
+  for d in "${MANAGED_DIRS[@]}"; do
+    target="$TARGET_DIR/$d"
+    if [ -d "$target" ] && [ -z "$(ls -A "$target" 2>/dev/null)" ]; then
+      rmdir "$target"
+      echo "  rmdir:  $d/"
+      dir_removed=$((dir_removed + 1))
+    fi
+  done
+
+  # Clean gitignore entries added by drom-flow
+  gitignore="$TARGET_DIR/.gitignore"
+  if [ -f "$gitignore" ]; then
+    cleaned=0
+    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
+      if grep -qF "$pattern" "$gitignore"; then
+        sed -i "\|^${pattern}$|d" "$gitignore"
+        cleaned=$((cleaned + 1))
+      fi
+    done
+    # Remove .gitignore if it's now empty (only whitespace left)
+    if [ ! -s "$gitignore" ] || ! grep -q '[^[:space:]]' "$gitignore"; then
+      rm -f "$gitignore"
+      echo "  remove: .gitignore (was empty)"
+    elif [ "$cleaned" -gt 0 ]; then
+      echo "  clean:  .gitignore ($cleaned drom-flow entries removed)"
+    fi
+  fi
+
+  echo ""
+  echo "Done. Removed $removed files, $dir_removed directories. Kept $kept protected files."
+  echo ""
+  echo "To fully clean up, you may also want to remove:"
+  echo "  - CLAUDE.md (your project config — kept in case you customized it)"
+  echo "  - context/ (your memory, decisions, conventions — kept to preserve your notes)"
+  echo "  - drom-plans/ (your execution plans — kept to preserve your work)"
+  echo "  - scripts/orchestrate.sh (your orchestration script — kept if customized)"
+  exit 0
+fi
 
 if [ "$MODE" = "check" ]; then
   echo "drom-flow update check for: $(cd "$TARGET_DIR" && pwd)"
@@ -138,9 +299,9 @@ mkdir -p "$TARGET_DIR/.claude/.state"
 # Create plans directory
 mkdir -p "$TARGET_DIR/drom-plans"
 
-# Add .state and edit-log to .gitignore if not already present
+# Add .state, edit-log, and .mcp.json to .gitignore if not already present
 gitignore="$TARGET_DIR/.gitignore"
-for pattern in ".claude/.state/" ".claude/edit-log.jsonl"; do
+for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json"; do
   if [ ! -f "$gitignore" ] || ! grep -qF "$pattern" "$gitignore"; then
     echo "$pattern" >> "$gitignore"
   fi
@@ -217,7 +378,7 @@ echo "What was installed:"
 echo "  CLAUDE.md              — behavioral rules + parallelism + closed-loop + plan protocol"
 echo "  .claude/settings.json  — hooks, statusline, permissions"
 echo "  .claude/hooks/         — bash lifecycle hooks"
-echo "  .claude/skills/        — 7 agent skills (/planner, /reviewer, /orchestrator, etc.)"
+echo "  .claude/skills/        — 9 agent skills (/planner, /reviewer, /orchestrator, /add-javaducker, etc.)"
 echo "  context/               — memory, decisions, conventions templates"
 echo "  workflows/             — bug-fix, new-feature, refactor, code-review, closed-loop"
 echo "  scripts/orchestrate.sh — template orchestration script for closed-loop pipelines"

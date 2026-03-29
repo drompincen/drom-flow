@@ -41,3 +41,26 @@ if [ -d "$PLANS_DIR" ]; then
     echo "Read the plan file to review progress and resume from the current chapter."
   fi
 fi
+
+# --- JavaDucker: auto-start and health check ---
+. "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
+if javaducker_available; then
+  if javaducker_healthy; then
+    echo "[JavaDucker: connected]"
+  else
+    # Auto-start the server in background
+    echo "[JavaDucker: starting server...]"
+    nohup bash "${JAVADUCKER_ROOT}/run-server.sh" >/dev/null 2>&1 &
+    # Wait briefly for server to come up
+    for i in 1 2 3 4 5; do
+      sleep 1
+      if javaducker_healthy; then
+        echo "[JavaDucker: connected]"
+        break
+      fi
+    done
+    if ! javaducker_healthy; then
+      echo "[JavaDucker: server starting in background — will be available shortly]"
+    fi
+  fi
+fi

@@ -74,6 +74,30 @@ When a workflow specifies a loop (repeat-until-pass), follow this protocol:
 - Check `context/CONVENTIONS.md` for project-specific patterns before writing code
 - During loops, append iteration results to `context/MEMORY.md` after each iteration
 
+## Knowledge Protocol (when JavaDucker is available)
+
+JavaDucker stores. Claude curates. You are responsible for keeping the knowledge base accurate.
+
+### After every task
+- **Record decisions** — any non-obvious choice you made → `javaducker_extract_decisions`
+- **Tag new patterns** — new conventions or patterns introduced → `javaducker_tag`
+- **Extract insights** — root causes found, risks identified → `javaducker_extract_points`
+
+### When you change something that invalidates prior knowledge
+- **Check for contradicted decisions** — `javaducker_find_points` with `DECISION` type in the affected area
+- **Supersede stale artifacts** — `javaducker_set_freshness` → `superseded` on the old artifact
+- **Synthesize** — `javaducker_synthesize` to compress the old artifact into a summary reference (what it said, why it's obsolete, what replaced it)
+- **Link concepts** — `javaducker_link_concepts` to connect old concepts to new artifacts
+
+### What to never do
+- Don't run enrichment mechanically — always read the content before classifying or extracting points
+- Don't supersede artifacts that are still valid just because they're old
+- Don't skip decision recording — the decision chain is the most valuable thread in the knowledge base
+
+### Maintenance
+- Follow `workflows/javaducker-hygiene.md` for periodic index maintenance
+- The session-end hook will prompt when un-enriched artifacts are detected
+
 ## Plan Protocol
 
 - All plans are created in `drom-plans/` as markdown files with YAML frontmatter
@@ -103,6 +127,7 @@ When the task matches a common pattern, follow the corresponding workflow:
 - Refactoring: follow `workflows/refactor.md`
 - Code reviews: follow `workflows/code-review.md`
 - Closed-loop QA: follow `workflows/closed-loop.md`
+- JavaDucker index maintenance: follow `workflows/javaducker-hygiene.md`
 
 ## Skills
 
@@ -115,6 +140,61 @@ Use these agent profiles when the task calls for a specialized role:
 - `/refactorer` — Safe code restructuring
 - `/architect` — System design and architecture decisions
 - `/orchestrator` — Design and run closed-loop pipelines
+- `/add-javaducker` — Set up JavaDucker companion tool for semantic code search
+- `/remove-javaducker` — Remove JavaDucker integration
+
+## JavaDucker Integration (optional)
+
+When JavaDucker is configured (via `/add-javaducker`), 48 MCP tools become available:
+
+**Core search & indexing:**
+- `javaducker_search` — semantic/hybrid/exact search across all indexed code
+- `javaducker_explain` — comprehensive file context (summary, deps, dependents, blame)
+- `javaducker_index_directory` / `javaducker_index_file` — index code into JavaDucker
+- `javaducker_map` — project structure overview
+- `javaducker_watch` — auto-index on file changes
+
+**Impact analysis:**
+- `javaducker_dependencies` / `javaducker_dependents` — import/dependency graph
+- `javaducker_related` — co-changed files (git history)
+- `javaducker_blame` — git blame with grouping
+
+**Content intelligence:**
+- `javaducker_classify` — classify documents (ADR, DESIGN_DOC, PLAN, etc.)
+- `javaducker_tag` / `javaducker_find_by_tag` — tag and search by tag
+- `javaducker_find_by_type` — find artifacts by document type
+- `javaducker_extract_points` / `javaducker_find_points` — extract and search salient points (DECISION, RISK, ACTION, etc.)
+- `javaducker_concepts` / `javaducker_concept_timeline` — concept map and evolution
+- `javaducker_latest` — most current artifact on a topic
+- `javaducker_synthesize` / `javaducker_synthesis` — compress stale artifacts into summaries
+- `javaducker_link_concepts` — cross-document concept links
+- `javaducker_set_freshness` — mark artifacts current/stale/superseded
+
+**Session memory:**
+- `javaducker_index_sessions` — index past Claude Code conversations
+- `javaducker_search_sessions` — search past conversations
+- `javaducker_session_context` — full historical context for a topic
+- `javaducker_extract_decisions` / `javaducker_recent_decisions` — record and recall decisions from sessions
+
+**Health & monitoring:**
+- `javaducker_index_health` — overall index freshness with recommendations
+- `javaducker_concept_health` — concept graph health (active/fading/cold)
+- `javaducker_stale` / `javaducker_stale_content` — detect out-of-date files
+- `javaducker_stats` — aggregate indexing statistics
+
+**Reladomo ORM (Java projects):**
+- `javaducker_reladomo_relationships` / `_graph` / `_path` — object model navigation
+- `javaducker_reladomo_schema` / `_object_files` / `_finders` — DDL, files, query patterns
+- `javaducker_reladomo_deepfetch` / `_temporal` / `_config` — eager loading, temporal, runtime config
+
+The integration is seamless:
+- The server auto-starts on session start
+- Edited files are auto-indexed via post-edit hooks
+- All skills and workflows automatically use JavaDucker when available
+- The statusline shows `JD` when active
+
+To set up: `/add-javaducker`
+To remove: `/remove-javaducker`
 
 ## Updating drom-flow
 
@@ -129,3 +209,17 @@ bash /path/to/drom-flow/init.sh --update .
 ```
 
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.
+
+## Uninstalling drom-flow
+
+To remove drom-flow from a project while preserving your customizations:
+
+```bash
+# Check what would be removed (dry run)
+bash /path/to/drom-flow/init.sh --uninstall-check .
+
+# Remove drom-flow
+bash /path/to/drom-flow/init.sh --uninstall .
+```
+
+`--uninstall` removes all drom-flow managed files (hooks, skills, workflows, settings, VERSION) and cleans up empty directories and gitignore entries. It **never removes** user-owned files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`, or any plans in `drom-plans/`.

@@ -16,3 +16,18 @@ if [ -d "$PLANS_DIR" ]; then
     fi
   done
 fi
+
+# JavaDucker session-end hygiene
+. "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
+if javaducker_available && javaducker_healthy; then
+  edits=0
+  [ -f "$DIR/.claude/edit-log.jsonl" ] && edits=$(wc -l < "$DIR/.claude/edit-log.jsonl" | tr -d ' ')
+  if [ "$edits" -gt 10 ]; then
+    echo "[JavaDucker: $edits files edited — run javaducker_index_health to check freshness.]"
+  fi
+  # Check for un-enriched artifacts
+  queue=$(curl -sf "http://localhost:${JAVADUCKER_HTTP_PORT:-8080}/api/enrich-queue?limit=1" 2>/dev/null)
+  if [ -n "$queue" ] && echo "$queue" | grep -q '"artifact_id"'; then
+    echo "[JavaDucker: un-enriched artifacts detected — run workflows/javaducker-hygiene.md Phase 2 to classify, tag, and extract points.]"
+  fi
+fi

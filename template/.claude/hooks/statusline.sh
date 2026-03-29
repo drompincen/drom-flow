@@ -85,6 +85,14 @@ agents=0
 mem="off"
 [ -s "$DIR/context/MEMORY.md" ] && mem="on"
 
+# --- JavaDucker status ---
+jd_icon=""
+. "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
+if javaducker_available; then
+  javaducker_healthy && jd_icon="JD" || jd_icon="JD(off)"
+fi
+
 status="drom-flow v$DROMFLOW_VERSION • $git_info • ${elapsed:-0m0s} • edits:$edits • agents:$agents • mem:$mem"
+[ -n "$jd_icon" ] && status="$status • $jd_icon"
 [ -n "$plan_info" ] && status="$status • $plan_info"
 echo "$status"

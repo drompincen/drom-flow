@@ -115,6 +115,7 @@ Use these agent profiles when the task calls for a specialized role:
 - `/refactorer` — Safe code restructuring
 - `/architect` — System design and architecture decisions
 - `/orchestrator` — Design and run closed-loop pipelines
+- `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
 
 ## Updating drom-flow
 

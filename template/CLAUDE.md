@@ -140,6 +140,7 @@ Use these agent profiles when the task calls for a specialized role:
 - `/refactorer` — Safe code restructuring
 - `/architect` — System design and architecture decisions
 - `/orchestrator` — Design and run closed-loop pipelines
+- `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
 - `/add-javaducker` — Set up JavaDucker companion tool for semantic code search
 - `/remove-javaducker` — Remove JavaDucker integration
 

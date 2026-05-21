@@ -185,6 +185,7 @@ Invoke with slash commands to get specialized behavior:
 | `/refactorer` | Safe incremental code restructuring |
 | `/architect` | System design and architecture decisions |
 | `/orchestrator` | Design and run closed-loop pipelines |
+| `/api-expert` | Contract-first REST APIs (OpenAPI 3.1, Spring Boot, security, rate limiting) |
 
 ### Workflows
 

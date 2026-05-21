@@ -116,6 +116,7 @@ Use these agent profiles when the task calls for a specialized role:
 - `/architect` — System design and architecture decisions
 - `/orchestrator` — Design and run closed-loop pipelines
 - `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
+- `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
 
 ## Updating drom-flow
 

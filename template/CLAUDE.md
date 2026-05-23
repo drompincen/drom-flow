@@ -131,7 +131,9 @@ When the task matches a common pattern, follow the corresponding workflow:
 
 ## Skills
 
-Use these agent profiles when the task calls for a specialized role:
+Use these agent profiles when the task calls for a specialized role.
+
+**Code & engineering:**
 
 - `/planner` — Task decomposition, parallel execution planning
 - `/implementer` — Writing production code
@@ -144,6 +146,29 @@ Use these agent profiles when the task calls for a specialized role:
 - `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
 - `/add-javaducker` — Set up JavaDucker companion tool for semantic code search
 - `/remove-javaducker` — Remove JavaDucker integration
+
+**Web platform quality** (from `addyosmani/web-quality-skills`, MIT):
+
+- `/web-quality-audit` — Comprehensive web quality audit (orchestrates the QA skills below)
+- `/accessibility` — WCAG 2.2 audit and fixes (screen reader, keyboard navigation)
+- `/seo` — Search engine visibility (meta, structured data, sitemap)
+- `/performance` — Web performance optimization (load time, bundle size)
+- `/core-web-vitals` — Optimize LCP, INP, CLS for page experience
+- `/best-practices` — Modern web best practices (security, code quality, modernization)
+
+**Product management** (from `deanpeters/product-manager-skills`):
+
+- `/discovery-process` — Run a full discovery cycle from problem hypothesis to validated solution
+- `/problem-statement` — Write a user-centered problem statement (who, what, why, how it feels)
+- `/jobs-to-be-done` — Uncover customer jobs, pains, and gains (JTBD framework)
+- `/customer-journey-map` — Map customer experience across stages, touchpoints, emotions
+- `/user-story-mapping` — Build a user story map (activities → steps → tasks → release slices)
+- `/epic-breakdown-advisor` — Split epics into stories using Humanizing Work patterns
+- `/user-story` — Write user stories (Mike Cohn format with Gherkin acceptance criteria)
+- `/user-story-splitting` — Break large stories into deliverable slices
+- `/prd-development` — Build structured PRDs (problem → users → solution → success criteria)
+- `/roadmap-planning` — Strategic roadmap (prioritization, epics, sequencing)
+- `/prioritization-advisor` — Choose the right prioritization framework (RICE, ICE, value/effort)
 
 ## JavaDucker Integration (optional)
 

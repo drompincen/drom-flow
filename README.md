@@ -174,7 +174,9 @@ Max iterations: 10
 
 ### Agent skills
 
-Invoke with slash commands to get specialized behavior:
+Invoke with slash commands to get specialized behavior.
+
+**Code & engineering:**
 
 | Command | Purpose |
 |---|---|
@@ -185,7 +187,35 @@ Invoke with slash commands to get specialized behavior:
 | `/refactorer` | Safe incremental code restructuring |
 | `/architect` | System design and architecture decisions |
 | `/orchestrator` | Design and run closed-loop pipelines |
+| `/ascii-architect` | Convert thoughts, architectures, and processes into ASCII art diagrams |
 | `/api-expert` | Contract-first REST APIs (OpenAPI 3.1, Spring Boot, security, rate limiting) |
+
+**Web platform quality** (from [addyosmani/web-quality-skills](https://github.com/addyosmani/web-quality-skills), MIT):
+
+| Command | Purpose |
+|---|---|
+| `/web-quality-audit` | Comprehensive web quality audit (orchestrates the QA skills below) |
+| `/accessibility` | WCAG 2.2 audit and fixes (screen reader, keyboard nav) |
+| `/seo` | Search engine visibility (meta, structured data, sitemap) |
+| `/performance` | Web performance optimization (load time, bundle size) |
+| `/core-web-vitals` | Optimize LCP, INP, CLS for page experience |
+| `/best-practices` | Modern web best practices (security, code quality, modernization) |
+
+**Product management** (from [deanpeters/product-manager-skills](https://github.com/deanpeters/product-manager-skills)):
+
+| Command | Purpose |
+|---|---|
+| `/discovery-process` | Full discovery cycle from problem hypothesis to validated solution |
+| `/problem-statement` | User-centered problem statement (who, what, why, how it feels) |
+| `/jobs-to-be-done` | Uncover customer jobs, pains, and gains (JTBD framework) |
+| `/customer-journey-map` | Map customer experience across stages, touchpoints, emotions |
+| `/user-story-mapping` | Build a user story map (activities → steps → tasks → release slices) |
+| `/epic-breakdown-advisor` | Split epics into stories using Humanizing Work patterns |
+| `/user-story` | Write user stories (Mike Cohn format with Gherkin acceptance criteria) |
+| `/user-story-splitting` | Break large stories into deliverable slices |
+| `/prd-development` | Build structured PRDs (problem → users → solution → success criteria) |
+| `/roadmap-planning` | Strategic roadmap (prioritization, epics, sequencing) |
+| `/prioritization-advisor` | Choose the right prioritization framework (RICE, ICE, value/effort) |
 
 ### Workflows
 

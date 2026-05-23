@@ -632,15 +632,45 @@ MANAGED_DIRS=(
   "workflows"
   "reports"
   "drom-plans"
+  ".claude/skills/accessibility/references"
+  ".claude/skills/core-web-vitals/references"
+  ".claude/skills/web-quality-audit/scripts"
+  ".claude/skills/customer-journey-map/examples"
+  ".claude/skills/discovery-process/examples"
+  ".claude/skills/jobs-to-be-done/examples"
+  ".claude/skills/prd-development/examples"
+  ".claude/skills/problem-statement/examples"
+  ".claude/skills/roadmap-planning/examples"
+  ".claude/skills/user-story-mapping/examples"
+  ".claude/skills/user-story-splitting/examples"
+  ".claude/skills/user-story/examples"
+  ".claude/skills/user-story/scripts"
+  ".claude/skills/accessibility"
   ".claude/skills/api-expert"
   ".claude/skills/architect"
   ".claude/skills/ascii-architect"
+  ".claude/skills/best-practices"
+  ".claude/skills/core-web-vitals"
+  ".claude/skills/customer-journey-map"
   ".claude/skills/debugger"
+  ".claude/skills/discovery-process"
+  ".claude/skills/epic-breakdown-advisor"
   ".claude/skills/implementer"
+  ".claude/skills/jobs-to-be-done"
   ".claude/skills/orchestrator"
+  ".claude/skills/performance"
   ".claude/skills/planner"
+  ".claude/skills/prd-development"
+  ".claude/skills/prioritization-advisor"
+  ".claude/skills/problem-statement"
   ".claude/skills/refactorer"
   ".claude/skills/reviewer"
+  ".claude/skills/roadmap-planning"
+  ".claude/skills/seo"
+  ".claude/skills/user-story"
+  ".claude/skills/user-story-mapping"
+  ".claude/skills/user-story-splitting"
+  ".claude/skills/web-quality-audit"
   ".claude/skills/add-javaducker"
   ".claude/skills/remove-javaducker"
   ".claude/.javaducker"
@@ -962,7 +992,7 @@ echo "What was installed:"
 echo "  CLAUDE.md              — behavioral rules + parallelism + closed-loop + plan protocol"
 echo "  .claude/settings.json  — hooks, statusline, permissions"
 echo "  .claude/hooks/         — bash lifecycle hooks"
-echo "  .claude/skills/        — 11 agent skills (/planner, /reviewer, /orchestrator, /ascii-architect, /api-expert, etc.)"
+echo "  .claude/skills/        — 27 agent skills: code (/planner, /reviewer, /orchestrator, /api-expert, /architect, etc.), web-QA (/accessibility, /seo, /performance, /core-web-vitals, /best-practices, /web-quality-audit), PM (/discovery-process, /problem-statement, /jobs-to-be-done, /customer-journey-map, /user-story-mapping, /epic-breakdown-advisor, /user-story, /user-story-splitting, /prd-development, /roadmap-planning, /prioritization-advisor)"
 echo "  context/               — memory, decisions, conventions templates"
 echo "  workflows/             — bug-fix, new-feature, refactor, code-review, closed-loop"
 echo "  scripts/orchestrate.sh — template orchestration script for closed-loop pipelines"
@@ -1091,6 +1121,133 @@ done
 
 echo "[orchestrate] Max iterations ($MAX_ITERATIONS) reached"
 exit 1
+```
+
+---
+
+## template/.claude/skills/web-quality-audit/scripts/analyze.sh
+
+> Generate this file **only** at `template/.claude/skills/web-quality-audit/scripts/analyze.sh` (no copy in `.claude/skills/`). It ships to target projects via `init.sh`.
+
+```bash
+#!/bin/bash
+# Read-only HTML quality analyzer (v2). No filesystem mutations.
+# stderr = human logs, stdout = structured JSON.
+set -euo pipefail
+
+MAX_FINDINGS=100
+MAX_PER_CATEGORY_PER_FILE=20  # cap per high-volume check per file so one category can't fill MAX_FINDINGS
+
+fail() {
+  local type="$1" msg="$2" suggestion="$3"
+  if command -v jq >/dev/null 2>&1; then
+    jq -n \
+      --arg type "$type" \
+      --arg msg "$msg" \
+      --arg suggestion "$suggestion" \
+      '{success: false, error: {type: $type, message: $msg, retryable: false, suggestion: $suggestion}}'
+  else
+    printf '{"success":false,"error":{"type":"%s","message":"%s","suggestion":"%s","retryable":false}}\n' \
+      "$type" "$msg" "$suggestion"
+  fi
+  exit 1
+}
+
+command -v jq >/dev/null 2>&1 || \
+  fail "missing_dependency" "jq is required for safe JSON output" "Install: brew install jq"
+
+[ $# -ge 1 ] || fail "invalid_input" "No target provided" "Usage: $0 <file_or_directory>"
+TARGET="$1"
+[ -e "$TARGET" ] || fail "invalid_input" "Target not found: $TARGET" "Pass an existing file or directory path"
+
+ISSUES=()
+WARNINGS=()
+
+analyze_html() {
+  local file="$1"
+  echo "Analyzing: $file" >&2
+
+  grep -qi "<!doctype html>"     "$file" || ISSUES+=("$file:0: Missing HTML5 doctype")
+  grep -qi 'charset.*utf-8'      "$file" || WARNINGS+=("$file:0: Missing or non-UTF-8 charset")
+  grep -qi 'name="viewport"'     "$file" || ISSUES+=("$file:0: Missing viewport meta tag")
+  grep -qi '<html[^>]*lang='     "$file" || ISSUES+=("$file:0: Missing lang attribute on <html>")
+  grep -qi '<title>'             "$file" || ISSUES+=("$file:0: Missing <title> tag")
+
+  # <img> without alt — two-pass replaces broken PCRE lookahead
+  local alt_count=0
+  while IFS=: read -r ln tag; do
+    if grep -qE 'alt=' <<<"$tag"; then continue; fi
+    if [ "$alt_count" -ge "$MAX_PER_CATEGORY_PER_FILE" ]; then
+      WARNINGS+=("$file:0: <img>-without-alt findings truncated (>${MAX_PER_CATEGORY_PER_FILE} in this file)")
+      break
+    fi
+    WARNINGS+=("$file:$ln: <img> without alt attribute")
+    alt_count=$((alt_count + 1))
+  done < <(grep -noE '<img[^>]*>' "$file" || true)
+
+  # Non-HTTPS URLs with line numbers
+  local http_count=0
+  while IFS=: read -r ln _; do
+    if [ "$http_count" -ge "$MAX_PER_CATEGORY_PER_FILE" ]; then
+      WARNINGS+=("$file:0: Non-HTTPS URL findings truncated (>${MAX_PER_CATEGORY_PER_FILE} in this file)")
+      break
+    fi
+    WARNINGS+=("$file:$ln: Non-HTTPS URL")
+    http_count=$((http_count + 1))
+  done < <(grep -noE 'http://[^"'\''[:space:]>]*' "$file" || true)
+}
+
+# Process substitution keeps arrays in main shell (fixes v1 subshell bug)
+if [ -d "$TARGET" ]; then
+  while IFS= read -r -d '' file; do
+    analyze_html "$file"
+  done < <(find "$TARGET" \( -name "*.html" -o -name "*.htm" \) -print0)
+elif [ -f "$TARGET" ]; then
+  analyze_html "$TARGET"
+else
+  fail "invalid_input" "Target is not a regular file or directory: $TARGET" "Pass a path to an .html/.htm file or a directory"
+fi
+
+issue_total=${#ISSUES[@]}
+warning_total=${#WARNINGS[@]}
+
+to_json_array() {
+  printf '%s\n' "$@" | jq -Rs 'split("\n") | map(select(length > 0))'
+}
+
+if [ "$issue_total" -gt 0 ]; then
+  issues_json=$(to_json_array "${ISSUES[@]:0:$MAX_FINDINGS}")
+else
+  issues_json='[]'
+fi
+
+if [ "$warning_total" -gt 0 ]; then
+  warnings_json=$(to_json_array "${WARNINGS[@]:0:$MAX_FINDINGS}")
+else
+  warnings_json='[]'
+fi
+
+echo "Scanned. $issue_total issues, $warning_total warnings." >&2
+
+jq -n \
+  --argjson issues "$issues_json" \
+  --argjson warnings "$warnings_json" \
+  --argjson issue_total "$issue_total" \
+  --argjson warning_total "$warning_total" \
+  --argjson max "$MAX_FINDINGS" \
+  '{
+    success: true,
+    issues: $issues,
+    warnings: $warnings,
+    issueCount: $issue_total,
+    warningCount: $warning_total,
+    truncated: (($issue_total > $max) or ($warning_total > $max))
+  }'
+```
+
+After generating, make it executable:
+```
+chmod +x template/.claude/skills/web-quality-audit/scripts/analyze.sh
 ```
 
 ---

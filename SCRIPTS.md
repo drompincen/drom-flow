@@ -641,6 +641,7 @@ collect_managed_files() {
 
 MANAGED_DIRS=(
   "workflows"
+  "docs"
   "reports"
   "drom-plans"
   ".claude/skills/accessibility/references"
@@ -984,6 +985,7 @@ echo "  context/               — memory, decisions, conventions templates"
 echo "  workflows/             — bug-fix, new-feature, refactor, code-review, closed-loop"
 echo "  scripts/orchestrate.sh — template orchestration script for closed-loop pipelines"
 echo "  drom-plans/            — chapter-based execution plans with progress tracking"
+echo "  docs/                  — grok fan-out + token economy guides"
 echo "  reports/               — iteration reports from orchestration runs"
 ```
 
@@ -2937,3 +2939,4 @@ The following files are **identical** to their counterparts above. After generat
 | `scripts/mk-task.sh` | `template/scripts/mk-task.sh` |
 | `scripts/limit-watch.sh` | `template/scripts/limit-watch.sh` |
 | `scripts/limit-verify.sh` | `template/scripts/limit-verify.sh` |
+| `scripts/bench-audit.sh` | `template/scripts/bench-audit.sh` |

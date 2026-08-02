@@ -2,6 +2,8 @@
 
 A lean, dependency-free enhancement kit for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It gives Claude Code structured workflows, parallel agent orchestration, closed-loop pipelines, persistent memory, chapter-based execution plans, and lifecycle hooks -- using only markdown files, bash scripts, and Claude Code's native features.
 
+It also lets Claude **delegate work to grok CLI sub-agents** running in parallel, which cuts Claude token usage sharply and keeps work moving even when Claude hits its usage limit.
+
 No MCP servers. No npm packages. No Node.js. Just plain text and bash.
 
 ## Why drom-flow?
@@ -20,9 +22,12 @@ Out of the box, Claude Code is powerful but unstructured. Every session starts f
 | **Session memory** | Gone when session ends | `context/MEMORY.md` loaded at start, updated at end, carries focus/findings/decisions forward |
 | **Progress tracking** | None | Plan chapters track completed/in-progress/pending status; statusline shows `plan:ch3/5(2check)` |
 | **Consistent workflows** | Depends on how you prompt | Predefined workflows for bug fixes, features, refactoring, code review, and closed-loop QA |
-| **Agent specialization** | Generic agents | 7 skill profiles (`/planner`, `/reviewer`, `/debugger`, etc.) with domain-specific instructions |
-| **Observability** | No visibility into what's happening | Statusline showing git state, session time, edit count, agent count, memory status, and plan progress |
+| **Agent specialization** | Generic agents | 28 skill profiles (`/planner`, `/reviewer`, `/debugger`, `/grok-fleet`, etc.) with domain-specific instructions |
+| **Observability** | No visibility into what's happening | Statusline showing git state, session time, edit count, Claude/grok agent counts, memory status, and plan progress |
 | **Resumability** | Start over every session | Session-start hook detects in-progress plans and surfaces them with current chapter |
+| **Extra parallelism** | Limited to Claude's own sub-agents | Fan out to **grok CLI sub-agents** — 8 concurrent verified in 13s — with progress, stop control, and stall detection |
+| **Token cost** | Every file read and draft burns Claude tokens | Delegate to grok: measured **−64% turns, −65% Claude output, −97% context bytes**, quality held |
+| **Hitting the usage limit** | Session dies mid-task, work is stranded | Checkpoint, hand off to detached grok agents that keep running, arm an hourly ping, resume from a ~230-byte record |
 
 ### Real-world result
 
@@ -87,11 +92,16 @@ Your plans in `drom-plans/`, reports in `reports/`, and any other project files 
 ```
 CLAUDE.md              -- Behavioral rules, parallelism, closed-loop protocol, plan protocol
 .claude/settings.json  -- Hooks, statusline, permissions
-.claude/hooks/         -- 5 bash lifecycle hooks
-.claude/skills/        -- 7 agent skills (/planner, /reviewer, /orchestrator, etc.)
+.claude/hooks/         -- 8 bash lifecycle hooks
+.claude/skills/        -- 28 agent skills (/planner, /reviewer, /orchestrator, /grok-fleet, etc.)
 context/               -- Memory, decisions, conventions templates
 workflows/             -- bug-fix, new-feature, refactor, code-review, closed-loop
+docs/                  -- grok fan-out and token economy guides
 scripts/orchestrate.sh -- Template orchestration script for closed-loop pipelines
+scripts/grok-fleet.sh  -- Grok sub-agent fan-out (spawn/status/stop/collect/resume)
+scripts/limit-watch.sh -- Usage-limit watcher + hourly wake-up loop
+scripts/token-audit.sh -- Measure Claude token usage from the session transcript
+scripts/mk-task.sh     -- Generate agent prompts from templates
 drom-plans/            -- Chapter-based execution plans with progress tracking
 reports/               -- Iteration reports from orchestration runs
 ```
@@ -163,15 +173,50 @@ units and cross-model second opinions. Verified at 8 concurrent agents (13s, no 
 budget caps, stall detection, and mid-flight stop. Requires the project to live under `/mnt/<drive>`,
 since grok runs as a Windows process. **See [`docs/grok-fleet.md`](docs/grok-fleet.md).**
 
-Delegating aggressively also cuts Claude token usage. Measured on the same benchmark, run by
-Claude alone vs delegated to grok: **turns −64%, Claude output tokens −65%, context bytes −97%**,
-with quality held (grok found every defect, with more precise line references). The statusline
-shows the split live as `C:0 G:8`. **See [`docs/token-economy.md`](docs/token-economy.md).**
+### Token economy — spend grok, save Claude
 
-When Claude nears its usage limit, `scripts/limit-watch.sh` checkpoints, hands in-flight work to
+Delegating aggressively cuts Claude token usage. Measured on one benchmark (audit 3 skill files),
+Claude-only vs delegated to grok:
+
+| Metric | Claude-only | Delegated | Cut |
+|---|---|---|---|
+| Turns | 11 | 4 | **−64%** |
+| Claude output tokens | 7,514 | 2,657 | **−65%** |
+| Context bytes | 14,096 | 465 | **−97%** |
+| Billable tokens | 38,300 | 5,427 | **−86%** |
+
+Quality held — grok found every defect, with more precise line references than the Claude-only pass.
+
+The wins come from measurement, not intuition: cache reads (turns x resident context) dominate at
+36.4M tokens per session versus ~27K for all tool results combined, so the fix is **collapse turns,
+stop authoring, keep context small** — not "shorten tool output".
+
+```bash
+bash scripts/token-audit.sh mark before   # ... do work ...
+bash scripts/token-audit.sh measure before
+```
+
+**See [`docs/token-economy.md`](docs/token-economy.md).**
+
+### Surviving the Claude usage limit
+
+Claude tokens are finite; grok's may not be. drom-flow treats **Claude as the interruptible
+component**:
+
+```bash
+bash scripts/grok-fleet.sh drain --manifest run.json  # detached; finishes without Claude
+bash scripts/limit-watch.sh status                    # window usage, budget, reset time
+bash scripts/grok-fleet.sh resume --run-id RUN        # pick up exactly where it stopped
+```
+
+When Claude nears its limit, `limit-watch.sh` checkpoints every in-flight run, hands queued work to
 detached grok agents that keep running, and arms an **hourly wake-up ping** that resumes once quota
-returns. The limit event itself (with its reset time) is read exactly from the transcript; the 97%
-figure is an estimate against a learned budget and is suppressed until it is trustworthy.
+returns. Resuming costs a ~230-byte read, not a re-explanation. Finished units are never re-run.
+
+Honest about what is measurable: Claude Code exposes **no live quota meter**. The limit *event* is
+exact — a transcript message carrying the reset time — so that trigger is reliable. The **97% figure
+is an estimate** against a learned budget, and is suppressed (reported as `null`) until trustworthy,
+so it never shows a fabricated percentage. The check runs in a hook: ~0.2s, **zero Claude tokens**.
 
 ### Closed-loop iteration
 
@@ -263,15 +308,16 @@ Step-by-step guides with parallel execution built in:
 A live status bar showing everything at a glance:
 
 ```
-drom-flow v0.1.0 -- main +2/-1/?0 up0down0 -- 12m30s -- edits:8 -- agents:3 -- mem:on -- plan:ch3/5(2check)
+drom-flow v0.8.0 -- main +2/-1/?0 -- 12m30s -- edits:8 -- C:1 G:8 -- mem:on -- plan:ch3/5(2check)
 ```
 
 - Git branch, staged/unstaged/untracked counts, ahead/behind
 - Session elapsed time
 - Total file edits this session
-- Background agents spawned
+- **`C:` Claude sub-agents and `G:` grok agents, counted separately** -- the delegation split at a glance
 - Whether session memory is loaded
 - Current plan progress: chapter X of Y, Z chapters completed
+- `armed` / `ping-due` when the usage-limit watcher is waiting on a quota reset
 
 ### Persistent memory
 
@@ -294,6 +340,16 @@ Three files in `context/` carry knowledge across sessions:
 - Writes JSON reports to `reports/`
 - Compares iterations for regression detection
 - Exit 0 = all pass, exit 1 = issues remain
+
+Other installed scripts:
+
+| Script | Purpose |
+|---|---|
+| `grok-fleet.sh` | Grok sub-agent fan-out: `doctor`, `spawn`, `status`, `stop`, `collect`, `drain`, `checkpoint`, `resume`, `verify` |
+| `limit-watch.sh` | Usage-limit watcher: `status`, `check`, `arm`, `ping`, `verify` |
+| `token-audit.sh` | Measure Claude turns/output/context from the live session transcript |
+| `mk-task.sh` | Generate grok task prompts from `scripts/task-templates/` |
+| `bench-audit.sh` | Worked example: encapsulated fan-out in one command |
 
 ## Customizing
 

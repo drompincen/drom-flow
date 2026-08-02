@@ -926,6 +926,7 @@ if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_D
   sections=(
     "## Plan Protocol"
     "## Updating drom-flow"
+    "## Token Economy"
   )
   if ! grep -q "drom-plans/" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
     if grep -q "## File Organization" "$TARGET_DIR/CLAUDE.md"; then

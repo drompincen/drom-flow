@@ -99,3 +99,23 @@ Parity held — grok found all 3 defects with better line references than the Cl
   and failed a correct grok answer that phrased it differently.
 - Resume costs a **227-byte** `RESUME.md` read; detached `drain` survives Claude exiting;
   killed agents are recovered, finished units never re-run.
+
+## Usage-limit wake-up loop (2026-08-02, v0.8.0)
+
+`scripts/limit-watch.sh` — checkpoint near the Claude usage limit, hand work to grok, arm an hourly
+ping, resume when quota returns. **8/8 gates pass.**
+
+**Claude Code exposes no live quota meter** (verified: transcript has per-turn usage only;
+`~/.claude/stats-cache.json` is stale lifetime totals). The limit EVENT is exact — a synthetic
+transcript message `You've hit your session limit · resets 9:50pm` — so the definitive trigger is
+reliable; the 97% figure is an estimate and is suppressed until trustworthy.
+
+**Four bugs testing caught:**
+- Clustered limit events (re-hits minutes apart) made the learned budget 272K vs 2.75M actually spent.
+  Gaps <30min are not windows.
+- Reset time anchored on `now` instead of the event's own date → stale events looked active forever.
+- Off-by-one window boundary in two places (usage sum + observation loop) → 97 turns read as 96%.
+- Budget == spend-so-far always yields exactly 100% → would arm constantly. Now `low-bounded`,
+  `percent: null`, predictive trigger off.
+
+Hook cost: PostToolUse check runs in **0.2s**, outside Claude's context, zero Claude tokens.

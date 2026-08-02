@@ -168,6 +168,11 @@ Claude alone vs delegated to grok: **turns −64%, Claude output tokens −65%, 
 with quality held (grok found every defect, with more precise line references). The statusline
 shows the split live as `C:0 G:8`. **See [`docs/token-economy.md`](docs/token-economy.md).**
 
+When Claude nears its usage limit, `scripts/limit-watch.sh` checkpoints, hands in-flight work to
+detached grok agents that keep running, and arms an **hourly wake-up ping** that resumes once quota
+returns. The limit event itself (with its reset time) is read exactly from the transcript; the 97%
+figure is an estimate against a learned budget and is suppressed until it is trustworthy.
+
 ### Closed-loop iteration
 
 The `closed-loop.md` workflow and `/orchestrator` skill implement a repeat-until-pass pattern:

@@ -92,3 +92,18 @@ After the loop exits, you are responsible for curating what was learned:
 - Always log — every iteration goes in MEMORY.md
 - Always revert regressions — don't compound bad fixes
 - Always stop at max iterations — diminishing returns
+
+## Grok fan-out as the fix stage
+
+The parallel fix stage can use grok CLI sub-agents instead of (or alongside) Claude agents when the
+fixes are independent and each has a verifiable output. See `/grok-fleet`.
+
+1. `bash scripts/grok-fleet.sh doctor --live` — abort the loop if this fails
+2. Write one `task.md` per fix category (self-contained — grok has no conversation context)
+3. Spawn them in parallel, respecting `GROK_MAX_PARALLEL`
+4. Poll `bash scripts/grok-fleet.sh status --run-id RUN` — watch `PROGRESS.md` checkpoints and
+   `STALLED` agents; `stop --all` on regression or budget overrun
+5. `collect --run-id RUN` (non-zero exit if any agent failed), then Claude integrates the outputs
+6. Re-run the check and log the iteration as usual
+
+Cost is real (~$0.02–0.10 per agent) — `GROK_BUDGET_USD` caps a run and halts the loop when exceeded.

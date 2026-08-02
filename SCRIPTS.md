@@ -18,6 +18,8 @@
 - Scripts under `.claude/hooks/` are the active hooks used by this project.
 - Scripts under `template/.claude/hooks/` are **identical copies** installed into new projects by `init.sh`.
 - `scripts/orchestrate.sh` and `template/scripts/orchestrate.sh` are also identical.
+- `scripts/grok-fleet.sh` and `scripts/grok-verify.sh` (grok sub-agent fan-out) are likewise
+  mirrored into `template/scripts/`. See `docs/grok-fleet.md` for usage.
 - `init.sh` lives at the repo root and bootstraps drom-flow into target projects.
 
 When generating: create each file at its listed path, then copy the hooks into
@@ -583,7 +585,6 @@ if [ ! -d "$TEMPLATE_DIR" ]; then
 fi
 
 # Files that belong to the user and should NEVER be overwritten on update.
-# These may contain project-specific customizations.
 USER_FILES=(
   "CLAUDE.md"
   "context/MEMORY.md"
@@ -607,27 +608,23 @@ fi
 NEW_VERSION=$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")
 
 # --- Uninstall: collect managed files ---
-# Managed files = everything from template/ that is NOT a user file, plus VERSION and .state/
 collect_managed_files() {
   local target="$1"
   managed=()
-  # Files from template
   while IFS= read -r -d '' file; do
     rel="${file#$TEMPLATE_DIR/}"
     if ! is_user_file "$rel" && [ -f "$target/$rel" ]; then
       managed+=("$rel")
     fi
   done < <(find "$TEMPLATE_DIR" -type f -print0)
-  # Extra managed files not in template/
   [ -f "$target/VERSION" ] && managed+=("VERSION")
-  # Ephemeral state
   [ -d "$target/.claude/.state" ] && managed+=(".claude/.state/")
   [ -f "$target/.claude/edit-log.jsonl" ] && managed+=(".claude/edit-log.jsonl")
   [ -d "$target/.claude/.javaducker" ] && managed+=(".claude/.javaducker/")
+  [ -d "$target/.claude/.grok-fleet" ] && managed+=(".claude/.grok-fleet/")
   true
 }
 
-# Directories that drom-flow created (remove only if empty after cleanup)
 MANAGED_DIRS=(
   "workflows"
   "reports"
@@ -673,6 +670,7 @@ MANAGED_DIRS=(
   ".claude/skills/web-quality-audit"
   ".claude/skills/add-javaducker"
   ".claude/skills/remove-javaducker"
+  ".claude/skills/grok-fleet"
   ".claude/.javaducker"
   ".claude/skills"
   ".claude/hooks"
@@ -700,14 +698,13 @@ if [ "$MODE" = "uninstall-check" ]; then
   for uf in "${USER_FILES[@]}"; do
     [ -f "$TARGET_DIR/$uf" ] && echo "  keep:   $uf"
   done
-  # Plans
   if [ -d "$TARGET_DIR/drom-plans" ]; then
     plan_count=$(find "$TARGET_DIR/drom-plans" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
     [ "$plan_count" -gt 0 ] && echo "  keep:   drom-plans/ ($plan_count plan file(s))"
   fi
   echo ""
   echo "Gitignore entries that would be cleaned:"
-  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
+  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
     if [ -f "$TARGET_DIR/.gitignore" ] && grep -qF "$pattern" "$TARGET_DIR/.gitignore"; then
       echo "  clean:  $pattern"
     fi
@@ -724,7 +721,6 @@ if [ "$MODE" = "uninstall" ]; then
   removed=0
   kept=0
 
-  # Remove managed files
   for rel in "${managed[@]}"; do
     target="$TARGET_DIR/$rel"
     if [ -d "$target" ]; then
@@ -738,7 +734,6 @@ if [ "$MODE" = "uninstall" ]; then
     fi
   done
 
-  # Show protected files
   echo ""
   echo "Protected (kept):"
   for uf in "${USER_FILES[@]}"; do
@@ -755,7 +750,6 @@ if [ "$MODE" = "uninstall" ]; then
     fi
   fi
 
-  # Clean up empty managed directories (order matters — children before parents)
   echo ""
   dir_removed=0
   for d in "${MANAGED_DIRS[@]}"; do
@@ -767,17 +761,15 @@ if [ "$MODE" = "uninstall" ]; then
     fi
   done
 
-  # Clean gitignore entries added by drom-flow
   gitignore="$TARGET_DIR/.gitignore"
   if [ -f "$gitignore" ]; then
     cleaned=0
-    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
+    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
       if grep -qF "$pattern" "$gitignore"; then
         sed -i "\|^${pattern}$|d" "$gitignore"
         cleaned=$((cleaned + 1))
       fi
     done
-    # Remove .gitignore if it's now empty (only whitespace left)
     if [ ! -s "$gitignore" ] || ! grep -q '[^[:space:]]' "$gitignore"; then
       rm -f "$gitignore"
       echo "  remove: .gitignore (was empty)"
@@ -849,7 +841,6 @@ updated=0
 skipped=0
 backed_up=0
 
-# Backup directory for files that will be overwritten
 BACKUP_DIR="$TARGET_DIR/setup-backup/$(date +%Y%m%d-%H%M%S)"
 
 backup_file() {
@@ -883,7 +874,6 @@ while IFS= read -r -d '' file; do
         updated=$((updated + 1))
       fi
     else
-      # Fresh install — back up existing file before overwriting
       backup_file "$rel"
       cp "$file" "$target"
       echo "  replace: $rel (backed up)"
@@ -896,46 +886,33 @@ while IFS= read -r -d '' file; do
   fi
 done < <(find "$TEMPLATE_DIR" -type f -print0)
 
-# Create session state directory (ephemeral, not committed)
 mkdir -p "$TARGET_DIR/.claude/.state"
-
-# Save drom-flow source location so Claude can find it for future updates
 echo "DROM_FLOW_HOME=$SCRIPT_DIR" > "$TARGET_DIR/.claude/.state/drom-flow.conf"
-
-# Create plans directory
 mkdir -p "$TARGET_DIR/drom-plans"
 
-# Add .state, edit-log, and .mcp.json to .gitignore if not already present
 gitignore="$TARGET_DIR/.gitignore"
-for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" "setup-backup/"; do
+for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
   if [ ! -f "$gitignore" ] || ! grep -qF "$pattern" "$gitignore"; then
     echo "$pattern" >> "$gitignore"
   fi
 done
 
-# Copy VERSION file (back up existing first)
 if [ -f "$SCRIPT_DIR/VERSION" ] && ! [ "$SCRIPT_DIR/VERSION" -ef "$TARGET_DIR/VERSION" ]; then
   backup_file "VERSION"
   cp "$SCRIPT_DIR/VERSION" "$TARGET_DIR/VERSION"
   echo "  copy: VERSION"
 fi
 
-# --- Merge missing sections into CLAUDE.md on update ---
-# Back up CLAUDE.md before any modifications
 if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ]; then
   backup_file "CLAUDE.md"
 fi
 if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
   appended=0
-  # Each entry: "heading to grep for" | "section content to append"
-  # We check if the heading exists in the user's CLAUDE.md; if not, extract and append it
   sections=(
     "## Plan Protocol"
     "## Updating drom-flow"
   )
-  # Also check that drom-plans is in File Organization
   if ! grep -q "drom-plans/" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
-    # Find the File Organization section and append the line
     if grep -q "## File Organization" "$TARGET_DIR/CLAUDE.md"; then
       sed -i '/## File Organization/,/^##/{/^- Use `config\//a\- Use `drom-plans/` for execution plans (chapter-based, with progress tracking)
 }' "$TARGET_DIR/CLAUDE.md"
@@ -946,7 +923,6 @@ if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_D
 
   for section_heading in "${sections[@]}"; do
     if ! grep -qF "$section_heading" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
-      # Extract section from template: from heading to next ## or EOF
       section_content=$(awk -v h="$section_heading" '
         $0 == h { found=1 }
         found && /^## / && $0 != h { exit }
@@ -960,10 +936,8 @@ if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_D
     fi
   done
 
-  # Ensure the drom-flow branding is in the title line
   if ! head -1 "$TARGET_DIR/CLAUDE.md" | grep -q "drom-flow" 2>/dev/null; then
     sed -i '1s/^# .*/# drom-flow — Project Configuration/' "$TARGET_DIR/CLAUDE.md"
-    # Add description line after title if not present
     if ! grep -q "drom-flow.*is active" "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
       sed -i '1a\\n> **drom-flow** is active in this project. It provides workflows, parallel agent orchestration, closed-loop pipelines, persistent memory, chapter-based execution plans, and lifecycle hooks.' "$TARGET_DIR/CLAUDE.md"
     fi
@@ -974,7 +948,6 @@ if [ "$MODE" = "update" ] && [ -f "$TARGET_DIR/CLAUDE.md" ] && [ -f "$TEMPLATE_D
   [ "$appended" -gt 0 ] && echo "  ($appended section(s) merged into CLAUDE.md)"
 fi
 
-# Make scripts executable
 chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
 chmod +x "$TARGET_DIR/scripts/"*.sh 2>/dev/null || true
 
@@ -1252,6 +1225,631 @@ chmod +x template/.claude/skills/web-quality-audit/scripts/analyze.sh
 
 ---
 
+## scripts/grok-fleet.sh
+
+```bash
+#!/bin/bash
+# drom-flow — grok sub-agent fleet: filesystem-controlled fan-out from WSL to grok CLI (Windows).
+#
+# Subcommands: doctor | spawn | status | stop | collect | verify | clean
+# Exit: 0 = ok, 1 = gate/agent failure, 2 = usage/env error
+#
+# Control plane lives on the Windows-visible disk because grok.exe is a Windows
+# process and cannot see WSL-native paths (/tmp is invisible to it).
+
+set -uo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FLEET_ROOT="${GROK_FLEET_ROOT:-$REPO_ROOT/.claude/.grok-fleet}"
+REPORT_DIR="$REPO_ROOT/reports"
+# NB: `grok models` lists the *selectable* ids. The name that appears in the `end`
+# event's modelUsage (e.g. grok-4.5-build) is an internal resolved name and is NOT
+# a valid -m value. Verify with `grok models` before changing this.
+GROK_MODEL="${GROK_MODEL:-grok-4.5}"
+GROK_MAX_PARALLEL="${GROK_MAX_PARALLEL:-4}"
+GROK_BUDGET_USD="${GROK_BUDGET_USD:-5}"
+STALL_SECS="${GROK_STALL_SECS:-180}"
+AGENT_TIMEOUT="${GROK_AGENT_TIMEOUT:-600}"
+GRACE_SECS="${GROK_GRACE_SECS:-10}"
+
+log() { echo "[grok-fleet] $*" >&2; }
+die() { echo "[grok-fleet] ERROR: $*" >&2; exit 2; }
+
+# --- binary resolution -------------------------------------------------------
+resolve_grok() {
+  if [[ -n "${GROK_BIN:-}" && -x "$GROK_BIN" ]]; then echo "$GROK_BIN"; return 0; fi
+  local c; c="$(command -v grok 2>/dev/null)"; [[ -n "$c" ]] && { echo "$c"; return 0; }
+  local p="/mnt/c/Users/$USER/.grok/bin/grok.exe"; [[ -x "$p" ]] && { echo "$p"; return 0; }
+  local up; up="$(cmd.exe /c echo %USERPROFILE% 2>/dev/null | tr -d '\r')"
+  if [[ -n "$up" ]]; then
+    p="$(wslpath -u "$up" 2>/dev/null)/.grok/bin/grok.exe"
+    [[ -x "$p" ]] && { echo "$p"; return 0; }
+  fi
+  return 1
+}
+
+winpath() { wslpath -w "$1" 2>/dev/null; }
+
+json_escape() { python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"; }
+
+# Guard: everything grok touches must live on the Windows-visible mount.
+assert_win_visible() {
+  case "$1" in /mnt/[a-z]/*) return 0 ;; *) return 1 ;; esac
+}
+
+# --- doctor ------------------------------------------------------------------
+cmd_doctor() {
+  local live=false; [[ "${1:-}" == "--live" ]] && live=true
+  mkdir -p "$REPORT_DIR"
+  local checks=() ok=true bin="" ver=""
+
+  add() { checks+=("{\"name\":\"$1\",\"ok\":$2,\"detail\":$(json_escape "$3")}"); [[ "$2" == "true" ]] || ok=false; }
+
+  if bin="$(resolve_grok)"; then add binary true "$bin"; else add binary false "grok.exe not found (set GROK_BIN)"; fi
+
+  if [[ -n "$bin" ]]; then
+    ver="$(timeout 60 "$bin" --version 2>/dev/null | head -1)"
+    [[ -n "$ver" ]] && add version true "$ver" || add version false "--version produced no output"
+  else add version false "skipped, no binary"; fi
+
+  local auth="/mnt/c/Users/$USER/.grok/auth.json"
+  [[ -f "$auth" ]] && add auth true "auth.json present" || add auth false "not authenticated: run 'grok login' on Windows"
+
+  if timeout 30 tasklist.exe /NH >/dev/null 2>&1; then add interop true "tasklist.exe responds"
+  else add interop false "WSL->Windows interop unavailable"; fi
+
+  local w; w="$(winpath "$REPO_ROOT")"
+  [[ -n "$w" ]] && add wslpath true "$REPO_ROOT -> $w" || add wslpath false "wslpath -w failed"
+
+  if assert_win_visible "$REPO_ROOT"; then add win_visible true "repo on Windows-visible mount"
+  else add win_visible false "repo at $REPO_ROOT is WSL-native; grok.exe cannot see it. Move the repo under /mnt/c."; fi
+
+  local live_json='{"ran":false,"ok":false,"latency_ms":0}'
+  if $live && [[ -n "$bin" ]] && $ok; then
+    local t0 t1 out rc
+    t0=$(date +%s%3N)
+    out="$(timeout 60 "$bin" --cwd "$(winpath "$REPO_ROOT")" --permission-mode dontAsk --max-turns 2 \
+           -p 'Reply with exactly the single word: PONG' 2>/dev/null)"; rc=$?
+    t1=$(date +%s%3N)
+    if [[ $rc -eq 0 && -n "${out// /}" ]]; then live_json="{\"ran\":true,\"ok\":true,\"latency_ms\":$((t1-t0))}"
+    else live_json="{\"ran\":true,\"ok\":false,\"latency_ms\":$((t1-t0))}"; ok=false; fi
+  fi
+
+  local IFS=,
+  cat > "$REPORT_DIR/grok-doctor.json" <<EOF
+{"ok":$ok,"binary":$(json_escape "$bin"),"version":$(json_escape "$ver"),
+ "fleet_root":$(json_escape "$FLEET_ROOT"),"model":$(json_escape "$GROK_MODEL"),
+ "checks":[${checks[*]}],"live_test":$live_json}
+EOF
+  python3 -m json.tool "$REPORT_DIR/grok-doctor.json" >/dev/null 2>&1 || log "warn: doctor json malformed"
+  $ok && { log "doctor: OK"; return 0; } || { log "doctor: FAILED (see $REPORT_DIR/grok-doctor.json)"; return 1; }
+}
+
+# --- agent helpers -----------------------------------------------------------
+agent_dir()  { echo "$FLEET_ROOT/$1/agents/$2"; }
+set_status() { # dir state [extra-json]
+  local d="$1" s="$2" extra="${3:-}"
+  printf '{"state":"%s","ts":"%s"%s}\n' "$s" "$(date -Iseconds)" "${extra:+,$extra}" > "$d/status.json"
+}
+get_state() { python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['state'])" "$1/status.json" 2>/dev/null || echo UNKNOWN; }
+
+FLEET_PREAMBLE='
+--- FLEET PROTOCOL (mandatory) ---
+1. You are a fleet sub-agent. Your working directory is yours alone.
+2. After each meaningful step, APPEND one line to PROGRESS.md in the PARENT of your
+   working directory (../PROGRESS.md), formatted: [HH:MM:SS] <what you just did>.
+   Write at least two such checkpoints before finishing.
+3. Write all work product INTO your current working directory.
+4. NEVER write outside your working directory or its parent PROGRESS.md.
+5. Finish with a one-line summary starting with RESULT:
+--- END FLEET PROTOCOL ---
+'
+
+# spawn one agent (blocking wrapper, meant to be backgrounded)
+run_agent() {
+  local d="$1" bin="$2" schema="${3:-}"
+  local rc; local -a args
+  args=( --cwd "$(winpath "$d/output")" -m "$GROK_MODEL"
+         --prompt-file "$(winpath "$d/task.md")"
+         --output-format streaming-json --permission-mode bypassPermissions
+         --no-memory --max-turns 30 )
+  [[ -n "$schema" ]] && args+=( --json-schema "$(cat "$schema")" )
+  printf '%q ' "$bin" "${args[@]}" > "$d/cmd.txt"
+
+  timeout "$AGENT_TIMEOUT" "$bin" "${args[@]}" > "$d/stream.jsonl" 2> "$d/stream.err" &
+  local pid=$!
+  printf '{"wsl_pid":%d}\n' "$pid" > "$d/pid"
+  set_status "$d" RUNNING "\"wsl_pid\":$pid"
+  wait $pid; rc=$?
+
+  # distil the terminal `end` event
+  python3 - "$d" <<'PY' 2>/dev/null
+import json,sys,os
+d=sys.argv[1]; end=None
+try:
+    for line in open(os.path.join(d,'stream.jsonl'),errors='replace'):
+        line=line.strip()
+        if not line: continue
+        try: o=json.loads(line)
+        except Exception: continue
+        if o.get('type')=='end': end=o
+except FileNotFoundError: pass
+json.dump(end or {}, open(os.path.join(d,'result.json'),'w'), indent=2)
+PY
+
+  local state
+  case $rc in
+    0)   state=DONE ;;
+    124) state=TIMEOUT ;;
+    143|137) state=STOPPED ;;
+    *)   state=FAILED ;;
+  esac
+  # An agent that produced nothing did not do the work, whatever the exit code says.
+  if [[ "$state" == DONE ]] && [[ -z "$(ls -A "$d/output" 2>/dev/null)" ]]; then state=FAILED; fi
+  local cost; cost="$(python3 -c "import json;print(json.load(open('$d/result.json')).get('total_cost_usd',0))" 2>/dev/null || echo 0)"
+  set_status "$d" "$state" "\"exit\":$rc,\"cost_usd\":$cost"
+}
+
+run_total_cost() { # run_id -> total USD across all agents
+  python3 - "$FLEET_ROOT/$1/agents" <<'PY'
+import json,os,sys
+b=sys.argv[1]; t=0.0
+if os.path.isdir(b):
+    for a in os.listdir(b):
+        try: t+=float(json.load(open(os.path.join(b,a,'status.json'))).get('cost_usd') or 0)
+        except Exception: pass
+print(round(t,6))
+PY
+}
+
+over_budget() { python3 -c "import sys;sys.exit(0 if float('$1')>float('$2') else 1)"; }
+
+# Polls spend while a fan-out runs and halts the whole run if it breaches the cap.
+budget_watchdog() {
+  local run="$1" cap="$2" t
+  while [[ ! -f "$FLEET_ROOT/$run/DONE" ]]; do
+    sleep 8
+    t="$(run_total_cost "$run")"
+    if over_budget "$t" "$cap"; then
+      log "BUDGET EXCEEDED: \$$t > \$$cap — halting run $run"
+      echo "{\"state\":\"BUDGET_EXCEEDED\",\"spent\":$t,\"cap\":$cap}" > "$FLEET_ROOT/$run/HALT"
+      cmd_stop --run-id "$run" >/dev/null 2>&1
+      return 0
+    fi
+  done
+}
+
+# spawn --manifest: fan out N agents with a concurrency gate + budget guard
+cmd_spawn_manifest() {
+  local mf="$1"
+  [[ -f "$mf" ]] || die "manifest not found: $mf"
+  local run_id cap par
+  run_id="$(python3 -c "import json;print(json.load(open('$mf'))['run_id'])")"
+  cap="$(python3 -c "import json;print(json.load(open('$mf')).get('budget_usd',$GROK_BUDGET_USD))")"
+  par="$(python3 -c "import json;print(json.load(open('$mf')).get('max_parallel',$GROK_MAX_PARALLEL))")"
+  mkdir -p "$FLEET_ROOT/$run_id"; rm -f "$FLEET_ROOT/$run_id/HALT" "$FLEET_ROOT/$run_id/DONE"
+  log "manifest run=$run_id parallel=$par budget=\$$cap"
+
+  budget_watchdog "$run_id" "$cap" &
+  local wd=$!
+
+  local -a pids=()
+  # Count only agent jobs — `jobs -rp` would also count the budget watchdog and
+  # silently shrink the gate by one.
+  alive_agents() { local n=0 p; for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && ((n++)); done; echo $n; }
+
+  while IFS=$'\t' read -r aid tf schema; do
+    [[ -z "$aid" ]] && continue
+    [[ -f "$FLEET_ROOT/$run_id/HALT" ]] && { log "halted, not launching $aid"; break; }
+    if [[ ! -f "$tf" ]]; then
+      log "manifest: agent '$aid' task_file missing: $tf — skipping"
+      mkdir -p "$FLEET_ROOT/$run_id/agents/$aid"
+      set_status "$FLEET_ROOT/$run_id/agents/$aid" FAILED "\"reason\":\"task_file missing\""
+      continue
+    fi
+    while (( $(alive_agents) >= par )); do sleep 1; done
+    # Synchronous budget check at the launch point — the watchdog alone races with
+    # the gate and can let another agent start after the cap is already breached.
+    local spent; spent="$(run_total_cost "$run_id")"
+    if over_budget "$spent" "$cap"; then
+      log "BUDGET EXCEEDED: \$$spent > \$$cap — not launching $aid or any remaining agent"
+      echo "{\"state\":\"BUDGET_EXCEEDED\",\"spent\":$spent,\"cap\":$cap}" > "$FLEET_ROOT/$run_id/HALT"
+      break
+    fi
+    ( cmd_spawn --run-id "$run_id" --agent-id "$aid" --task-file "$tf" ${schema:+--schema "$schema"} >/dev/null 2>&1 ) &
+    pids+=($!)
+  done < <(python3 -c "
+import json
+for a in json.load(open('$mf'))['agents']:
+    print('\t'.join([a['id'],a['task_file'],a.get('schema','')]))")
+
+  (( ${#pids[@]} > 0 )) && wait "${pids[@]}" 2>/dev/null
+  touch "$FLEET_ROOT/$run_id/DONE"; kill $wd 2>/dev/null; wait $wd 2>/dev/null
+
+  local total; total="$(run_total_cost "$run_id")"
+  if [[ -f "$FLEET_ROOT/$run_id/HALT" ]]; then
+    log "run $run_id BUDGET_EXCEEDED (\$$total > \$$cap)"; return 1
+  fi
+  log "run $run_id complete, \$$total"
+  cmd_status --run-id "$run_id" >/dev/null 2>&1
+  return 0
+}
+
+cmd_spawn() {
+  local run_id="" agent_id="" task_file="" schema="" bin
+  [[ "${1:-}" == "--manifest" ]] && { cmd_spawn_manifest "$2"; return $?; }
+  while [[ $# -gt 0 ]]; do case $1 in
+    --run-id) run_id="$2"; shift 2 ;;
+    --agent-id) agent_id="$2"; shift 2 ;;
+    --task-file) task_file="$2"; shift 2 ;;
+    --schema) schema="$2"; shift 2 ;;
+    --wait) shift ;;
+    *) die "spawn: unknown arg $1" ;;
+  esac; done
+  [[ -n "$run_id" && -n "$agent_id" && -n "$task_file" ]] || die "spawn needs --run-id --agent-id --task-file"
+  [[ -f "$task_file" ]] || die "task file not found: $task_file"
+  bin="$(resolve_grok)" || die "grok binary not found"
+  assert_win_visible "$FLEET_ROOT" || die "fleet root $FLEET_ROOT is not Windows-visible"
+
+  local d; d="$(agent_dir "$run_id" "$agent_id")"
+  # Idempotent resume: an agent that already finished is never re-run (and never re-billed).
+  if [[ -f "$d/status.json" && "$(get_state "$d")" == DONE ]]; then
+    log "spawn: $agent_id already DONE, skipping"; return 0
+  fi
+  mkdir -p "$d/output"
+  { cat "$task_file"; printf '%s' "$FLEET_PREAMBLE"; } > "$d/task.md"
+  : > "$d/PROGRESS.md"
+  set_status "$d" QUEUED
+  run_agent "$d" "$bin" "$schema"
+  [[ "$(get_state "$d")" == DONE ]]
+}
+
+# --- status ------------------------------------------------------------------
+cmd_status() {
+  local run_id="" as_json=false
+  while [[ $# -gt 0 ]]; do case $1 in
+    --run-id) run_id="$2"; shift 2 ;; --json) as_json=true; shift ;; *) die "status: unknown arg $1" ;;
+  esac; done
+  [[ -n "$run_id" ]] || die "status needs --run-id"
+  local base="$FLEET_ROOT/$run_id/agents"
+  [[ -d "$base" ]] || die "no such run: $run_id"
+  mkdir -p "$REPORT_DIR"
+
+  python3 - "$base" "$STALL_SECS" "$REPORT_DIR/grok-fleet-$run_id.json" "$as_json" <<'PY'
+import json,os,sys,time
+base,stall,out,as_json=sys.argv[1],int(sys.argv[2]),sys.argv[3],sys.argv[4]=='true'
+agents=[];total=0.0
+for a in sorted(os.listdir(base)):
+    d=os.path.join(base,a)
+    if not os.path.isdir(d): continue
+    st={}
+    try: st=json.load(open(os.path.join(d,'status.json')))
+    except Exception: pass
+    state=st.get('state','UNKNOWN'); cost=float(st.get('cost_usd') or 0); total+=cost
+    sp=os.path.join(d,'stream.jsonl')
+    age=int(time.time()-os.path.getmtime(sp)) if os.path.exists(sp) else -1
+    if state=='RUNNING' and age>stall: state='STALLED'
+    prog=[l.strip() for l in open(os.path.join(d,'PROGRESS.md'),errors='replace')] if os.path.exists(os.path.join(d,'PROGRESS.md')) else []
+    prog=[p for p in prog if p]
+    agents.append({'agent':a,'state':state,'cost_usd':cost,'stream_age_s':age,
+                   'checkpoints':len(prog),'last_progress':prog[-1] if prog else ''})
+roll={'running':sum(1 for x in agents if x['state']in('RUNNING','STALLED')),
+      'done':sum(1 for x in agents if x['state']=='DONE'),
+      'failed':sum(1 for x in agents if x['state']in('FAILED','TIMEOUT')),
+      'stopped':sum(1 for x in agents if x['state']=='STOPPED'),
+      'total_cost_usd':round(total,4)}
+json.dump({'agents':agents,'rollup':roll},open(out,'w'),indent=2)
+if as_json: print(json.dumps({'agents':agents,'rollup':roll}))
+else:
+    print(f"{'AGENT':<22}{'STATE':<10}{'CKPT':>5}{'AGE':>6}{'COST':>9}  LAST")
+    for x in agents:
+        print(f"{x['agent']:<22}{x['state']:<10}{x['checkpoints']:>5}{x['stream_age_s']:>6}{x['cost_usd']:>9.4f}  {x['last_progress'][:48]}")
+    print(f"-- {roll['done']} done / {roll['running']} running / {roll['failed']} failed / {roll['stopped']} stopped, ${roll['total_cost_usd']}")
+PY
+}
+
+# --- stop --------------------------------------------------------------------
+kill_agent() {
+  local d="$1"
+  local pid; pid="$(python3 -c "import json;print(json.load(open('$d/pid'))['wsl_pid'])" 2>/dev/null)" || return 0
+  [[ -z "$pid" ]] && return 0
+  touch "$d/STOP"
+  local waited=0
+  while kill -0 "$pid" 2>/dev/null && (( waited < GRACE_SECS )); do sleep 1; ((waited++)); done
+  kill -0 "$pid" 2>/dev/null && { kill "$pid" 2>/dev/null; sleep 2; }
+  kill -0 "$pid" 2>/dev/null && { kill -9 "$pid" 2>/dev/null; sleep 1; }
+  # Preserve spend already incurred — a stopped agent still cost money, and dropping
+  # it here would under-report the run total that the budget guard depends on.
+  local prior; prior="$(python3 -c "
+import json
+try: print(json.load(open('$d/result.json')).get('total_cost_usd') or json.load(open('$d/status.json')).get('cost_usd') or 0)
+except Exception: print(0)" 2>/dev/null || echo 0)"
+  set_status "$d" STOPPED "\"stopped_by\":\"fleet\",\"cost_usd\":${prior:-0}"
+}
+
+cmd_stop() {
+  local run_id="" agent_id="" all=false
+  while [[ $# -gt 0 ]]; do case $1 in
+    --run-id) run_id="$2"; shift 2 ;; --agent-id) agent_id="$2"; shift 2 ;;
+    --all) all=true; shift ;; *) die "stop: unknown arg $1" ;;
+  esac; done
+
+  if $all; then
+    for d in "$FLEET_ROOT"/*/agents/*; do [[ -d "$d" ]] || continue
+      [[ "$(get_state "$d")" == RUNNING ]] && kill_agent "$d"; done
+    # NB: never `pkill -f grok.exe` — it matches any process whose command line merely
+    # mentions the string (including the caller's own shell) and kills bystanders.
+    # Tracked PIDs above, then the Windows side for orphans, is sufficient.
+    sleep 2
+    taskkill.exe /IM grok.exe /F >/dev/null 2>&1
+    log "stop --all complete"; return 0
+  fi
+  [[ -n "$run_id" ]] || die "stop needs --run-id or --all"
+  if [[ -n "$agent_id" ]]; then kill_agent "$(agent_dir "$run_id" "$agent_id")"
+  else for d in "$FLEET_ROOT/$run_id/agents"/*; do [[ -d "$d" ]] && kill_agent "$d"; done; fi
+  log "stop complete"
+}
+
+# --- collect -----------------------------------------------------------------
+cmd_collect() {
+  local run_id=""
+  while [[ $# -gt 0 ]]; do case $1 in --run-id) run_id="$2"; shift 2 ;; *) die "collect: unknown arg $1" ;; esac; done
+  [[ -n "$run_id" ]] || die "collect needs --run-id"
+  local base="$FLEET_ROOT/$run_id/agents" out="$REPORT_DIR/grok-fleet-$run_id.md" failed=0
+  mkdir -p "$REPORT_DIR"
+  { echo "# Grok fleet run: $run_id"; echo; echo "_$(date -Iseconds)_"; echo; } > "$out"
+  local total=0
+  for d in "$base"/*; do [[ -d "$d" ]] || continue
+    local a s c; a="$(basename "$d")"; s="$(get_state "$d")"
+    c="$(python3 -c "import json;print(json.load(open('$d/status.json')).get('cost_usd',0))" 2>/dev/null || echo 0)"
+    total="$(python3 -c "print(round($total+${c:-0},4))")"
+    [[ "$s" == DONE ]] || failed=1
+    { echo "## $a — **$s** (\$$c)"; echo '```'; head -c 1200 "$d/output"/* 2>/dev/null || echo '(no output)'; echo '```'; echo; } >> "$out"
+  done
+  echo "**Total cost: \$$total**" >> "$out"
+  log "collect -> $out (total \$$total)"
+  return $failed
+}
+
+cmd_clean() { rm -rf "${FLEET_ROOT:?}"/*; log "fleet root cleared"; }
+
+[[ $# -eq 0 ]] && die "usage: grok-fleet.sh {doctor|spawn|status|stop|collect|verify|clean}"
+SUB="$1"; shift
+case "$SUB" in
+  doctor)  cmd_doctor "$@" ;;
+  spawn)   cmd_spawn "$@" ;;
+  status)  cmd_status "$@" ;;
+  stop)    cmd_stop "$@" ;;
+  collect) cmd_collect "$@" ;;
+  clean)   cmd_clean "$@" ;;
+  verify)  source "$REPO_ROOT/scripts/grok-verify.sh"; cmd_verify "$@" ;;
+  *) die "unknown subcommand: $SUB" ;;
+esac
+```
+
+---
+
+## scripts/grok-verify.sh
+
+```bash
+#!/bin/bash
+# drom-flow — closed-loop verifier for the grok sub-agent fleet.
+# Sourced by grok-fleet.sh; implements the six exit-criteria gates.
+# Writes reports/grok-verify.json. Exit 0 only when every gate PASSes.
+
+GATES_JSON=()
+GATE_FAIL=0
+
+gate() { # id status detail evidence
+  local id="$1" st="$2" detail="$3" ev="${4:-}"
+  GATES_JSON+=("{\"id\":\"$id\",\"status\":\"$st\",\"detail\":$(json_escape "$detail"),\"evidence\":$(json_escape "$ev")}")
+  [[ "$st" == PASS ]] || GATE_FAIL=1
+  log "gate $id: $st — $detail"
+}
+
+mk_task() { mkdir -p "$(dirname "$1")"; cat > "$1"; }
+
+cmd_verify() {
+  local as_json=false iteration="${GROK_ITERATION:-0}"
+  while [[ $# -gt 0 ]]; do case $1 in
+    --json) as_json=true; shift ;;
+    --iteration) iteration="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+
+  mkdir -p "$REPORT_DIR" "$FLEET_ROOT"
+  local t_start; t_start=$(date +%s)
+  local RUN="verify-$(date +%H%M%S)"
+  local TASKS="$FLEET_ROOT/_tasks"; mkdir -p "$TASKS"
+
+  # ---------- Gate 1: feasibility ----------
+  if cmd_doctor --live >/dev/null 2>&1; then
+    gate feasibility PASS "doctor --live ok" "$REPORT_DIR/grok-doctor.json"
+  else
+    gate feasibility FAIL "doctor --live failed" "$REPORT_DIR/grok-doctor.json"
+    finish_verify "$RUN" "$t_start" "$iteration" "$as_json"; return $?
+  fi
+
+  # ---------- Gates 2+3: work_done + monitor (one fan-out) ----------
+  local -a AGENTS=(alpha bravo charlie)
+  local i=1
+  for a in "${AGENTS[@]}"; do
+    mk_task "$TASKS/$a.md" <<EOF
+You are fleet agent "$a" (unit $i of 3).
+
+TASK: Write a file named findings.md in your working directory. It must contain:
+  - line 1 exactly: MARKER_${a^^}
+  - then 3 bullet points describing what a "closed-loop QA pipeline" is.
+
+Do the work in at least two steps, appending a PROGRESS.md checkpoint after each.
+EOF
+    ((i++))
+  done
+
+  local -a pids=()
+  for a in "${AGENTS[@]}"; do
+    ( cmd_spawn --run-id "$RUN" --agent-id "$a" --task-file "$TASKS/$a.md" >/dev/null 2>&1 ) &
+    pids+=($!)
+  done
+
+  # monitor while they run: sample progress checkpoints
+  local max_ckpt=0 samples=0 saw_running=0
+  while :; do
+    local alive=0
+    for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && alive=1; done
+    local s; s="$(cmd_status --run-id "$RUN" --json 2>/dev/null | tail -1)"
+    if [[ -n "$s" ]]; then
+      local c r
+      c="$(python3 -c "import json,sys;d=json.loads(sys.argv[1]);print(max([a['checkpoints'] for a in d['agents']]+[0]))" "$s" 2>/dev/null || echo 0)"
+      r="$(python3 -c "import json,sys;d=json.loads(sys.argv[1]);print(d['rollup']['running'])" "$s" 2>/dev/null || echo 0)"
+      (( c > max_ckpt )) && max_ckpt=$c
+      (( r > 0 )) && saw_running=1
+      ((samples++))
+    fi
+    [[ $alive -eq 0 ]] && break
+    sleep 3
+  done
+  wait "${pids[@]}" 2>/dev/null
+
+  # work_done: every agent DONE and output carries its marker
+  local wd_ok=true wd_detail=""
+  for a in "${AGENTS[@]}"; do
+    local d; d="$(agent_dir "$RUN" "$a")"
+    local st; st="$(get_state "$d")"
+    local marker="MARKER_${a^^}"
+    if [[ "$st" != DONE ]]; then wd_ok=false; wd_detail+="$a=$st "; continue; fi
+    if ! grep -rqs "$marker" "$d/output" 2>/dev/null; then wd_ok=false; wd_detail+="$a=no-marker "; fi
+  done
+  if $wd_ok; then gate work_done PASS "3/3 agents DONE with correct markers" "$FLEET_ROOT/$RUN"
+  else gate work_done FAIL "agent problems: $wd_detail" "$FLEET_ROOT/$RUN"; fi
+
+  # monitor: live status sampled + >=2 checkpoints seen on some agent
+  if (( samples > 0 )) && (( max_ckpt >= 2 )) && (( saw_running == 1 )); then
+    gate monitor PASS "sampled $samples times, max $max_ckpt checkpoints, live RUNNING observed" "$REPORT_DIR/grok-fleet-$RUN.json"
+  else
+    gate monitor FAIL "samples=$samples max_checkpoints=$max_ckpt saw_running=$saw_running" "$REPORT_DIR/grok-fleet-$RUN.json"
+  fi
+
+  # ---------- Gate 4: stop ----------
+  mk_task "$TASKS/longrun.md" <<'EOF'
+Count from 1 to 400. For EVERY number write a full sentence reflecting on it into
+notes.md in your working directory, appending as you go. Work slowly and thoroughly.
+Append a PROGRESS.md checkpoint every 10 numbers.
+EOF
+  ( cmd_spawn --run-id "$RUN" --agent-id longrun --task-file "$TASKS/longrun.md" >/dev/null 2>&1 ) &
+  local lp=$!
+  local ld; ld="$(agent_dir "$RUN" longrun)"
+  local waited=0
+  while (( waited < 60 )); do
+    [[ -s "$ld/stream.jsonl" ]] && break
+    sleep 2; ((waited+=2))
+  done
+
+  local stop_ok=false stop_detail="agent never started streaming"
+  if [[ -s "$ld/stream.jsonl" ]]; then
+    local before after tl
+    before=$(stat -c%s "$ld/stream.jsonl")
+    cmd_stop --run-id "$RUN" --agent-id longrun >/dev/null 2>&1
+    sleep 5
+    after=$(stat -c%s "$ld/stream.jsonl"); sleep 4
+    local after2; after2=$(stat -c%s "$ld/stream.jsonl")
+    tl="$(tasklist.exe /FI "IMAGENAME eq grok.exe" 2>/dev/null | grep -c grok.exe)"
+    local st; st="$(get_state "$ld")"
+    if [[ "$st" == STOPPED ]] && (( after == after2 )); then
+      stop_ok=true; stop_detail="state=STOPPED, stream frozen at $after2 bytes (was $before growing), grok.exe procs=$tl"
+    else
+      stop_detail="state=$st stream $after->$after2 procs=$tl"
+    fi
+  fi
+  kill $lp 2>/dev/null; wait $lp 2>/dev/null
+  $stop_ok && gate stop PASS "$stop_detail" "$ld" || gate stop FAIL "$stop_detail" "$ld"
+
+  # ---------- Gate 5: combined claude + grok ----------
+  # (a) cross-model schema verdict from grok
+  local schema="$TASKS/verdict.schema.json"
+  cat > "$schema" <<'EOF'
+{"type":"object","properties":{"verdict":{"type":"string","enum":["pass","fail"]},"reason":{"type":"string"}},"required":["verdict","reason"]}
+EOF
+  mk_task "$TASKS/review.md" <<EOF
+Review this statement for correctness and answer with the required schema:
+"A closed-loop pipeline re-runs its check after each fix round and stops on regression."
+EOF
+  cmd_spawn --run-id "$RUN" --agent-id reviewer --task-file "$TASKS/review.md" --schema "$schema" >/dev/null 2>&1
+  local rd; rd="$(agent_dir "$RUN" reviewer)"
+  local verdict=""
+  # --json-schema results land in `structuredOutput`; fall back to parsing `text`.
+  verdict="$(python3 -c "
+import json,re
+d=json.load(open('$rd/result.json'))
+so=d.get('structuredOutput')
+if isinstance(so,dict) and so.get('verdict'):
+    print(so['verdict'])
+else:
+    m=re.search(r'\{.*\}',d.get('text','') or '',re.S)
+    print(json.loads(m.group(0)).get('verdict','') if m else '')" 2>/dev/null)"
+
+  # (b) Claude-side merged artifact consuming grok outputs
+  local merged="$REPORT_DIR/grok-claude-merge.md"
+  local merge_ok=false
+  if [[ -f "$merged" ]]; then
+    merge_ok=true
+    for a in "${AGENTS[@]}"; do grep -qs "MARKER_${a^^}" "$merged" || merge_ok=false; done
+  fi
+  if [[ "$verdict" =~ ^(pass|fail)$ ]] && $merge_ok; then
+    gate combined PASS "grok schema verdict='$verdict'; Claude merged all 3 grok outputs" "$merged"
+  else
+    gate combined FAIL "schema verdict='$verdict' merged_artifact=$merge_ok (needs $merged citing every MARKER_*)" "$merged"
+  fi
+
+  # ---------- Gate 6: control (failure honesty, budget guard, idempotent resume) ----------
+  local ctl_ok=true ctl=""
+
+  # failure honesty: an agent that cannot produce output must NOT be DONE
+  mk_task "$TASKS/impossible.md" <<'EOF'
+Do not create any file. Do not write anything to disk. Simply reply with the word SKIP and stop immediately.
+EOF
+  cmd_spawn --run-id "$RUN" --agent-id impossible --task-file "$TASKS/impossible.md" >/dev/null 2>&1
+  local ist; ist="$(get_state "$(agent_dir "$RUN" impossible)")"
+  [[ "$ist" == DONE ]] && { ctl_ok=false; ctl+="no-output-agent reported DONE; "; } || ctl+="failure-honesty=$ist ok; "
+  if cmd_collect --run-id "$RUN" >/dev/null 2>&1; then ctl_ok=false; ctl+="collect exited 0 despite failure; "
+  else ctl+="collect non-zero ok; "; fi
+
+  # budget guard
+  local spent; spent="$(python3 -c "import json;print(json.load(open('$REPORT_DIR/grok-fleet-$RUN.json'))['rollup']['total_cost_usd'])" 2>/dev/null || echo 0)"
+  local over; over="$(python3 -c "print('yes' if float('$spent')>0.0001 else 'no')")"
+  [[ "$over" == yes ]] && ctl+="budget-accounting ok (\$$spent tracked); " || { ctl_ok=false; ctl+="no cost tracked; "; }
+
+  # idempotent resume: re-spawning a DONE agent must skip, not re-bill
+  local before_cost; before_cost="$(python3 -c "import json;print(json.load(open('$(agent_dir "$RUN" alpha)/status.json')).get('cost_usd',0))" 2>/dev/null || echo 0)"
+  cmd_spawn --run-id "$RUN" --agent-id alpha --task-file "$TASKS/alpha.md" >/dev/null 2>&1
+  local after_cost; after_cost="$(python3 -c "import json;print(json.load(open('$(agent_dir "$RUN" alpha)/status.json')).get('cost_usd',0))" 2>/dev/null || echo 0)"
+  if [[ "$before_cost" == "$after_cost" ]]; then ctl+="idempotent-resume ok (no re-bill); "
+  else ctl_ok=false; ctl+="resume re-ran agent ($before_cost -> $after_cost); "; fi
+
+  $ctl_ok && gate control PASS "$ctl" "$FLEET_ROOT/$RUN" || gate control FAIL "$ctl" "$FLEET_ROOT/$RUN"
+
+  cmd_stop --all >/dev/null 2>&1
+  finish_verify "$RUN" "$t_start" "$iteration" "$as_json"
+}
+
+finish_verify() {
+  local run="$1" t0="$2" iter="$3" as_json="$4"
+  local spent; spent="$(python3 -c "import json;print(json.load(open('$REPORT_DIR/grok-fleet-$run.json'))['rollup']['total_cost_usd'])" 2>/dev/null || echo 0)"
+  local ok=true; [[ $GATE_FAIL -eq 0 ]] || ok=false
+  local IFS=,
+  cat > "$REPORT_DIR/grok-verify.json" <<EOF
+{"ok":$ok,"iteration":$iter,"run_id":"$run","gates":[${GATES_JSON[*]}],
+ "cost_usd":$spent,"wall_clock_s":$(( $(date +%s) - t0 )),"ts":"$(date -Iseconds)"}
+EOF
+  $as_json && cat "$REPORT_DIR/grok-verify.json"
+  local passed=$(( ${#GATES_JSON[@]} - $(grep -o '"status":"FAIL"' "$REPORT_DIR/grok-verify.json" | wc -l) ))
+  log "verify: $passed/${#GATES_JSON[@]} gates PASS, \$$spent, $(( $(date +%s) - t0 ))s"
+  return $GATE_FAIL
+}
+```
+
+---
+
 ## Template copies
 
 The following files are **identical** to their counterparts above. After generating the scripts above, copy them to these locations:
@@ -1267,3 +1865,5 @@ The following files are **identical** to their counterparts above. After generat
 | `.claude/hooks/track-agents.sh` | `template/.claude/hooks/track-agents.sh` |
 | `.claude/hooks/validate-plan.sh` | `template/.claude/hooks/validate-plan.sh` |
 | `scripts/orchestrate.sh` | `template/scripts/orchestrate.sh` |
+| `scripts/grok-fleet.sh` | `template/scripts/grok-fleet.sh` |
+| `scripts/grok-verify.sh` | `template/scripts/grok-verify.sh` |

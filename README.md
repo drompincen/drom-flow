@@ -145,6 +145,24 @@ Use `/planner` to create new plans -- it handles the format and file placement a
 
 All workflows spawn independent work as parallel Agent calls in a single message. Steps only run sequentially when there's a true data dependency. This is enforced in `CLAUDE.md` as a behavioral rule, not a suggestion.
 
+### Grok sub-agent fan-out
+
+Beyond Claude's own sub-agents, drom-flow can fan work out to **grok CLI sub-agents** running in
+parallel — the grok CLI binary (not the xAI API), driven from WSL, using the filesystem as the control
+plane: `task.md` in, `status.json` / `PROGRESS.md` / `result.json` / `output/` out.
+
+```bash
+bash scripts/grok-fleet.sh doctor --live          # preflight
+bash scripts/grok-fleet.sh spawn --manifest run.json   # parallel fan-out
+bash scripts/grok-fleet.sh status --run-id RUN    # live progress
+bash scripts/grok-fleet.sh stop --all             # stop everything
+```
+
+Claude keeps the work needing repo context, memory, and final integration; grok takes wide independent
+units and cross-model second opinions. Verified at 8 concurrent agents (13s, no degradation), with
+budget caps, stall detection, and mid-flight stop. Requires the project to live under `/mnt/<drive>`,
+since grok runs as a Windows process. **See [`docs/grok-fleet.md`](docs/grok-fleet.md).**
+
 ### Closed-loop iteration
 
 The `closed-loop.md` workflow and `/orchestrator` skill implement a repeat-until-pass pattern:
@@ -189,6 +207,7 @@ Invoke with slash commands to get specialized behavior.
 | `/orchestrator` | Design and run closed-loop pipelines |
 | `/ascii-architect` | Convert thoughts, architectures, and processes into ASCII art diagrams |
 | `/api-expert` | Contract-first REST APIs (OpenAPI 3.1, Spring Boot, security, rate limiting) |
+| `/grok-fleet` | Fan out parallel grok CLI sub-agents from WSL — filesystem progress, monitoring, stop control |
 
 **Web platform quality** (from [addyosmani/web-quality-skills](https://github.com/addyosmani/web-quality-skills), MIT):
 

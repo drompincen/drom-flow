@@ -2,6 +2,7 @@
 .claude/edit-log.jsonl
 .mcp.json
 .claude/.javaducker/
+.claude/.grok-fleet/
 *.png
 *.jpg
 *.jpeg

@@ -130,3 +130,19 @@ When creating or completing a plan, curate the knowledge:
 - Flag when the task is too small to need a plan
 - Chapters group related work — typically 3-7 steps per chapter
 - A plan should have 2-6 chapters; if more, the task is too large
+
+## Engine routing — Claude vs grok sub-agents
+
+When a chapter contains **3 or more independent units**, tag each unit with an `engine:` so the
+orchestrator knows where to send it:
+
+- `engine: claude` — needs repo context, memory, hooks, multi-file coherence, or writes to the
+  working tree; and all final integration/merging.
+- `engine: grok` — wide, independent, well-specified units with a verifiable output: breadth
+  research, per-file mechanical transforms, test generation, N-way exploration, cross-model review.
+
+Never assign both engines to the same files in one phase — grok agents write only inside their own
+`output/` directory, and a Claude agent integrates the results.
+
+If any unit is tagged `engine: grok`, note in the plan that `/grok-fleet` runs it, and that
+`bash scripts/grok-fleet.sh doctor --live` must pass first (grok is unavailable on WSL-native paths).

@@ -31,3 +31,21 @@ independent, well-specified units with verifiable outputs, and cross-model secon
 strength. Cross-model review demonstrated real value — a grok reviewer correctly rejected a
 plausible-but-wrong claim about regression handling that a single-model pipeline would likely
 have accepted.
+
+## 2026-08-01 — Claude is the interruptible component
+
+**Decision:** treat Claude as the component that may run out mid-task, and grok as the one
+that keeps going. Fan-outs dispatch detached (`drain`), state is written atomically, and a
+cold Claude session resumes from a ≤2 KB `RESUME.md` rather than re-deriving context.
+
+**Why:** Claude tokens are finite here and grok's are not. Verified: killing an agent
+mid-flight and resuming yields 4/4 complete, 0 re-run, 0 lost.
+
+## 2026-08-01 — Optimize turns and authoring, not tool output
+
+**Decision:** target Claude turn count and Claude-authored text, not the size of tool results.
+
+**Why:** measurement showed cache reads (turns × context) at 36.4M tokens and Claude output
+at 366K, versus only ~27K for all tool results combined. The first delegated attempt cut
+turns 64% but output only 28%, because Claude still wrote the dispatch script by hand —
+encapsulating that in `bench-audit.sh` took the output cut to 65%.

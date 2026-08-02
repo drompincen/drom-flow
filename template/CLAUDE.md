@@ -224,6 +224,18 @@ The integration is seamless:
 To set up: `/add-javaducker`
 To remove: `/remove-javaducker`
 
+## Token Economy
+
+Claude tokens are the scarce resource; grok sub-agents are not. To minimize Claude usage:
+
+- **Collapse turns** — one `spawn --manifest` for N units, never N separate spawns, and never poll in a loop
+- **Stop authoring** — generate task prompts with `scripts/mk-task.sh` templates instead of writing them inline
+- **Read verdicts, not artifacts** — `collect --run-id R --brief`; open an agent's `output/` only to diagnose a FAIL
+- **Let grok read files** — pass paths, never paste file contents into context to describe them
+
+Measured: turns −64%, Claude output tokens −65%, context bytes −97%, quality held.
+Full guidance in `docs/token-economy.md`.
+
 ## Updating drom-flow
 
 **Prerequisite:** If the drom-flow source directory does not contain `init.sh` (e.g., after downloading a new ZIP), generate scripts first by running `claude "Read start-here.md and follow the setup instructions"` in the drom-flow directory.

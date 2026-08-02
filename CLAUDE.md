@@ -119,6 +119,18 @@ Use these agent profiles when the task calls for a specialized role:
 - `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
 - `/grok-fleet` — Fan out parallel grok CLI sub-agents with filesystem progress, monitoring, and stop control (combines with Claude sub-agents)
 
+## Token Economy
+
+Claude tokens are the scarce resource; grok sub-agents are not. To minimize Claude usage:
+
+- **Collapse turns** — one `spawn --manifest` for N units, never N separate spawns, and never poll in a loop
+- **Stop authoring** — generate task prompts with `scripts/mk-task.sh` templates instead of writing them inline
+- **Read verdicts, not artifacts** — `collect --run-id R --brief`; open an agent's `output/` only to diagnose a FAIL
+- **Let grok read files** — pass paths, never paste file contents into context to describe them
+
+Measured: turns −64%, Claude output tokens −65%, context bytes −97%, quality held.
+Full guidance in `docs/token-economy.md`.
+
 ## Updating drom-flow
 
 To update drom-flow to a newer version without losing project customizations:

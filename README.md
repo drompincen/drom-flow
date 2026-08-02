@@ -163,6 +163,11 @@ units and cross-model second opinions. Verified at 8 concurrent agents (13s, no 
 budget caps, stall detection, and mid-flight stop. Requires the project to live under `/mnt/<drive>`,
 since grok runs as a Windows process. **See [`docs/grok-fleet.md`](docs/grok-fleet.md).**
 
+Delegating aggressively also cuts Claude token usage. Measured on the same benchmark, run by
+Claude alone vs delegated to grok: **turns −64%, Claude output tokens −65%, context bytes −97%**,
+with quality held (grok found every defect, with more precise line references). The statusline
+shows the split live as `C:0 G:8`. **See [`docs/token-economy.md`](docs/token-economy.md).**
+
 ### Closed-loop iteration
 
 The `closed-loop.md` workflow and `/orchestrator` skill implement a repeat-until-pass pattern:

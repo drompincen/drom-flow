@@ -369,7 +369,6 @@ PLANS_DIR="$DIR/drom-plans"
 if [ -d "$PLANS_DIR" ]; then
   for plan in "$PLANS_DIR"/*.md; do
     [ -f "$plan" ] || continue
-    # Match plans that are in-progress OR have any in-progress chapter (fallback for bad frontmatter)
     if grep -q "^status: in-progress" "$plan" 2>/dev/null || grep -q '^\*\*Status:\*\* in-progress' "$plan" 2>/dev/null; then
       cur=$(grep "^current_chapter:" "$plan" 2>/dev/null | sed 's/^current_chapter: *//')
       total=$(grep -c "^## Chapter " "$plan" 2>/dev/null)
@@ -409,9 +408,15 @@ git_info="$branch +${staged}/-${unstaged}/?${untracked}"
 edits=0
 [ -f "$DIR/.claude/edit-log.jsonl" ] && edits=$(wc -l < "$DIR/.claude/edit-log.jsonl" | tr -d ' ')
 
-# --- Background agents (tracked via hook) ---
+# --- Background agents: Claude and grok counted separately ---
+# Claude agents come from the track-agents hook; grok agents are counted live from
+# the fleet control plane, so the delegation split is visible while work is in flight.
 agents=0
 [ -f "$STATE_DIR/agent-count" ] && agents=$(cat "$STATE_DIR/agent-count" | tr -d '[:space:]')
+grok_agents=0
+if [ -d "$DIR/.claude/.grok-fleet" ]; then
+  grok_agents=$(grep -l '"state":"RUNNING"' "$DIR"/.claude/.grok-fleet/*/agents/*/status.json 2>/dev/null | wc -l | tr -d ' ')
+fi
 
 # --- Memory status ---
 mem="off"
@@ -428,7 +433,7 @@ if javaducker_available; then
   fi
 fi
 
-status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • agents:$agents • mem:$mem"
+status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • C:$agents G:$grok_agents • mem:$mem"
 [ -n "$jd_icon" ] && status="$status • $jd_icon"
 [ -n "$plan_info" ] && status="$status • $plan_info"
 echo -e "$status"
@@ -1328,8 +1333,11 @@ EOF
 # --- agent helpers -----------------------------------------------------------
 agent_dir()  { echo "$FLEET_ROOT/$1/agents/$2"; }
 set_status() { # dir state [extra-json]
+  # Atomic: write to a temp file then rename, so a kill mid-write (Claude running out
+  # of tokens, machine sleep) can never leave a truncated, unreadable status.
   local d="$1" s="$2" extra="${3:-}"
-  printf '{"state":"%s","ts":"%s"%s}\n' "$s" "$(date -Iseconds)" "${extra:+,$extra}" > "$d/status.json"
+  printf '{"state":"%s","ts":"%s"%s}\n' "$s" "$(date -Iseconds)" "${extra:+,$extra}" > "$d/.status.tmp"
+  mv -f "$d/.status.tmp" "$d/status.json"
 }
 get_state() { python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['state'])" "$1/status.json" 2>/dev/null || echo UNKNOWN; }
 
@@ -1354,6 +1362,13 @@ run_agent() {
          --output-format streaming-json --permission-mode bypassPermissions
          --no-memory --max-turns 30 )
   [[ -n "$schema" ]] && args+=( --json-schema "$(cat "$schema")" )
+  # Grok self-verifies before returning. On an unmetered account this is free and
+  # replaces a Claude review turn, which is not.
+  # NOT with --json-schema: the appended verification turn displaces the structured
+  # output and `structuredOutput` comes back empty.
+  [[ "${GROK_SELF_CHECK:-1}" == 1 && -z "$schema" ]] && args+=( --check )
+  # Run the task N ways in parallel and keep the best — free quality, no Claude fixes.
+  [[ -n "${GROK_BEST_OF_N:-}" ]] && args+=( --best-of-n "$GROK_BEST_OF_N" )
   printf '%q ' "$bin" "${args[@]}" > "$d/cmd.txt"
 
   timeout "$AGENT_TIMEOUT" "$bin" "${args[@]}" > "$d/stream.jsonl" 2> "$d/stream.err" &
@@ -1402,13 +1417,22 @@ print(round(t,6))
 PY
 }
 
-over_budget() { python3 -c "import sys;sys.exit(0 if float('$1')>float('$2') else 1)"; }
+# A cap of 0 (or negative) means unlimited — for accounts where grok spend is not
+# metered. Cost is still tracked and reported; it just never halts a run.
+over_budget() { python3 -c "
+import sys
+cap=float('$2')
+sys.exit(1 if cap<=0 else (0 if float('$1')>cap else 1))"; }
 
 # Polls spend while a fan-out runs and halts the whole run if it breaches the cap.
 budget_watchdog() {
   local run="$1" cap="$2" t
+  source "$REPO_ROOT/scripts/grok-resume.sh" 2>/dev/null
   while [[ ! -f "$FLEET_ROOT/$run/DONE" ]]; do
     sleep 8
+    # Refresh the resume record continuously so an abrupt Claude exit never leaves
+    # a stale picture of what finished.
+    cmd_checkpoint --run-id "$run" >/dev/null 2>&1
     t="$(run_total_cost "$run")"
     if over_budget "$t" "$cap"; then
       log "BUDGET EXCEEDED: \$$t > \$$cap — halting run $run"
@@ -1428,6 +1452,8 @@ cmd_spawn_manifest() {
   cap="$(python3 -c "import json;print(json.load(open('$mf')).get('budget_usd',$GROK_BUDGET_USD))")"
   par="$(python3 -c "import json;print(json.load(open('$mf')).get('max_parallel',$GROK_MAX_PARALLEL))")"
   mkdir -p "$FLEET_ROOT/$run_id"; rm -f "$FLEET_ROOT/$run_id/HALT" "$FLEET_ROOT/$run_id/DONE"
+  # Keep the manifest with the run so `resume` can re-dispatch without Claude.
+  [[ "$(readlink -f "$mf")" == "$(readlink -f "$FLEET_ROOT/$run_id/run.json")" ]] || cp -f "$mf" "$FLEET_ROOT/$run_id/run.json"
   log "manifest run=$run_id parallel=$par budget=\$$cap"
 
   budget_watchdog "$run_id" "$cap" &
@@ -1500,7 +1526,23 @@ cmd_spawn() {
   { cat "$task_file"; printf '%s' "$FLEET_PREAMBLE"; } > "$d/task.md"
   : > "$d/PROGRESS.md"
   set_status "$d" QUEUED
-  run_agent "$d" "$bin" "$schema"
+  # Retry on the grok side. A failure re-runs with the failure text appended, so
+  # Claude only ever sees terminal states — never intermediate attempts.
+  local attempts="${GROK_MAX_ATTEMPTS:-3}" n=1
+  while :; do
+    run_agent "$d" "$bin" "$schema"
+    [[ "$(get_state "$d")" == DONE ]] && break
+    # A deliberate stop is NOT a failure — never retry past it, or `stop` would be
+    # defeated by the retry immediately relaunching the agent.
+    [[ "$(get_state "$d")" == STOPPED || -f "$d/STOP" ]] && { log "agent $agent_id stopped by request; not retrying"; break; }
+    (( n >= attempts )) && break
+    log "agent $agent_id attempt $n/$attempts -> $(get_state "$d"), retrying on grok"
+    { echo; echo "--- PREVIOUS ATTEMPT FAILED (attempt $n) ---";
+      echo "Error output:"; tail -c 600 "$d/stream.err" 2>/dev/null;
+      echo "Fix the cause and complete the task. Write your output into the working directory."; } >> "$d/task.md"
+    n=$(( n + 1 ))
+  done
+  printf '{"attempts":%d}\n' "$n" > "$d/attempts.json"
   [[ "$(get_state "$d")" == DONE ]]
 }
 
@@ -1592,9 +1634,28 @@ cmd_stop() {
 
 # --- collect -----------------------------------------------------------------
 cmd_collect() {
-  local run_id=""
-  while [[ $# -gt 0 ]]; do case $1 in --run-id) run_id="$2"; shift 2 ;; *) die "collect: unknown arg $1" ;; esac; done
+  local run_id="" brief=false
+  while [[ $# -gt 0 ]]; do case $1 in
+    --run-id) run_id="$2"; shift 2 ;;
+    --brief) brief=true; shift ;;
+    *) die "collect: unknown arg $1" ;;
+  esac; done
   [[ -n "$run_id" ]] || die "collect needs --run-id"
+
+  # Brief mode is what Claude reads: verdicts only, never agent output bodies.
+  # Full artifacts stay on disk and are opened only to diagnose a FAIL.
+  if $brief; then
+    local base="$FLEET_ROOT/$run_id/agents" failed=0
+    for d in "$base"/*; do [[ -d "$d" ]] || continue
+      local a s line; a="$(basename "$d")"; s="$(get_state "$d")"
+      [[ "$s" == DONE ]] || failed=1
+      line="$(grep -h '^RESULT:' "$d/output"/* 2>/dev/null | head -1)"
+      [[ -z "$line" ]] && line="$(tail -n1 "$d/PROGRESS.md" 2>/dev/null)"
+      printf '%s\t%s\t%s\n' "$a" "$s" "${line:0:90}"
+    done
+    echo "-- run=$run_id spend=\$$(run_total_cost "$run_id") outputs=$FLEET_ROOT/$run_id/agents/<id>/output/"
+    return $failed
+  fi
   local base="$FLEET_ROOT/$run_id/agents" out="$REPORT_DIR/grok-fleet-$run_id.md" failed=0
   mkdir -p "$REPORT_DIR"
   { echo "# Grok fleet run: $run_id"; echo; echo "_$(date -Iseconds)_"; echo; } > "$out"
@@ -1623,6 +1684,9 @@ case "$SUB" in
   collect) cmd_collect "$@" ;;
   clean)   cmd_clean "$@" ;;
   verify)  source "$REPO_ROOT/scripts/grok-verify.sh"; cmd_verify "$@" ;;
+  drain)      source "$REPO_ROOT/scripts/grok-resume.sh"; cmd_drain "$@" ;;
+  checkpoint) source "$REPO_ROOT/scripts/grok-resume.sh"; cmd_checkpoint "$@" ;;
+  resume)     source "$REPO_ROOT/scripts/grok-resume.sh"; cmd_resume "$@" ;;
   *) die "unknown subcommand: $SUB" ;;
 esac
 ```
@@ -1850,6 +1914,533 @@ EOF
 
 ---
 
+## scripts/grok-resume.sh
+
+```bash
+#!/bin/bash
+# drom-flow — resume support for the grok fleet.
+# Sourced by grok-fleet.sh. Provides: drain (detached runner), checkpoint (compact
+# resume record), resume (reconcile + re-dispatch).
+#
+# Premise: Claude tokens are finite, grok's are not. Claude is therefore the
+# interruptible component — in-flight grok work must be able to finish without it,
+# and a cold Claude session must resume from a tiny amount of state.
+
+RESUME_MAX_BYTES="${RESUME_MAX_BYTES:-2048}"
+
+# --- drain: run a manifest to completion detached from this shell ---------------
+# Survives the Claude session ending, so a fan-out is never stranded.
+cmd_drain() {
+  local mf=""
+  while [[ $# -gt 0 ]]; do case $1 in --manifest) mf="$2"; shift 2 ;; *) shift ;; esac; done
+  [[ -f "$mf" ]] || die "drain needs --manifest <file>"
+  local run_id; run_id="$(python3 -c "import json;print(json.load(open('$mf'))['run_id'])")"
+  mkdir -p "$FLEET_ROOT/$run_id"
+  local logf="$FLEET_ROOT/$run_id/drain.log"
+  nohup setsid bash "$REPO_ROOT/scripts/grok-fleet.sh" spawn --manifest "$mf" \
+        > "$logf" 2>&1 < /dev/null &
+  disown 2>/dev/null
+  echo "{\"run_id\":\"$run_id\",\"detached\":true,\"log\":\"$logf\"}"
+  log "drain: run $run_id detached — it will finish without Claude"
+}
+
+# --- checkpoint: the entire cost of resuming --------------------------------------
+cmd_checkpoint() {
+  local run_id="" goal="" plan="" chapter=""
+  while [[ $# -gt 0 ]]; do case $1 in
+    --run-id) run_id="$2"; shift 2 ;;
+    --goal) goal="$2"; shift 2 ;;
+    --plan) plan="$2"; shift 2 ;;
+    --chapter) chapter="$2"; shift 2 ;;
+    *) shift ;;
+  esac; done
+  [[ -n "$run_id" ]] || die "checkpoint needs --run-id"
+  local rd="$FLEET_ROOT/$run_id"; mkdir -p "$rd"
+  [[ -n "$goal"    ]] && echo "$goal"    > "$rd/.goal"
+  [[ -n "$plan"    ]] && echo "$plan"    > "$rd/.plan"
+  [[ -n "$chapter" ]] && echo "$chapter" > "$rd/.chapter"
+
+  python3 - "$rd" "$RESUME_MAX_BYTES" <<'PY'
+import json,os,sys
+rd,cap=sys.argv[1],int(sys.argv[2])
+def rd_file(n,d=''):
+    p=os.path.join(rd,n)
+    return open(p).read().strip() if os.path.exists(p) else d
+base=os.path.join(rd,'agents')
+done=[];pend=[];run=[]
+if os.path.isdir(base):
+    for a in sorted(os.listdir(base)):
+        try: st=json.load(open(os.path.join(base,a,'status.json')))['state']
+        except Exception: st='UNKNOWN'
+        (done if st=='DONE' else run if st=='RUNNING' else pend).append(f"{a}:{st}")
+L=[]
+L.append(f"# RESUME — {os.path.basename(rd)}")
+g=rd_file('.goal');  L.append(f"goal: {g}") if g else None
+p=rd_file('.plan');  L.append(f"plan: {p}") if p else None
+c=rd_file('.chapter');L.append(f"chapter: {c}") if c else None
+L.append(f"done({len(done)}): {', '.join(done) or '-'}")
+L.append(f"running({len(run)}): {', '.join(run) or '-'}")
+L.append(f"pending({len(pend)}): {', '.join(pend) or '-'}")
+L.append(f"next: bash scripts/grok-fleet.sh resume --run-id {os.path.basename(rd)}")
+L.append("note: DONE units are never re-run. Read outputs only for FAILED units.")
+out='\n'.join(L)+'\n'
+if len(out.encode())>cap:                      # hard cap — resuming must stay cheap
+    out=out.encode()[:cap-20].decode('utf-8','ignore')+"\n...(truncated)\n"
+tmp=os.path.join(rd,'.RESUME.tmp')
+open(tmp,'w').write(out); os.replace(tmp,os.path.join(rd,'RESUME.md'))
+print(out,end='')
+PY
+}
+
+# --- resume: reconcile reality, re-dispatch only what is genuinely incomplete -----
+cmd_resume() {
+  local run_id=""
+  while [[ $# -gt 0 ]]; do case $1 in --run-id) run_id="$2"; shift 2 ;; *) shift ;; esac; done
+  [[ -n "$run_id" ]] || die "resume needs --run-id"
+  local rd="$FLEET_ROOT/$run_id" base="$FLEET_ROOT/$run_id/agents"
+  [[ -d "$base" ]] || die "no such run: $run_id"
+
+  # Reconcile: trust on-disk results over the recorded state. An agent whose process
+  # is gone but whose result is complete really did finish; one with neither is
+  # INTERRUPTED and must be redone.
+  local recovered=0 interrupted=0
+  for d in "$base"/*; do [[ -d "$d" ]] || continue
+    local s; s="$(get_state "$d")"
+    [[ "$s" == RUNNING ]] || continue
+    local pid alive=0
+    pid="$(python3 -c "import json;print(json.load(open('$d/pid'))['wsl_pid'])" 2>/dev/null)"
+    [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && alive=1
+    (( alive )) && continue
+    if [[ -s "$d/result.json" ]] && [[ -n "$(ls -A "$d/output" 2>/dev/null)" ]]; then
+      local c; c="$(python3 -c "import json;print(json.load(open('$d/result.json')).get('total_cost_usd',0))" 2>/dev/null || echo 0)"
+      set_status "$d" DONE "\"recovered\":true,\"cost_usd\":${c:-0}"; recovered=$(( recovered + 1 ))
+    else
+      set_status "$d" INTERRUPTED "\"reason\":\"process gone, no result\""; interrupted=$(( interrupted + 1 ))
+    fi
+  done
+  log "resume: recovered=$recovered interrupted=$interrupted"
+
+  # Re-dispatch. spawn is idempotent — DONE agents are skipped, never re-billed.
+  local mf="$rd/run.json"
+  if [[ -f "$mf" ]]; then
+    cmd_spawn_manifest "$mf"
+  else
+    log "resume: no stored manifest; nothing to re-dispatch automatically"
+  fi
+  cmd_checkpoint --run-id "$run_id" >/dev/null
+  cmd_collect --run-id "$run_id" --brief
+}
+```
+
+---
+
+## scripts/token-audit.sh
+
+```bash
+#!/bin/bash
+# drom-flow — Claude token audit + delegation gates.
+#
+#   token-audit.sh mark <label>          record the current transcript position
+#   token-audit.sh measure <label>       report Claude cost since that mark
+#   token-audit.sh gates [--json]        evaluate the eight exit-criteria gates
+#
+# Measures the real thing: per-turn usage from the live Claude Code session
+# transcript (~/.claude/projects/<slug>/<session>.jsonl), which records
+# input_tokens / output_tokens / cache_read_input_tokens for every turn.
+#
+# Exit: 0 = all evaluated gates PASS, 1 = a gate failed, 2 = usage/env error
+
+set -uo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPORT_DIR="$REPO_ROOT/reports"
+STATE_DIR="${TOKEN_AUDIT_STATE:-$REPO_ROOT/.claude/.token-audit}"
+mkdir -p "$STATE_DIR" "$REPORT_DIR"
+
+log() { echo "[token-audit] $*" >&2; }
+die() { echo "[token-audit] ERROR: $*" >&2; exit 2; }
+
+# Resolve the transcript for THIS project (most recently modified session).
+transcript() {
+  [[ -n "${CLAUDE_TRANSCRIPT:-}" && -f "${CLAUDE_TRANSCRIPT:-}" ]] && { echo "$CLAUDE_TRANSCRIPT"; return; }
+  local slug d
+  slug="$(echo "$REPO_ROOT" | sed 's|/|-|g')"
+  d="$HOME/.claude/projects/$slug"
+  [[ -d "$d" ]] || return 1
+  ls -t "$d"/*.jsonl 2>/dev/null | head -1
+}
+
+usage_between() { # file start_line end_line -> JSON of the window
+  python3 - "$1" "$2" "$3" <<'PY'
+import json,sys
+f,a,b=sys.argv[1],int(sys.argv[2]),int(sys.argv[3])
+turns=out=cr=cc=fresh=0; tr_bytes=0
+for i,line in enumerate(open(f,errors='replace'),1):
+    if i<=a or i>b: continue
+    try: o=json.loads(line)
+    except Exception: continue
+    m=o.get('message') or {}
+    if not isinstance(m,dict): continue
+    u=m.get('usage')
+    if u:
+        turns+=1
+        out+=u.get('output_tokens',0); fresh+=u.get('input_tokens',0)
+        cr+=u.get('cache_read_input_tokens',0); cc+=u.get('cache_creation_input_tokens',0)
+    c=m.get('content')
+    if isinstance(c,list):
+        for blk in c:
+            if isinstance(blk,dict) and blk.get('type')=='tool_result':
+                t=blk.get('content'); tr_bytes+=len(t if isinstance(t,str) else json.dumps(t))
+print(json.dumps({'turns':turns,'output_tokens':out,'fresh_input_tokens':fresh,
+                  'cache_read':cr,'cache_creation':cc,'tool_result_bytes':tr_bytes,
+                  'billable_tokens':out+fresh+cc}))
+PY
+}
+
+cmd_mark() {
+  local label="${1:-}"; [[ -n "$label" ]] || die "mark needs a label"
+  local f; f="$(transcript)" || die "no transcript found for $REPO_ROOT"
+  wc -l < "$f" | tr -d ' ' > "$STATE_DIR/$label.mark"
+  log "mark '$label' @ line $(cat "$STATE_DIR/$label.mark")"
+}
+
+cmd_measure() {
+  local label="${1:-}"; [[ -n "$label" ]] || die "measure needs a label"
+  local mk="$STATE_DIR/$label.mark"; [[ -f "$mk" ]] || die "no such mark: $label"
+  local f; f="$(transcript)" || die "no transcript found"
+  local a b; a="$(cat "$mk")"; b="$(wc -l < "$f" | tr -d ' ')"
+  local j; j="$(usage_between "$f" "$a" "$b")"
+  echo "$j" > "$STATE_DIR/$label.usage.json"
+  echo "$j"
+}
+
+# --- gates ---------------------------------------------------------------------
+gate() { # id status detail
+  GATES+=("{\"id\":\"$1\",\"status\":\"$2\",\"detail\":$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$3")}")
+  [[ "$2" == PASS ]] || FAIL=1
+  log "gate $1: $2 — $3"
+}
+
+num() { python3 -c "
+import json,sys
+try: print(json.load(open(sys.argv[1])).get(sys.argv[2],0))
+except Exception: print(0)" "$1" "$2"; }
+
+pct_cut() { python3 -c "
+b,d=float('$1'),float('$2')
+print(round((b-d)/b*100,1) if b>0 else 0.0)"; }
+
+cmd_gates() {
+  local as_json=false; [[ "${1:-}" == "--json" ]] && as_json=true
+  GATES=(); FAIL=0
+  local B="$STATE_DIR/baseline.usage.json" D="$STATE_DIR/delegated.usage.json"
+
+  # 1 measurable
+  local f; if f="$(transcript)" && [[ -s "$f" ]]; then
+    gate measurable PASS "transcript readable: $(basename "$f"), $(wc -l < "$f" | tr -d ' ') records"
+  else gate measurable FAIL "no readable transcript"; fi
+
+  # 2 delegation ratio (from the fleet ledger)
+  local led="$STATE_DIR/ledger.tsv" tot=0 grok=0
+  if [[ -f "$led" ]]; then
+    tot=$(wc -l < "$led" | tr -d ' '); grok=$(grep -c $'\tgrok$' "$led" || echo 0)
+  fi
+  local ratio; ratio="$(python3 -c "print(round($grok/$tot*100,1) if $tot else 0.0)")"
+  python3 -c "import sys;sys.exit(0 if $ratio>=95 else 1)" \
+    && gate delegation PASS "$grok/$tot units on grok = ${ratio}%" \
+    || gate delegation FAIL "$grok/$tot units on grok = ${ratio}% (need >=95%)"
+
+  # 3 turns / 4 authoring — delegated vs measured Claude-only baseline
+  if [[ -f "$B" && -f "$D" ]]; then
+    local bt dt bo do_ ct co
+    bt="$(num "$B" turns)"; dt="$(num "$D" turns)"
+    bo="$(num "$B" output_tokens)"; do_="$(num "$D" output_tokens)"
+    ct="$(pct_cut "$bt" "$dt")"; co="$(pct_cut "$bo" "$do_")"
+    python3 -c "import sys;sys.exit(0 if $ct>=50 else 1)" \
+      && gate turns PASS "turns $bt -> $dt (-${ct}%)" || gate turns FAIL "turns $bt -> $dt (-${ct}%, need -50%)"
+    python3 -c "import sys;sys.exit(0 if $co>=50 else 1)" \
+      && gate authoring PASS "output_tokens $bo -> $do_ (-${co}%)" || gate authoring FAIL "output_tokens $bo -> $do_ (-${co}%, need -50%)"
+  else
+    gate turns FAIL "missing baseline/delegated measurement"
+    gate authoring FAIL "missing baseline/delegated measurement"
+  fi
+
+  # 5 context bytes into Claude for the fan-out
+  local cb; cb="$(cat "$STATE_DIR/brief_bytes" 2>/dev/null || echo 999999)"
+  (( cb <= 4096 )) && gate context PASS "collect --brief = ${cb}B (<=4096)" \
+                   || gate context FAIL "collect --brief = ${cb}B (>4096)"
+
+  # 6 parity
+  local vg; vg="$(python3 -c "
+import json
+try:
+  d=json.load(open('$REPORT_DIR/grok-verify.json'))
+  print('ok' if d.get('ok') else 'fail')
+except Exception: print('missing')")"
+  local bench_ok; bench_ok="$(cat "$STATE_DIR/benchmark_ok" 2>/dev/null || echo no)"
+  [[ "$vg" == ok && "$bench_ok" == yes ]] \
+    && gate parity PASS "fleet verify 6/6 and benchmark output correct" \
+    || gate parity FAIL "fleet verify=$vg benchmark_correct=$bench_ok"
+
+  # 7 resume
+  local rs; rs="$(cat "$STATE_DIR/resume_result" 2>/dev/null || echo no)"
+  [[ "$rs" == pass ]] && gate resume PASS "$(cat "$STATE_DIR/resume_detail" 2>/dev/null)" \
+                      || gate resume FAIL "$(cat "$STATE_DIR/resume_detail" 2>/dev/null || echo 'not run')"
+
+  # 8 ship
+  local sh; sh="$(cat "$STATE_DIR/ship_result" 2>/dev/null || echo no)"
+  [[ "$sh" == pass ]] && gate ship PASS "$(cat "$STATE_DIR/ship_detail" 2>/dev/null)" \
+                      || gate ship FAIL "$(cat "$STATE_DIR/ship_detail" 2>/dev/null || echo 'not shipped')"
+
+  local IFS=,
+  cat > "$REPORT_DIR/token-audit.json" <<EOF
+{"ok":$([[ $FAIL -eq 0 ]] && echo true || echo false),"ts":"$(date -Iseconds)","gates":[${GATES[*]}]}
+EOF
+  $as_json && cat "$REPORT_DIR/token-audit.json"
+  local p; p=$(grep -o '"status":"PASS"' "$REPORT_DIR/token-audit.json" | wc -l)
+  log "gates: $p/${#GATES[@]} PASS"
+  return $FAIL
+}
+
+# record a work unit and which engine executed it
+cmd_ledger() { printf '%s\t%s\n' "${1:-unit}" "${2:-grok}" >> "$STATE_DIR/ledger.tsv"; }
+
+case "${1:-}" in
+  mark)    shift; cmd_mark "$@" ;;
+  measure) shift; cmd_measure "$@" ;;
+  gates)   shift; cmd_gates "$@" ;;
+  ledger)  shift; cmd_ledger "$@" ;;
+  *) die "usage: token-audit.sh {mark <label>|measure <label>|gates [--json]|ledger <unit> <engine>}" ;;
+esac
+```
+
+---
+
+## scripts/mk-task.sh
+
+```bash
+#!/bin/bash
+# drom-flow — generate a grok task.md from a template, so dispatching N units costs
+# Claude one command instead of N hand-written prompts.
+#
+#   mk-task.sh <template> <out-file> KEY=VALUE ...
+#
+# Templates live in scripts/task-templates/*.md and use {{KEY}} placeholders.
+# On an unmetered grok account, prompts are free — templates are verbose on purpose.
+
+set -uo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TPL_DIR="$REPO_ROOT/scripts/task-templates"
+
+[[ $# -ge 2 ]] || { echo "usage: mk-task.sh <template> <out-file> KEY=VAL ..." >&2; exit 2; }
+tpl="$1"; out="$2"; shift 2
+src="$TPL_DIR/$tpl.md"
+[[ -f "$src" ]] || { echo "no such template: $tpl (have: $(ls "$TPL_DIR" 2>/dev/null | sed 's/\.md//' | tr '\n' ' '))" >&2; exit 2; }
+
+mkdir -p "$(dirname "$out")"
+cp "$src" "$out"
+for kv in "$@"; do
+  k="${kv%%=*}"; v="${kv#*=}"
+  python3 - "$out" "$k" "$v" <<'PY'
+import sys
+p,k,v=sys.argv[1],sys.argv[2],sys.argv[3]
+s=open(p,encoding='utf-8').read().replace('{{'+k+'}}',v)
+open(p,'w',encoding='utf-8').write(s)
+PY
+done
+# Leftover placeholders mean a caller forgot a key — fail loudly rather than
+# shipping a prompt with literal {{FOO}} in it.
+if grep -q '{{[A-Z_]*}}' "$out"; then
+  echo "ERROR: unfilled placeholders in $out: $(grep -o '{{[A-Z_]*}}' "$out" | sort -u | tr '\n' ' ')" >&2
+  exit 2
+fi
+echo "$out"
+```
+
+---
+
+## scripts/bench-audit.sh
+
+```bash
+#!/bin/bash
+# drom-flow — encapsulated audit fan-out.
+#
+#   bench-audit.sh <run-id> <file> [<file> ...]
+#
+# Exists so dispatching a fan-out costs Claude a one-line command instead of a
+# hand-written block of bash + python. Claude authoring is a top-two token cost;
+# this moves it into a script that is written once.
+
+set -uo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUN="${1:?usage: bench-audit.sh <run-id> <file>...}"; shift
+[[ $# -ge 1 ]] || { echo "no target files" >&2; exit 2; }
+
+T="$REPO_ROOT/.claude/.grok-fleet/_tasks/$RUN"; mkdir -p "$T"
+rm -rf "$REPO_ROOT/.claude/.grok-fleet/$RUN"
+
+CHECKS='1) YAML frontmatter present and valid with name, description, user-invocable. 2) Ordered list numbering is strictly sequential with no duplicated or skipped numbers — report the exact duplicated number, its section heading, and the line range.'
+
+agents=()
+for f in "$@"; do
+  id="$(basename "$(dirname "$f")")"; [[ "$id" == "." ]] && id="$(basename "$f" .md)"
+  bash "$REPO_ROOT/scripts/mk-task.sh" audit "$T/$id.md" \
+    TARGET="$f" CHECKS="$CHECKS" OUTFILE="findings.md" TITLE="$id" >/dev/null || exit 2
+  bash "$REPO_ROOT/scripts/token-audit.sh" ledger "audit-$id" grok
+  agents+=("$id:$T/$id.md")
+done
+
+python3 - "$T/m.json" "$RUN" "${agents[@]}" <<'PY'
+import json,sys
+out,run=sys.argv[1],sys.argv[2]
+ag=[{'id':a.split(':',1)[0],'task_file':a.split(':',1)[1]} for a in sys.argv[3:]]
+json.dump({'run_id':run,'budget_usd':0,'max_parallel':len(ag),'agents':ag},open(out,'w'),indent=2)
+PY
+
+bash "$REPO_ROOT/scripts/grok-fleet.sh" spawn --manifest "$T/m.json" >/dev/null 2>&1
+bash "$REPO_ROOT/scripts/grok-fleet.sh" collect --run-id "$RUN" --brief
+```
+
+---
+
+## scripts/check-parity.sh
+
+```bash
+#!/bin/bash
+# drom-flow — parity check for the delegated audit benchmark.
+# Verifies grok found the SAME defects the Claude-only baseline found, by meaning
+# rather than by exact string, so a differently-worded but correct answer passes.
+#
+#   check-parity.sh <run-id>
+# Writes yes|no to .claude/.token-audit/benchmark_ok
+
+set -uo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUN="${1:?usage: check-parity.sh <run-id>}"
+BASE="$REPO_ROOT/.claude/.grok-fleet/$RUN/agents"
+ok=yes
+
+# expected: agent -> duplicated number, section that contains the break
+check() { # agent dupnum section
+  local a="$1" n="$2" sec="$3" f="$BASE/$1/output/findings.md"
+  if [[ ! -s "$f" ]]; then echo "  $a: NO OUTPUT"; ok=no; return; fi
+  local body; body="$(tr '[:upper:]' '[:lower:]' < "$f")"
+  local hasdup=no hassec=no
+  grep -qE "($n, *$n|duplicat)" <<<"$body" && hasdup=yes
+  grep -qF "$(tr '[:upper:]' '[:lower:]' <<<"$sec")" <<<"$body" && hassec=yes
+  if [[ "$hasdup" == yes && "$hassec" == yes ]]; then echo "  $a: OK (dup $n in $sec)"
+  else echo "  $a: MISS (dup=$hasdup section=$hassec)"; ok=no; fi
+}
+
+check architect   3 Responsibilities
+check debugger    4 Process
+check implementer 4 Process
+
+echo "$ok" > "$REPO_ROOT/.claude/.token-audit/benchmark_ok"
+echo "benchmark_correct=$ok"
+[[ "$ok" == yes ]]
+```
+
+---
+
+## scripts/test-resume.sh
+
+```bash
+#!/bin/bash
+# drom-flow — gate 7: survive Claude token exhaustion.
+#
+# Simulates Claude dying mid-run and verifies:
+#   1. detached grok work keeps going without Claude
+#   2. an interrupted unit is detected (not silently trusted)
+#   3. a cold resume re-dispatches ONLY incomplete units — none re-run, none lost
+#   4. resume state stays under the 2 KB budget
+
+set -uo pipefail
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FLEET="$REPO_ROOT/.claude/.grok-fleet"
+RUN=resumetest
+T="$FLEET/_tasks/$RUN"; mkdir -p "$T"; rm -rf "$FLEET/$RUN"
+detail(){ echo "$*" > "$REPO_ROOT/.claude/.token-audit/resume_detail"; echo "$*"; }
+fail(){ echo pass > /dev/null; echo fail > "$REPO_ROOT/.claude/.token-audit/resume_result"; detail "$*"; exit 1; }
+
+for i in 1 2 3 4; do
+  printf 'Write a file named out.md in your working directory containing exactly: UNIT_%d\n' "$i" > "$T/u$i.md"
+done
+python3 - "$T/m.json" <<'PY'
+import json,sys,os
+t=os.path.dirname(sys.argv[1])
+json.dump({'run_id':'resumetest','budget_usd':0,'max_parallel':2,
+ 'agents':[{'id':f'u{i}','task_file':f'{t}/u{i}.md'} for i in (1,2,3,4)]},open(sys.argv[1],'w'),indent=2)
+PY
+
+echo "== 1. dispatch detached (Claude may die after this) =="
+bash "$REPO_ROOT/scripts/grok-fleet.sh" drain --manifest "$T/m.json"
+
+echo "== 2. simulate Claude dying: kill the dispatching shell's process group parent =="
+sleep 12
+# Kill one RUNNING agent outright => an INTERRUPTED unit with no result.
+victim=""
+for d in "$FLEET/$RUN"/agents/*; do
+  [[ -d "$d" ]] || continue
+  if [[ "$(python3 -c "import json;print(json.load(open('$d/status.json'))['state'])" 2>/dev/null)" == RUNNING ]]; then
+    pid="$(python3 -c "import json;print(json.load(open('$d/pid'))['wsl_pid'])" 2>/dev/null)"
+    [[ -n "$pid" ]] && kill -9 "$pid" 2>/dev/null && victim="$(basename "$d")" && break
+  fi
+done
+echo "   killed agent: ${victim:-none}"
+
+echo "== 3. wait for the detached runner to finish the rest without Claude =="
+for _ in $(seq 1 60); do
+  [[ -f "$FLEET/$RUN/DONE" ]] && break
+  sleep 5
+done
+before_done=$(grep -l '"state":"DONE"' "$FLEET/$RUN"/agents/*/status.json 2>/dev/null | wc -l)
+echo "   DONE after detached run: $before_done/4"
+
+echo "== 4. cold resume =="
+cost_before=$(bash -c "cd $REPO_ROOT && source scripts/grok-fleet.sh 2>/dev/null; true"; python3 - "$FLEET/$RUN/agents" <<'PY'
+import json,os,sys
+b=sys.argv[1];t=0.0
+for a in os.listdir(b):
+    try: t+=float(json.load(open(os.path.join(b,a,'status.json'))).get('cost_usd') or 0)
+    except Exception: pass
+print(round(t,6))
+PY
+)
+declare -A pre
+for d in "$FLEET/$RUN"/agents/*; do
+  a=$(basename "$d")
+  pre[$a]=$(python3 -c "import json;print(json.load(open('$d/status.json')).get('cost_usd',0))" 2>/dev/null || echo 0)
+done
+bash "$REPO_ROOT/scripts/grok-fleet.sh" resume --run-id "$RUN" >/dev/null 2>&1
+
+echo "== 5. assertions =="
+final_done=0; rerun=0; lost=0
+for d in "$FLEET/$RUN"/agents/*; do
+  a=$(basename "$d")
+  s=$(python3 -c "import json;print(json.load(open('$d/status.json'))['state'])" 2>/dev/null || echo MISSING)
+  c=$(python3 -c "import json;print(json.load(open('$d/status.json')).get('cost_usd',0))" 2>/dev/null || echo 0)
+  [[ "$s" == DONE ]] && final_done=$(( final_done + 1 )) || lost=$(( lost + 1 ))
+  # a unit that was already DONE before resume must not have been charged again
+  if [[ "${pre[$a]}" != "0" && "${pre[$a]}" != "" ]]; then
+    prev_state_done=$(grep -c '"state":"DONE"' <<<"$(cat "$d/status.json")")
+    if [[ "$c" != "${pre[$a]}" && "$prev_state_done" == "1" ]]; then rerun=$(( rerun + 1 )); fi
+  fi
+  grep -qs "UNIT_${a#u}" "$d/output"/* || { [[ "$s" == DONE ]] && lost=$(( lost + 1 )); }
+done
+rs="$FLEET/$RUN/RESUME.md"; rbytes=$(wc -c < "$rs" 2>/dev/null || echo 99999)
+
+echo "   final DONE=$final_done/4  re-run=$rerun  lost=$lost  RESUME.md=${rbytes}B"
+[[ $final_done -eq 4 ]] || fail "not all units completed after resume ($final_done/4)"
+[[ $rerun -eq 0 ]]      || fail "$rerun finished unit(s) were re-run on resume"
+[[ $lost -eq 0 ]]       || fail "$lost unit(s) lost their output"
+[[ $rbytes -le 2048 ]]  || fail "RESUME.md ${rbytes}B exceeds 2048B budget"
+
+echo pass > "$REPO_ROOT/.claude/.token-audit/resume_result"
+detail "detached run survived Claude death; killed agent '$victim' recovered; 4/4 DONE, 0 re-run, 0 lost, RESUME.md ${rbytes}B"
+```
+
+---
+
 ## Template copies
 
 The following files are **identical** to their counterparts above. After generating the scripts above, copy them to these locations:
@@ -1867,3 +2458,6 @@ The following files are **identical** to their counterparts above. After generat
 | `scripts/orchestrate.sh` | `template/scripts/orchestrate.sh` |
 | `scripts/grok-fleet.sh` | `template/scripts/grok-fleet.sh` |
 | `scripts/grok-verify.sh` | `template/scripts/grok-verify.sh` |
+| `scripts/grok-resume.sh` | `template/scripts/grok-resume.sh` |
+| `scripts/token-audit.sh` | `template/scripts/token-audit.sh` |
+| `scripts/mk-task.sh` | `template/scripts/mk-task.sh` |

@@ -59,3 +59,43 @@ surfaced as a silent exit 144. Removed: `stop --all` now kills only tracked PIDs
   on), and the gate counted the watchdog as an agent job (shrinking parallelism by one). Both fixed.
 - `*.sh` is gitignored repo-wide — **SCRIPTS.md is the real distribution mechanism**. Any script change must
   be re-embedded there (including `init.sh`), or ZIP users regenerate stale scripts. Round-trip verified.
+
+## Token economy — minimize Claude, maximize grok (2026-08-01, v0.7.0)
+
+Measured from the live session transcript, then optimized in a closed loop.
+
+### Where Claude tokens actually go (295-turn session)
+- `cache_read_input_tokens` **36,359,748** — dominant
+- `output_tokens` **366,110** — second
+- tool results into context 110 KB ≈ **27,588 tokens** — minor
+
+**The intuitive fix (shorten tool output) targets the smallest line item.** Real drivers:
+turns × resident context (~123K re-read per turn), Claude's own authoring, and context size.
+
+### Benchmark: audit 3 skill files, Claude-only vs delegated
+| Metric | Claude-only | Delegated | Cut |
+|---|---|---|---|
+| turns | 11 | 4 | −64% |
+| output_tokens | 7,514 | 2,657 | −65% |
+| tool_result bytes | 14,096 | 465 | −97% |
+| billable tokens | 38,300 | 5,427 | −86% |
+
+Parity held — grok found all 3 defects with better line references than the Claude pass.
+
+### Iterations
+- **Iter 1** — delegated but output only −28%: Claude still hand-wrote a 30-line dispatch
+  block. Fix: `scripts/bench-audit.sh` encapsulation → −65%. **Claude authoring the
+  dispatch is itself a top-two cost.**
+- **Iter 2 (regression, caught by verify)** — 6/6 → **4/6**. My own changes broke two gates:
+  the retry loop treated a deliberate `STOPPED` as failure and **relaunched the agent**,
+  defeating `stop`; and `--check` displaced `--json-schema` output so verdicts came back
+  empty. Fixed: never retry past a stop; disable `--check` when a schema is used.
+- **Iter 3** — 6/6 PASS restored.
+
+### Hard-won facts
+- `--check` and `--json-schema` are mutually exclusive in practice.
+- Retry logic must exempt deliberate stops or it silently defeats stop control.
+- A parity check must be semantic — my first version grepped for a literal line number
+  and failed a correct grok answer that phrased it differently.
+- Resume costs a **227-byte** `RESUME.md` read; detached `drain` survives Claude exiting;
+  killed agents are recovered, finished units never re-run.

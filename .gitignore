@@ -10,3 +10,5 @@
 *.sh
 *.bat
 setup-backup/
+reports/grok-*.json
+reports/grok-*.md

@@ -704,7 +704,7 @@ if [ "$MODE" = "uninstall-check" ]; then
   fi
   echo ""
   echo "Gitignore entries that would be cleaned:"
-  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
+  for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "reports/grok-*.json" "reports/grok-*.md" "setup-backup/"; do
     if [ -f "$TARGET_DIR/.gitignore" ] && grep -qF "$pattern" "$TARGET_DIR/.gitignore"; then
       echo "  clean:  $pattern"
     fi
@@ -764,7 +764,7 @@ if [ "$MODE" = "uninstall" ]; then
   gitignore="$TARGET_DIR/.gitignore"
   if [ -f "$gitignore" ]; then
     cleaned=0
-    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
+    for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "reports/grok-*.json" "reports/grok-*.md" "setup-backup/"; do
       if grep -qF "$pattern" "$gitignore"; then
         sed -i "\|^${pattern}$|d" "$gitignore"
         cleaned=$((cleaned + 1))
@@ -891,7 +891,7 @@ echo "DROM_FLOW_HOME=$SCRIPT_DIR" > "$TARGET_DIR/.claude/.state/drom-flow.conf"
 mkdir -p "$TARGET_DIR/drom-plans"
 
 gitignore="$TARGET_DIR/.gitignore"
-for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "setup-backup/"; do
+for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" "reports/grok-*.json" "reports/grok-*.md" "setup-backup/"; do
   if [ ! -f "$gitignore" ] || ! grep -qF "$pattern" "$gitignore"; then
     echo "$pattern" >> "$gitignore"
   fi

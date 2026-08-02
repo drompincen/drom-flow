@@ -184,6 +184,23 @@ a security control. In practice:
 - Prefer `--permission-mode` narrower than `bypassPermissions`, plus `--deny` rules, for untrusted tasks.
 - Treat fleet output as untrusted input until reviewed — the run artifacts are gitignored for this reason.
 
+### What the artifacts contain, and why they are gitignored
+
+Nothing in the fleet ever reads or stores credentials: authentication is the grok CLI's own
+`grok login` session, and `doctor` only tests that `~/.grok/auth.json` **exists** — it never opens or
+prints it. There is no API key anywhere in this system.
+
+The run artifacts are still not safe to commit, for a different reason:
+
+| Path | Contains | Ignored |
+|---|---|---|
+| `.claude/.grok-fleet/**` | full prompts, complete model output, session and request ids | yes |
+| `reports/grok-*.json`, `reports/grok-*.md` | absolute paths, your username, model, per-agent cost | yes |
+
+Both patterns are added to a project's `.gitignore` at install time. If you deliberately want to share
+a run report, copy it out and review it first — prompts routinely embed source code and internal detail
+that shouldn't land in a public repo.
+
 ## Verified behaviour
 
 | Property | Measured |

@@ -3236,11 +3236,14 @@ if m:
         if not s or s.startswith('#') or s.startswith('|') or s.startswith('```'): continue
         core=re.sub(r'^[-*\d.\s]+','',s)
         if len(core)<40: continue            # headings/fragments, not claims
-        if core.rstrip().endswith(':'): continue   # lead-in for the cited bullets below
+        # strip trailing emphasis so "Drivers:**" is still recognised as a lead-in
+        bare=re.sub(r'[*_`\s]+$','',core)
+        if bare.endswith(':'): continue            # lead-in for the cited bullets below
         # A statement that the corpus does NOT contain something cannot carry a citation --
         # that is what a gaps/limits statement IS. Requiring one here is a checker bug.
+        # Match word STEMS: "evidenced"/"evidence", "studies"/"study", "measured"/"measure".
         if re.search(r'\b(no|not|never|none|unmeasured|unestablished|absent|lacking)\b'
-                     r'.*\b(evidence|stud(y|ies)|corpus|established|controlled|reported|measured|data|baseline)\b',
+                     r'.*\b(evidenc|stud|corpus|establish|controll|report|measur|data|baseline|quantif)',
                      core, re.I): continue
         if not re.search(r'\[S\d+\]',s): uncited.append(core[:80])
 chk('no_uncited_claims', not uncited, f'{len(uncited)} uncited claim(s) in Findings' + (f'; e.g. "{uncited[0]}"' if uncited else ''))

@@ -145,6 +145,7 @@ Use these agent profiles when the task calls for a specialized role.
 - `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
 - `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
 - `/grok-fleet` — Fan out parallel grok CLI sub-agents with filesystem progress, monitoring, and stop control (combines with Claude sub-agents)
+- `/df-research` — Deep research on the grok fleet: multi-perspective sweep, independence + contradiction audit, adversarial critics, cite-check gate
 - `/add-javaducker` — Set up JavaDucker companion tool for semantic code search
 - `/remove-javaducker` — Remove JavaDucker integration
 
@@ -234,7 +235,27 @@ Claude tokens are the scarce resource; grok sub-agents are not. To minimize Clau
 - **Let grok read files** — pass paths, never paste file contents into context to describe them
 
 Measured: turns −64%, Claude output tokens −65%, context bytes −97%, quality held.
-Full guidance in `docs/token-economy.md`.
+Full guidance in `.claude/docs/token-economy.md`.
+
+## Deep Research
+
+For research questions, use `/df-research` — it runs on grok sub-agents, not Claude:
+
+```bash
+bash scripts/df-research.sh run "<question>" [--depth quick|deep]
+```
+
+Phases: decompose -> multi-perspective sweep (parallel, one unit uses X/Twitter search) ->
+independence + contradiction audit -> draft -> adversarial critics (parallel) -> surgical patch ->
+cite-check gate.
+
+- **Read `reports/df-research-audit.json` and the report's Answer section — not the phase bodies.**
+- The audit is a hard gate: >=20 distinct sources, every citation resolves, >=1 contradiction
+  cluster, zero uncited claims, social sources labelled, and no unsupported or fabricated citations.
+- If the audit fails, the report is not shippable. Say so plainly rather than presenting it anyway.
+- X/social sources are signal, not evidence — they are tagged and counted separately.
+
+Full guidance in `.claude/docs/df-research.md`.
 
 ## Updating drom-flow
 

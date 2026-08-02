@@ -96,9 +96,10 @@ CLAUDE.md              -- Behavioral rules, parallelism, closed-loop protocol, p
 .claude/skills/        -- 28 agent skills (/planner, /reviewer, /orchestrator, /grok-fleet, etc.)
 context/               -- Memory, decisions, conventions templates
 workflows/             -- bug-fix, new-feature, refactor, code-review, closed-loop
-docs/                  -- grok fan-out and token economy guides
+.claude/docs/          -- grok fan-out, token economy, df-research guides (gitignored)
 scripts/orchestrate.sh -- Template orchestration script for closed-loop pipelines
 scripts/grok-fleet.sh  -- Grok sub-agent fan-out (spawn/status/stop/collect/resume)
+scripts/df-research.sh -- Deep research pipeline on the grok fleet
 scripts/limit-watch.sh -- Usage-limit watcher + hourly wake-up loop
 scripts/token-audit.sh -- Measure Claude token usage from the session transcript
 scripts/mk-task.sh     -- Generate agent prompts from templates
@@ -263,6 +264,7 @@ Invoke with slash commands to get specialized behavior.
 | `/ascii-architect` | Convert thoughts, architectures, and processes into ASCII art diagrams |
 | `/api-expert` | Contract-first REST APIs (OpenAPI 3.1, Spring Boot, security, rate limiting) |
 | `/grok-fleet` | Fan out parallel grok CLI sub-agents from WSL — filesystem progress, monitoring, stop control |
+| `/df-research` | Deep research on the grok fleet — sweep, contradiction audit, adversarial critics, cite-check gate |
 
 **Web platform quality** (from [addyosmani/web-quality-skills](https://github.com/addyosmani/web-quality-skills), MIT):
 

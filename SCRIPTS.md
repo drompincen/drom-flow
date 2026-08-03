@@ -228,11 +228,24 @@ date +%s > "$STATE_DIR/session-start"
 echo "0" > "$STATE_DIR/agent-count"
 echo "0" > "$STATE_DIR/edit-count"
 
-# Load session memory
+# Load session memory.
+# Cap it: this is injected into EVERY session and then re-read on every turn, so a
+# large MEMORY.md is paid for continuously. Show the top (current focus) and the
+# tail (most recent entries); the full file stays one Read away.
+MEMORY_MAX_BYTES="${DROMFLOW_MEMORY_MAX_BYTES:-4000}"
 if [ -s "$MEMORY" ]; then
   echo "[Session Memory Loaded]"
   echo "---"
-  cat "$MEMORY"
+  msize=$(wc -c < "$MEMORY" | tr -d ' ')
+  if [ "$msize" -gt "$MEMORY_MAX_BYTES" ]; then
+    head -30 "$MEMORY"
+    echo ""
+    echo "... [truncated: ${msize} bytes total, showing head+tail. Full file: context/MEMORY.md] ..."
+    echo ""
+    tail -40 "$MEMORY"
+  else
+    cat "$MEMORY"
+  fi
   echo "---"
 else
   echo "[No session memory found. Create context/MEMORY.md to persist context across sessions.]"
@@ -267,6 +280,10 @@ if javaducker_available; then
     else
       echo "[JavaDucker: connected (port ${JAVADUCKER_HTTP_PORT:-8080})]"
     fi
+    # The 48-tool catalog lives in a doc, surfaced only when JavaDucker is really
+    # present — projects without it should not carry it in every session.
+    [ -f "$DIR/.claude/docs/javaducker.md" ] && \
+      echo "[JavaDucker tool catalog: .claude/docs/javaducker.md]"
   else
     if javaducker_is_shared; then
       echo "[JavaDucker: shared instance not running (from ${JAVADUCKER_SHARED}) — start it from the owning project]"

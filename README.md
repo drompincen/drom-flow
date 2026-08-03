@@ -6,6 +6,11 @@ It also lets Claude **delegate work to grok CLI sub-agents** running in parallel
 
 No MCP servers. No npm packages. No Node.js. Just plain text and bash.
 
+📖 **Full guide: <https://drompincen.github.io/drom-flow>** — including
+[Claude orchestrator, grok workers](https://drompincen.github.io/drom-flow/orchestration),
+and generated references for [skills](https://drompincen.github.io/drom-flow/skills) and
+[scripts](https://drompincen.github.io/drom-flow/scripts).
+
 ## Why drom-flow?
 
 ### The problem

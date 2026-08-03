@@ -1,0 +1,7 @@
+title: drom-flow
+description: Structured workflows, parallel grok sub-agents, and closed-loop pipelines for Claude Code
+theme: jekyll-theme-minimal
+baseurl: /drom-flow
+url: https://drompincen.github.io
+markdown: kramdown
+exclude: [Gemfile, Gemfile.lock, vendor]

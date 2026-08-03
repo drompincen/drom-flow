@@ -1,0 +1,50 @@
+---
+title: Install and updates
+nav_order: 9
+---
+
+# Install, update, uninstall
+
+## Why scripts ship as text
+
+GitHub routes ZIP downloads through `codeload.github.com` when a repo contains `.sh` files, which some
+corporate firewalls block. So **`*.sh` is gitignored** and every script's full source lives in
+[`SCRIPTS.md`](https://github.com/drompincen/drom-flow/blob/main/SCRIPTS.md). Generate them once:
+
+```bash
+claude "Read start-here.md and follow the setup instructions"
+```
+
+`SCRIPTS.md` is the real distribution channel — a script change that isn't re-embedded there never
+reaches anyone.
+
+## Install / update / uninstall
+
+```bash
+bash /path/to/drom-flow/init.sh              # install into the current project
+bash /path/to/drom-flow/init.sh --check .    # dry run
+bash /path/to/drom-flow/init.sh --update .   # upgrade
+bash /path/to/drom-flow/init.sh --uninstall .
+```
+
+**Never overwritten:** `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`,
+`context/CONVENTIONS.md`, `scripts/orchestrate.sh`, plans, reports. Overwritten files are backed up to
+`setup-backup/<timestamp>/` first.
+
+`--update` also **merges** new guidance sections into an existing `CLAUDE.md` rather than replacing it,
+and **preserves third-party hooks** in `.claude/settings.json` (a tool like hyperresearch registering
+its own hook is not clobbered).
+
+## What a host project receives
+
+| Path | Contents |
+|---|---|
+| `CLAUDE.md` | behavioural rules, parallelism, closed-loop and plan protocol |
+| `.claude/skills/` | the skills marked *ships* in [Skills](skills.md) |
+| `.claude/hooks/` | lifecycle hooks (see [Hooks](hooks.md)) |
+| `.claude/docs/` | **operator runbooks — gitignored**, including `runbook.md` |
+| `scripts/` | the fleet, research, audit and watcher scripts |
+| `workflows/`, `context/`, `drom-plans/`, `reports/` | protocol, memory, plans, run output |
+
+**This site is never installed.** `docs/` is the public guide and stays in the repo; host projects get
+`.claude/docs/` instead — terse, operational, and gitignored so it never pollutes your tree.

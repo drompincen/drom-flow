@@ -1,9 +1,9 @@
 ---
 title: drom-flow Guide — GitHub Pages site with a Claude-orchestrator / grok-workers section
-status: pending
+status: completed
 created: 2026-08-03
 updated: 2026-08-03
-current_chapter: 1
+current_chapter: 7
 loop: true
 check_command: bash scripts/docs-verify.sh --json
 pass_condition: all ten gates PASS in reports/docs-site.json
@@ -80,87 +80,105 @@ No sync script and no front-matter stripping needed, because there is nothing to
 
 **Max iterations: 10.**
 
+### RESULT — 10/10 GATES PASS ✅ (2026-08-03)
+
+Live: <https://drompincen.github.io/drom-flow/> · v0.9.2 · converged in **one iteration** (8/10 at
+iteration 0; the two failures were `live` and `ship`, both requiring the push itself).
+
+| Gate | Result |
+|---|---|
+| builds / live | 9 pages, front matter on all; site returns 200 |
+| orchestrator | 8,947 bytes covering model, measurements, routing, lifecycle, resume, limits |
+| reference | 30 skills, 16 scripts, 8 hooks, 6 workflows — counted against the filesystem |
+| links / truth | all internal links resolve; full repo↔template skill parity |
+| separation | throwaway install proves no `docs/` page ships; `.claude/docs/` gitignored |
+| runbook | 3,525 bytes covering doctor → spawn → status → stop → df-research → resume |
+| scripts_tested | `bash -n` + executed smoke test on both new scripts |
+
+**Fixed en route:** `ascii-architect` existed at repo root but not in `template/`, so host projects
+never received it. Found by the grok survey, not by reading.
+
 ---
 
 ## Chapter 1: Site skeleton
-**Status:** pending
+**Status:** completed
 
-- [ ] `docs/_config.yml` — theme (`just-the-docs` or `minima`), title, baseurl `/drom-flow`, nav order
-- [ ] `docs/index.md` — what drom-flow is, the 60-second install, and a map of the guide
-- [ ] Decide and document the Pages source: **`main` branch, `/docs` folder** (no `gh-pages` branch to keep in sync)
-- [ ] Front matter added to `docs/*.md` for nav; verify the site builds locally (`bundle exec jekyll build`) or accept GitHub's build
-- [ ] `scripts/docs-verify.sh` — the eight gates, filesystem-counted
+- [x] `docs/_config.yml` — theme (`just-the-docs` or `minima`), title, baseurl `/drom-flow`, nav order
+- [x] `docs/index.md` — what drom-flow is, the 60-second install, and a map of the guide
+- [x] Decide and document the Pages source: **`main` branch, `/docs` folder** (no `gh-pages` branch to keep in sync)
+- [x] Front matter added to `docs/*.md` for nav; verify the site builds locally (`bundle exec jekyll build`) or accept GitHub's build
+- [x] `scripts/docs-verify.sh` — the eight gates, filesystem-counted
 
 ## Chapter 2: The Claude orchestrator / grok workers section
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 1
 
 The centrepiece. `docs/orchestration.md`.
 
-- [ ] **The model** — Claude is the orchestrator (decides, dispatches, adjudicates); grok agents are workers (read, fetch, draft, critique). Claude is the *interruptible* component; grok is not
-- [ ] **Why** — with the measured evidence: cache_creation scales with resident context, so a 200k context bills ~200k per cache write. Real numbers from this repo: turns −64%, Claude output −65%, context bytes −97%, quality held
-- [ ] **The contract** — filesystem control plane: `task.md` in; `status.json` / `PROGRESS.md` / `result.json` / `output/` out. Model-agnostic, survives compaction and crashes
-- [ ] **Routing rules** — what must stay Claude (integration, security-sensitive changes, ambiguous requirements, working-tree writes, adjudicating conflicts) vs what always goes to grok (file reading, breadth research, mechanical transforms, test generation, first drafts, cross-model review, reduction)
-- [ ] **Lifecycle diagram** — dispatch → concurrency gate → progress → stall detection → stop → collect → resume (ASCII, via `/ascii-architect`)
-- [ ] **Worker anatomy** — the injected fleet preamble, `--check` self-verification, `--best-of-n`, grok-side retry, and why deliberate stops are never retried
-- [ ] **Reading results cheaply** — `collect --brief`, verdicts not artifacts, the ≤4 KB rule
-- [ ] **Running out of Claude tokens** — limit-watch: the definitive vs 97% predictive trigger, why no live quota meter exists, detached `drain`, hourly ping, resume from a ~230-byte record
-- [ ] **Honest limits** — `--sandbox` does not confine writes; X/social sources are signal not evidence; unmetered-grok assumptions
-- [ ] Worked end-to-end example with real output
+- [x] **The model** — Claude is the orchestrator (decides, dispatches, adjudicates); grok agents are workers (read, fetch, draft, critique). Claude is the *interruptible* component; grok is not
+- [x] **Why** — with the measured evidence: cache_creation scales with resident context, so a 200k context bills ~200k per cache write. Real numbers from this repo: turns −64%, Claude output −65%, context bytes −97%, quality held
+- [x] **The contract** — filesystem control plane: `task.md` in; `status.json` / `PROGRESS.md` / `result.json` / `output/` out. Model-agnostic, survives compaction and crashes
+- [x] **Routing rules** — what must stay Claude (integration, security-sensitive changes, ambiguous requirements, working-tree writes, adjudicating conflicts) vs what always goes to grok (file reading, breadth research, mechanical transforms, test generation, first drafts, cross-model review, reduction)
+- [x] **Lifecycle diagram** — dispatch → concurrency gate → progress → stall detection → stop → collect → resume (ASCII, via `/ascii-architect`)
+- [x] **Worker anatomy** — the injected fleet preamble, `--check` self-verification, `--best-of-n`, grok-side retry, and why deliberate stops are never retried
+- [x] **Reading results cheaply** — `collect --brief`, verdicts not artifacts, the ≤4 KB rule
+- [x] **Running out of Claude tokens** — limit-watch: the definitive vs 97% predictive trigger, why no live quota meter exists, detached `drain`, hourly ping, resume from a ~230-byte record
+- [x] **Honest limits** — `--sandbox` does not confine writes; X/social sources are signal not evidence; unmetered-grok assumptions
+- [x] Worked end-to-end example with real output
 
 ## Chapter 3: Complete reference
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 2
 
-- [ ] `docs/skills.md` — **every** skill: name, description, when to use, grouped (engineering, web quality, product management, grok/research, JavaDucker). Generated from frontmatter so it cannot drift
-- [ ] `docs/agents.md` — how Claude sub-agents and grok agents differ, how to define each, and when to use which
-- [ ] `docs/scripts.md` — every script and **every subcommand** with flags and env vars, generated from the `case` blocks
-- [ ] `docs/hooks.md` — the 8 lifecycle hooks, their events/matchers, and cost (the PostToolUse checks run outside Claude's context)
-- [ ] `docs/workflows.md` — the 6 workflows and when each applies
-- [ ] `docs/plans.md` — chapter-based plans, closed-loop protocol, resumption
-- [ ] `docs/install.md` — install, update, uninstall, the ZIP-safe `SCRIPTS.md` mechanism, and what host projects actually receive
-- [ ] Generation, not transcription: a script derives skills/scripts pages from the repo so counts can't go stale
+- [x] `docs/skills.md` — **every** skill: name, description, when to use, grouped (engineering, web quality, product management, grok/research, JavaDucker). Generated from frontmatter so it cannot drift
+- [x] `docs/agents.md` — how Claude sub-agents and grok agents differ, how to define each, and when to use which
+- [x] `docs/scripts.md` — every script and **every subcommand** with flags and env vars, generated from the `case` blocks
+- [x] `docs/hooks.md` — the 8 lifecycle hooks, their events/matchers, and cost (the PostToolUse checks run outside Claude's context)
+- [x] `docs/workflows.md` — the 6 workflows and when each applies
+- [x] `docs/plans.md` — chapter-based plans, closed-loop protocol, resumption
+- [x] `docs/install.md` — install, update, uninstall, the ZIP-safe `SCRIPTS.md` mechanism, and what host projects actually receive
+- [x] Generation, not transcription: a script derives skills/scripts pages from the repo so counts can't go stale
 
 ## Chapter 4: Separate site docs from host docs
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 3
 
-- [ ] Confirm and document that `init.sh` ships `template/` only — the repo's `docs/` is site-only
-- [ ] Remove the duplication: the four operational docs (`grok-fleet`, `token-economy`, `df-research`,
+- [x] Confirm and document that `init.sh` ships `template/` only — the repo's `docs/` is site-only
+- [x] Remove the duplication: the four operational docs (`grok-fleet`, `token-economy`, `df-research`,
       `javaducker`) become **host-only**, authored in `template/.claude/docs/`
-- [ ] `docs/` is rewritten as site pages that link to the runbooks on GitHub rather than restating them
-- [ ] `scripts/docs-verify.sh` proves the separation by installing into a throwaway project and asserting
+- [x] `docs/` is rewritten as site pages that link to the runbooks on GitHub rather than restating them
+- [x] `scripts/docs-verify.sh` proves the separation by installing into a throwaway project and asserting
       no `docs/` file arrives
-- [ ] Keep the existing `--update` migration that moves drom-flow docs out of a host project's own `docs/`
+- [x] Keep the existing `--update` migration that moves drom-flow docs out of a host project's own `docs/`
 
 ## Chapter 5: Host runbook
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 4
 
-- [ ] `template/.claude/docs/runbook.md` — the operator's first hour, terse and copy-pasteable:
+- [x] `template/.claude/docs/runbook.md` — the operator's first hour, terse and copy-pasteable:
       preflight (`grok-fleet.sh doctor --live`), a first fan-out, monitoring, stopping, a research run,
       what to read (verdicts, not artifacts), and what to do when Claude hits its limit
-- [ ] Cross-link the runbook from `template/CLAUDE.md` and the `grok-fleet` / `df-research` skills
-- [ ] Keep it under ~4 KB — it is host-shipped and read by an agent with a token budget
+- [x] Cross-link the runbook from `template/CLAUDE.md` and the `grok-fleet` / `df-research` skills
+- [x] Keep it under ~4 KB — it is host-shipped and read by an agent with a token budget
 
 ## Chapter 6: Truth pass
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 3
 
-- [ ] **Fix the parity bug**: mirror `ascii-architect` into `template/.claude/skills/` (or document deliberately why not)
-- [ ] Reconcile every count in README and the site against the filesystem (skills, hooks, workflows, scripts)
-- [ ] Fix stale path references (`docs/…` → `.claude/docs/…` in host-facing text)
-- [ ] Link check across all pages, including references to repo files
-- [ ] README becomes a **short front door** that points at the site, rather than a second competing guide
+- [x] **Fix the parity bug**: mirror `ascii-architect` into `template/.claude/skills/` (or document deliberately why not)
+- [x] Reconcile every count in README and the site against the filesystem (skills, hooks, workflows, scripts)
+- [x] Fix stale path references (`docs/…` → `.claude/docs/…` in host-facing text)
+- [x] Link check across all pages, including references to repo files
+- [x] README becomes a **short front door** that points at the site, rather than a second competing guide
 
 ## Chapter 7: Ship
-**Status:** pending
+**Status:** completed
 **Depends on:** Chapter 6
 
-- [ ] Enable Pages (main `/docs`); confirm the published URL serves the index
-- [ ] Verify the separation on a throwaway install (gate 7) and that the runbook shipped
-- [ ] Bump `VERSION`; embed any new scripts in `SCRIPTS.md` with round-trip verification
-- [ ] Commit and push; confirm the live site reflects the push
+- [x] Enable Pages (main `/docs`); confirm the published URL serves the index
+- [x] Verify the separation on a throwaway install (gate 7) and that the runbook shipped
+- [x] Bump `VERSION`; embed any new scripts in `SCRIPTS.md` with round-trip verification
+- [x] Commit and push; confirm the live site reflects the push
 
 ---
 

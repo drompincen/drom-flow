@@ -27,7 +27,7 @@ Out of the box, Claude Code is powerful but unstructured. Every session starts f
 | **Session memory** | Gone when session ends | `context/MEMORY.md` loaded at start, updated at end, carries focus/findings/decisions forward |
 | **Progress tracking** | None | Plan chapters track completed/in-progress/pending status; statusline shows `plan:ch3/5(2check)` |
 | **Consistent workflows** | Depends on how you prompt | Predefined workflows for bug fixes, features, refactoring, code review, and closed-loop QA |
-| **Agent specialization** | Generic agents | 28 skill profiles (`/planner`, `/reviewer`, `/debugger`, `/grok-fleet`, etc.) with domain-specific instructions |
+| **Agent specialization** | Generic agents | 30 skill profiles (`/planner`, `/reviewer`, `/debugger`, `/grok-fleet`, etc.) with domain-specific instructions |
 | **Observability** | No visibility into what's happening | Statusline showing git state, session time, edit count, Claude/grok agent counts, memory status, and plan progress |
 | **Resumability** | Start over every session | Session-start hook detects in-progress plans and surfaces them with current chapter |
 | **Extra parallelism** | Limited to Claude's own sub-agents | Fan out to **grok CLI sub-agents** — 8 concurrent verified in 13s — with progress, stop control, and stall detection |
@@ -98,10 +98,10 @@ Your plans in `drom-plans/`, reports in `reports/`, and any other project files 
 CLAUDE.md              -- Behavioral rules, parallelism, closed-loop protocol, plan protocol
 .claude/settings.json  -- Hooks, statusline, permissions
 .claude/hooks/         -- 8 bash lifecycle hooks
-.claude/skills/        -- 28 agent skills (/planner, /reviewer, /orchestrator, /grok-fleet, etc.)
+.claude/skills/        -- 30 agent skills (/planner, /reviewer, /orchestrator, /grok-fleet, etc.)
 context/               -- Memory, decisions, conventions templates
 workflows/             -- bug-fix, new-feature, refactor, code-review, closed-loop
-.claude/docs/          -- grok fan-out, token economy, df-research guides (gitignored)
+.claude/docs/          -- operator runbook + grok/token-economy/df-research guides (gitignored)
 scripts/orchestrate.sh -- Template orchestration script for closed-loop pipelines
 scripts/grok-fleet.sh  -- Grok sub-agent fan-out (spawn/status/stop/collect/resume)
 scripts/df-research.sh -- Deep research pipeline on the grok fleet

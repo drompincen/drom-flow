@@ -238,11 +238,15 @@ if [ -s "$MEMORY" ]; then
   echo "---"
   msize=$(wc -c < "$MEMORY" | tr -d ' ')
   if [ "$msize" -gt "$MEMORY_MAX_BYTES" ]; then
-    head -30 "$MEMORY"
+    # Bound by BYTES, not lines: a memory file can be 70 long lines, where a
+    # head/tail line count trims nothing at all.
+    _head=$(( MEMORY_MAX_BYTES * 2 / 5 ))
+    _tail=$(( MEMORY_MAX_BYTES - _head ))
+    head -c "$_head" "$MEMORY"
     echo ""
-    echo "... [truncated: ${msize} bytes total, showing head+tail. Full file: context/MEMORY.md] ..."
+    echo "... [truncated: ${msize} bytes total, showing first ${_head}B + last ${_tail}B. Full file: context/MEMORY.md] ..."
     echo ""
-    tail -40 "$MEMORY"
+    tail -c "$_tail" "$MEMORY"
   else
     cat "$MEMORY"
   fi
@@ -615,6 +619,10 @@ if [ ! -d "$TEMPLATE_DIR" ]; then
   exit 1
 fi
 
+_SETTINGS_BEFORE=""
+if [ -f "$TARGET_DIR/.claude/settings.json" ]; then
+  _SETTINGS_BEFORE="$(mktemp)"; cp "$TARGET_DIR/.claude/settings.json" "$_SETTINGS_BEFORE"
+fi
 # Files that belong to the user and should NEVER be overwritten on update.
 USER_FILES=(
   "CLAUDE.md"
@@ -941,6 +949,33 @@ if [ "$MODE" = "update" ] || [ "$MODE" = "install" ]; then
   done
   # Only removes docs/ if it is now empty; a non-empty dir must not abort the installer.
   rmdir "$TARGET_DIR/docs" 2>/dev/null || true
+fi
+
+# --- Preserve third-party hooks in .claude/settings.json ---
+# settings.json is a managed file, but other tools (e.g. hyperresearch) register their
+# own hooks in it. Replacing it wholesale silently deletes them. Re-merge any hook entry
+# that does not point at drom-flow's own hooks directory.
+if [ -f "$TARGET_DIR/.claude/settings.json" ] && [ -n "${_SETTINGS_BEFORE:-}" ] && [ -f "$_SETTINGS_BEFORE" ]; then
+  python3 - "$_SETTINGS_BEFORE" "$TARGET_DIR/.claude/settings.json" <<'PYEOF' 2>/dev/null
+import json,sys
+old_p,new_p=sys.argv[1],sys.argv[2]
+try:
+    old=json.load(open(old_p)); new=json.load(open(new_p))
+except Exception: raise SystemExit(0)
+restored=0
+for ev,arr in (old.get('hooks') or {}).items():
+    for entry in arr or []:
+        blob=json.dumps(entry)
+        if '.claude/hooks/' in blob:   # drom-flow's own -- the fresh copy already has it
+            continue
+        tgt=new.setdefault('hooks',{}).setdefault(ev,[])
+        if entry not in tgt:
+            tgt.append(entry); restored+=1
+if restored:
+    json.dump(new,open(new_p,'w'),indent=2)
+    print(f"  merge:   .claude/settings.json - preserved {restored} third-party hook entr(ies)")
+PYEOF
+  rm -f "$_SETTINGS_BEFORE"
 fi
 
 for pattern in ".claude/.state/" ".claude/edit-log.jsonl" ".mcp.json" ".claude/.javaducker/" ".claude/.grok-fleet/" ".claude/docs/" "reports/grok-*.json" "reports/grok-*.md" "setup-backup/"; do

@@ -24,3 +24,5 @@ reports/grok-*.md
 .claude/docs/
 .ri-build/
 .ri-build-t/
+__pycache__/
+*.pyc

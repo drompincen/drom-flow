@@ -162,6 +162,20 @@ Use these agent profiles when the task calls for a specialized role.
 - `/roadmap-planning` — Strategic roadmap (prioritization, epics, sequencing)
 - `/prioritization-advisor` — Choose the right prioritization framework (RICE, ICE, value/effort)
 
+## Repository Intelligence
+
+drom-flow keeps a deterministic structural map of this repository up to date automatically. The
+**user** never installs, initialises, refreshes or maintains it, and must never be asked to.
+Skills reach it through a documented internal command — the details live in the skill files, not
+here.
+
+For unfamiliar multi-file work, architecture analysis, debugging, impact analysis, refactoring
+or review, prefer that structural map over broad source discovery, then verify what it tells you
+against the actual source before acting. The `/planner`, `/architect`, `/debugger`, `/reviewer`,
+`/refactorer`, `/implementer` and `/orchestrator` skills carry the details. For trivial work — a
+typo, a formatting fix, a one-line config change — skip it and just make the edit. If it is
+unavailable, fall back to ordinary search and read without comment.
+
 ## Token Economy
 
 Claude tokens are the scarce resource; grok sub-agents are not. To minimize Claude usage:

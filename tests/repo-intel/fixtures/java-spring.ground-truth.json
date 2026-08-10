@@ -1,0 +1,208 @@
+{
+  "fixture": "java-spring",
+  "language": "java",
+  "declarations": [
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController", "type": "class" },
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController.caseService", "type": "field" },
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController.CaseController", "type": "constructor" },
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController.getById", "type": "method" },
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController.create", "type": "method" },
+    { "file": "src/main/java/com/acme/api/CaseController.java", "qualified_name": "com.acme.api.CaseController.update", "type": "method" },
+
+    { "file": "src/main/java/com/acme/service/CaseService.java", "qualified_name": "com.acme.service.CaseService", "type": "interface" },
+    { "file": "src/main/java/com/acme/service/CaseService.java", "qualified_name": "com.acme.service.CaseService.getCase", "type": "method" },
+    { "file": "src/main/java/com/acme/service/CaseService.java", "qualified_name": "com.acme.service.CaseService.createCase", "type": "method" },
+    { "file": "src/main/java/com/acme/service/CaseService.java", "qualified_name": "com.acme.service.CaseService.updateCase", "type": "method" },
+
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl", "type": "class" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.caseRepository", "type": "field" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.CaseServiceImpl", "type": "constructor" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.getCase", "type": "method" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.createCase", "type": "method" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.updateCase", "type": "method" },
+    { "file": "src/main/java/com/acme/service/CaseServiceImpl.java", "qualified_name": "com.acme.service.CaseServiceImpl.touch", "type": "method" },
+
+    { "file": "src/main/java/com/acme/repo/CaseRepository.java", "qualified_name": "com.acme.repo.CaseRepository", "type": "class" },
+    { "file": "src/main/java/com/acme/repo/CaseRepository.java", "qualified_name": "com.acme.repo.CaseRepository.findById", "type": "method" },
+    { "file": "src/main/java/com/acme/repo/CaseRepository.java", "qualified_name": "com.acme.repo.CaseRepository.get", "type": "method" },
+    { "file": "src/main/java/com/acme/repo/CaseRepository.java", "qualified_name": "com.acme.repo.CaseRepository.save", "type": "method" },
+    { "file": "src/main/java/com/acme/repo/CaseRepository.java", "qualified_name": "com.acme.repo.CaseRepository.delete", "type": "method" },
+
+    { "file": "src/main/java/com/acme/repo/CaseAuditRepository.java", "qualified_name": "com.acme.repo.CaseAuditRepository", "type": "class" },
+    { "file": "src/main/java/com/acme/repo/CaseAuditRepository.java", "qualified_name": "com.acme.repo.CaseAuditRepository.findById", "type": "method" },
+    { "file": "src/main/java/com/acme/repo/CaseAuditRepository.java", "qualified_name": "com.acme.repo.CaseAuditRepository.audit", "type": "method" },
+
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case", "type": "class" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.title", "type": "field" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.status", "type": "field" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.Case", "type": "constructor" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.getTitle", "type": "method" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.setTitle", "type": "method" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.getStatus", "type": "method" },
+    { "file": "src/main/java/com/acme/model/Case.java", "qualified_name": "com.acme.model.Case.setStatus", "type": "method" },
+
+    { "file": "src/main/java/com/acme/model/CaseStatus.java", "qualified_name": "com.acme.model.CaseStatus", "type": "enum" },
+    { "file": "src/main/java/com/acme/model/CaseStatus.java", "qualified_name": "com.acme.model.CaseStatus.OPEN", "type": "constant" },
+    { "file": "src/main/java/com/acme/model/CaseStatus.java", "qualified_name": "com.acme.model.CaseStatus.IN_PROGRESS", "type": "constant" },
+    { "file": "src/main/java/com/acme/model/CaseStatus.java", "qualified_name": "com.acme.model.CaseStatus.CLOSED", "type": "constant" },
+    { "file": "src/main/java/com/acme/model/CaseStatus.java", "qualified_name": "com.acme.model.CaseStatus.isTerminal", "type": "method" },
+
+    { "file": "src/main/java/com/acme/model/BaseEntity.java", "qualified_name": "com.acme.model.BaseEntity", "type": "class" },
+    { "file": "src/main/java/com/acme/model/BaseEntity.java", "qualified_name": "com.acme.model.BaseEntity.id", "type": "field" },
+    { "file": "src/main/java/com/acme/model/BaseEntity.java", "qualified_name": "com.acme.model.BaseEntity.BaseEntity", "type": "constructor" },
+    { "file": "src/main/java/com/acme/model/BaseEntity.java", "qualified_name": "com.acme.model.BaseEntity.getId", "type": "method" },
+    { "file": "src/main/java/com/acme/model/BaseEntity.java", "qualified_name": "com.acme.model.BaseEntity.setId", "type": "method" },
+
+    { "file": "src/main/java/com/acme/util/Helper.java", "qualified_name": "com.acme.util.Helper", "type": "class" },
+    { "file": "src/main/java/com/acme/util/Helper.java", "qualified_name": "com.acme.util.Helper.VERSION", "type": "constant" },
+    { "file": "src/main/java/com/acme/util/Helper.java", "qualified_name": "com.acme.util.Helper.Helper", "type": "constructor" },
+    { "file": "src/main/java/com/acme/util/Helper.java", "qualified_name": "com.acme.util.Helper.help", "type": "method" },
+    { "file": "src/main/java/com/acme/util/Helper.java", "qualified_name": "com.acme.util.Helper.format", "type": "method" },
+
+    { "file": "src/main/java/com/acme/other/Helper.java", "qualified_name": "com.acme.other.Helper", "type": "class" },
+    { "file": "src/main/java/com/acme/other/Helper.java", "qualified_name": "com.acme.other.Helper.help", "type": "method" },
+
+    { "file": "src/main/java/com/acme/event/CaseUpdatedEvent.java", "qualified_name": "com.acme.event.CaseUpdatedEvent", "type": "record" },
+    { "file": "src/main/java/com/acme/event/CaseUpdatedEvent.java", "qualified_name": "com.acme.event.CaseUpdatedEvent.caseId", "type": "field" },
+    { "file": "src/main/java/com/acme/event/CaseUpdatedEvent.java", "qualified_name": "com.acme.event.CaseUpdatedEvent.title", "type": "field" },
+    { "file": "src/main/java/com/acme/event/CaseUpdatedEvent.java", "qualified_name": "com.acme.event.CaseUpdatedEvent.CaseUpdatedEvent", "type": "constructor" },
+
+    { "file": "src/main/java/com/acme/event/CaseEventListener.java", "qualified_name": "com.acme.event.CaseEventListener", "type": "class" },
+    { "file": "src/main/java/com/acme/event/CaseEventListener.java", "qualified_name": "com.acme.event.CaseEventListener.onCaseUpdated", "type": "method" },
+    { "file": "src/main/java/com/acme/event/CaseEventListener.java", "qualified_name": "com.acme.event.CaseEventListener.handle", "type": "method" },
+
+    { "file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "qualified_name": "com.acme.service.CaseServiceImplTest", "type": "test" },
+    { "file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "qualified_name": "com.acme.service.CaseServiceImplTest.testGetCase", "type": "method" },
+    { "file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "qualified_name": "com.acme.service.CaseServiceImplTest.testCreateCase", "type": "method" }
+  ],
+  "relations": [
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "com.acme.model.Case" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "com.acme.service.CaseService" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "org.springframework.web.bind.annotation.GetMapping" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "org.springframework.web.bind.annotation.PostMapping" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "org.springframework.web.bind.annotation.PutMapping" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "org.springframework.web.bind.annotation.RequestMapping" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/api/CaseController.java", "to": "org.springframework.web.bind.annotation.RestController" },
+
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseService.java", "to": "com.acme.model.Case" },
+
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "com.acme.model.*" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "com.acme.repo.CaseRepository" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "com.acme.util.Helper" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "org.springframework.stereotype.Service" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "java.util.ArrayList" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "to": "java.util.List" },
+
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/repo/CaseRepository.java", "to": "com.acme.model.Case" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/repo/CaseRepository.java", "to": "org.springframework.stereotype.Repository" },
+
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/repo/CaseAuditRepository.java", "to": "com.acme.model.Case" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/repo/CaseAuditRepository.java", "to": "org.springframework.stereotype.Repository" },
+
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/event/CaseEventListener.java", "to": "org.springframework.kafka.annotation.KafkaListener" },
+    { "relation": "IMPORTS", "from_file": "src/main/java/com/acme/event/CaseEventListener.java", "to": "org.springframework.stereotype.Component" },
+
+    { "relation": "IMPORTS", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "to": "com.acme.model.Case" },
+    { "relation": "IMPORTS", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "to": "com.acme.repo.CaseRepository" },
+    { "relation": "IMPORTS", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "to": "org.junit.jupiter.api.Test" },
+
+    { "relation": "EXTENDS", "from": "com.acme.model.Case", "to": "com.acme.model.BaseEntity" },
+    { "relation": "IMPLEMENTS", "from": "com.acme.service.CaseServiceImpl", "to": "com.acme.service.CaseService" },
+
+    { "relation": "CALLS", "from": "com.acme.api.CaseController.getById", "to": "com.acme.service.CaseService.getCase", "from_file": "src/main/java/com/acme/api/CaseController.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.api.CaseController.create", "to": "com.acme.service.CaseService.createCase", "from_file": "src/main/java/com/acme/api/CaseController.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.api.CaseController.update", "to": "com.acme.service.CaseService.updateCase", "from_file": "src/main/java/com/acme/api/CaseController.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.getCase", "to": "com.acme.repo.CaseRepository.findById", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.getCase", "to": "com.acme.util.Helper.help", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.getCase", "to": "com.acme.util.Helper.format", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.getCase", "to": "com.acme.model.Case.setTitle", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.createCase", "to": "com.acme.model.Case.Case", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.createCase", "to": "com.acme.model.Case.setStatus", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.createCase", "to": "com.acme.repo.CaseRepository.save", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.updateCase", "to": "com.acme.repo.CaseRepository.findById", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.updateCase", "to": "com.acme.model.Case.setTitle", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.updateCase", "to": "com.acme.model.Case.setStatus", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.updateCase", "to": "com.acme.repo.CaseRepository.save", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.touch", "to": "com.acme.model.Case.getStatus", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.touch", "to": "com.acme.model.BaseEntity.getId", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImpl.touch", "to": "com.acme.repo.CaseRepository.delete", "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.repo.CaseRepository.get", "to": "com.acme.repo.CaseRepository.findById", "from_file": "src/main/java/com/acme/repo/CaseRepository.java", "cross_file": false },
+
+    { "relation": "CALLS", "from": "com.acme.event.CaseEventListener.onCaseUpdated", "to": "com.acme.event.CaseEventListener.handle", "from_file": "src/main/java/com/acme/event/CaseEventListener.java", "cross_file": false },
+    { "relation": "CALLS", "from": "com.acme.event.CaseEventListener.handle", "to": "com.acme.event.CaseUpdatedEvent.caseId", "from_file": "src/main/java/com/acme/event/CaseEventListener.java", "cross_file": true },
+
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testGetCase", "to": "com.acme.repo.CaseRepository.CaseRepository", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testGetCase", "to": "com.acme.service.CaseServiceImpl.CaseServiceImpl", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testGetCase", "to": "com.acme.service.CaseServiceImpl.getCase", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testCreateCase", "to": "com.acme.repo.CaseRepository.CaseRepository", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testCreateCase", "to": "com.acme.service.CaseServiceImpl.CaseServiceImpl", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true },
+    { "relation": "CALLS", "from": "com.acme.service.CaseServiceImplTest.testCreateCase", "to": "com.acme.service.CaseServiceImpl.createCase", "from_file": "src/test/java/com/acme/service/CaseServiceImplTest.java", "cross_file": true }
+  ],
+  "negatives": [
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.getCase",
+      "to": "com.acme.other.Helper.help",
+      "why": "same simple name Helper.help, different package; only com.acme.util.Helper is imported and used"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java",
+      "to": "com.acme.other.Helper",
+      "why": "import is commented out: // import com.acme.other.Helper;"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.getCase",
+      "to": "com.acme.other.Helper.help",
+      "why": "fully-qualified call is commented out: // com.acme.other.Helper.help();"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.getCase",
+      "to": "com.acme.repo.CaseRepository.get",
+      "why": "buffer.get(0) is java.util.List.get on a local List variable, not CaseRepository.get"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.getCase",
+      "to": "com.acme.repo.CaseAuditRepository.findById",
+      "why": "caseRepository field is declared CaseRepository; findById must not resolve to the same-named method on CaseAuditRepository"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.updateCase",
+      "to": "com.acme.repo.CaseAuditRepository.findById",
+      "why": "same field-type trap: declared type CaseRepository, not CaseAuditRepository"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java",
+      "to": "com.acme.other.Helper",
+      "why": "string literal decoy contains text 'import com.acme.other.Helper; Helper.help();' — not a real import"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.service.CaseServiceImpl.getCase",
+      "to": "com.acme.other.Helper.help",
+      "why": "string literal looks like a call/import but must be ignored by a syntactic extractor"
+    },
+    {
+      "relation": "CALLS",
+      "from": "com.acme.api.CaseController.getById",
+      "to": "com.acme.service.CaseServiceImpl.getCase",
+      "why": "controller field is typed CaseService (interface); without runtime wiring, call resolves to the interface method, not the impl"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/main/java/com/acme/service/CaseServiceImpl.java",
+      "to": "com.acme.repo.CaseAuditRepository",
+      "why": "CaseAuditRepository is never imported in CaseServiceImpl"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "fixture-app",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "express": "^4.19.2",
+    "lodash": "4.17.21",
+    "uuid": "^9.0.1",
+    "semver": "7.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "~5.4.5",
+    "jest": "^29.7.0"
+  }
+}

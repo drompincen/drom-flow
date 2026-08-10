@@ -70,6 +70,14 @@ drom-flow — generate a grok task.md from a template, so dispatching N units co
 
 drom-flow orchestration script template
 
+### `repo-intel-bench.sh`
+
+drom-flow — measures what repository intelligence is FOR: discovery cost.
+
+### `repo-intel-verify.sh`
+
+drom-flow — release gates for repository intelligence.
+
 ### `test-resume.sh`
 
 drom-flow — gate 7: survive Claude token exhaustion.

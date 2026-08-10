@@ -32,6 +32,7 @@ Out of the box, Claude Code is powerful but unstructured. Every session starts f
 | **Resumability** | Start over every session | Session-start hook detects in-progress plans and surfaces them with current chapter |
 | **Extra parallelism** | Limited to Claude's own sub-agents | Fan out to **grok CLI sub-agents** — 8 concurrent verified in 13s — with progress, stop control, and stall detection |
 | **Token cost** | Every file read and draft burns Claude tokens | Delegate to grok: measured **−64% turns, −65% Claude output, −97% context bytes**, quality held |
+| **Repository discovery** | Every session re-greps and re-reads the same files to work out what connects to what | Deterministic structural map maintained automatically; measured **−86% to −92% exploratory tool calls** and **−89% to −98% source bytes** before the right files are found |
 | **Hitting the usage limit** | Session dies mid-task, work is stranded | Checkpoint, hand off to detached grok agents that keep running, arm an hourly ping, resume from a ~230-byte record |
 
 ### Real-world result
@@ -223,6 +224,34 @@ Honest about what is measurable: Claude Code exposes **no live quota meter**. Th
 exact — a transcript message carrying the reset time — so that trigger is reliable. The **97% figure
 is an estimate** against a learned budget, and is suppressed (reported as `null`) until trustworthy,
 so it never shows a fabricated percentage. The check runs in a hook: ~0.2s, **zero Claude tokens**.
+
+### Repository intelligence — automatic, invisible
+
+drom-flow maintains a deterministic structural map of your repository and its skills consult it
+before searching your source. **There is no command to run and nothing to set up** — install or
+upgrade drom-flow and it is simply there.
+
+- `/planner`, `/architect`, `/debugger`, `/reviewer` and `/refactorer` use it to find the real
+  working set for a change, then read and verify those files
+- Java, Python, TypeScript/JavaScript, Bash, and the common package manifests
+- Every relationship carries provenance and a confidence — `EXTRACTED`, `INFERRED` or
+  `AMBIGUOUS`. Nothing uncertain is promoted to certain
+- Entirely local and deterministic: no model, no API, no network, and your source never leaves
+  the machine. It parses syntax; it never executes your code
+- Secrets, binaries, oversized files and symlinks that leave the repository are never indexed
+- The graph lives in `.claude/.state/repo-intel/` by default and is relocatable via
+  `DROMFLOW_REPO_INTEL_STATE` or `REPO_INTEL_STATE` in `.claude/.state/drom-flow.conf`
+- If there is no JVM, or anything else fails, drom-flow falls back silently to ordinary search
+  and read — you lose the speed-up, not the tool
+
+Measured on real repositories (method documented in `scripts/repo-intel-bench.sh`):
+
+| Repository | Files | Exploratory tool calls | Source bytes read |
+|---|---:|---|---|
+| spring-petclinic | 131 | 97 → 13 (−86.6%) | 952 KB → 106 KB (−88.9%) |
+| axios | 464 | 138 → 11 (−92.0%) | 3.01 MB → 69 KB (−97.7%) |
+
+Full page: <https://drompincen.github.io/drom-flow/repo-intelligence>
 
 ### Closed-loop iteration
 

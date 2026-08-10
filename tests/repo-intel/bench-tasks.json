@@ -1,0 +1,58 @@
+{
+  "_comment": "Each task is a realistic request plus the working set a correct answer must reach. Working sets were derived by reading the repositories, not from the graph.",
+  "java-spring": [
+    {"task": "change the case status enum and everything that persists or exposes it",
+     "seed": "CaseStatus",
+     "working_set": ["src/main/java/com/acme/model/CaseStatus.java",
+                     "src/main/java/com/acme/model/Case.java",
+                     "src/main/java/com/acme/service/CaseServiceImpl.java",
+                     "src/main/java/com/acme/api/CaseController.java"]},
+    {"task": "modify the case repository persistence contract",
+     "seed": "CaseRepository",
+     "working_set": ["src/main/java/com/acme/repo/CaseRepository.java",
+                     "src/main/java/com/acme/service/CaseServiceImpl.java"]},
+    {"task": "change the case updated event payload consumed from kafka",
+     "seed": "CaseUpdatedEvent",
+     "working_set": ["src/main/java/com/acme/event/CaseUpdatedEvent.java",
+                     "src/main/java/com/acme/event/CaseEventListener.java"]},
+    {"task": "change the case service interface",
+     "seed": "CaseService",
+     "working_set": ["src/main/java/com/acme/service/CaseService.java",
+                     "src/main/java/com/acme/service/CaseServiceImpl.java",
+                     "src/main/java/com/acme/api/CaseController.java"]}
+  ],
+  "spring-petclinic": [
+    {"task": "change the owner entity and everything that reads or writes it",
+     "seed": "Owner",
+     "working_set": ["src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+                     "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+                     "src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java"]},
+    {"task": "modify the pet type validation and the controller that uses it",
+     "seed": "PetType",
+     "working_set": ["src/main/java/org/springframework/samples/petclinic/owner/PetType.java",
+                     "src/main/java/org/springframework/samples/petclinic/owner/PetController.java"]},
+    {"task": "change the visit booking flow",
+     "seed": "Visit",
+     "working_set": ["src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+                     "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"]}
+  ],
+  "axios": [
+    {"task": "change how request configuration is merged",
+     "seed": "mergeConfig",
+     "working_set": ["lib/core/mergeConfig.js", "lib/core/Axios.js"]},
+    {"task": "modify the xhr adapter behaviour",
+     "seed": "xhrAdapter",
+     "working_set": ["lib/adapters/xhr.js", "lib/adapters/adapters.js"]},
+    {"task": "change interceptor handling",
+     "seed": "InterceptorManager",
+     "working_set": ["lib/core/InterceptorManager.js", "lib/core/Axios.js"]}
+  ],
+  "streamlit": [
+    {"task": "change the session state implementation",
+     "seed": "SessionState",
+     "working_set": ["lib/streamlit/runtime/state/session_state.py"]},
+    {"task": "modify the dataframe element serialisation",
+     "seed": "DataFrame",
+     "working_set": ["lib/streamlit/elements/arrow.py"]}
+  ]
+}

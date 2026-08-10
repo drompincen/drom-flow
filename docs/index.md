@@ -61,3 +61,7 @@ drom-flow is opinionated and young. Three things worth knowing before you rely o
   learned from past limit events and is suppressed until it's trustworthy. The 100% trigger is exact.
 
 [Source on GitHub](https://github.com/drompincen/drom-flow)
+
+**[Repository intelligence](repo-intelligence.md)** — drom-flow keeps a deterministic structural
+map of your repository up to date automatically, so planning, debugging, review and refactoring
+start from the right files instead of finding them again every session. No setup, no commands.

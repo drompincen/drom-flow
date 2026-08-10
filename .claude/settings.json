@@ -18,6 +18,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/javaducker-index.sh\"",
             "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/repo-intel-mark.sh\"",
+            "timeout": 3000
           }
         ]
       },
@@ -58,6 +63,15 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/scripts/limit-watch.sh\" status 2>/dev/null | grep -q '\"state\": \"limited\"' && echo \"[Usage limit armed] see .claude/.state/limit-armed.json \u2014 resume with: bash scripts/grok-fleet.sh resume --run-id <RUN>\" || true",
             "timeout": 8000
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/repo-intel-session.sh\"",
+            "timeout": 5000
           }
         ]
       }

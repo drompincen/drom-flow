@@ -1,0 +1,377 @@
+{
+  "method": "scripted surrogate: grep-then-read baseline vs one bounded graph query; see script header",
+  "runs": {
+    "java-spring": {
+      "repository": "java-spring",
+      "repo_files": 13,
+      "repo_source_bytes": 6476,
+      "first_intake_ms": 808,
+      "noop_refresh_ms": 792,
+      "tasks": [
+        {
+          "task": "change the case status enum and everything that persists or exposes it",
+          "seed": "CaseStatus",
+          "working_set": 4,
+          "baseline": {
+            "tool_calls": 14,
+            "grep_terms": 5,
+            "files_opened": 9,
+            "bytes": 5750,
+            "working_set_found": 4
+          },
+          "graph": {
+            "tool_calls": 6,
+            "query_bytes": 4771,
+            "files_opened": 4,
+            "bytes": 17018,
+            "working_set_found": 4,
+            "query_ms": 1304,
+            "candidates_returned": 9
+          },
+          "reduction": {
+            "tool_calls_pct": 57.1,
+            "bytes_pct": -196.0
+          }
+        },
+        {
+          "task": "modify the case repository persistence contract",
+          "seed": "CaseRepository",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 9,
+            "grep_terms": 4,
+            "files_opened": 5,
+            "bytes": 4365,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 4334,
+            "files_opened": 2,
+            "bytes": 15325,
+            "working_set_found": 2,
+            "query_ms": 1294,
+            "candidates_returned": 10
+          },
+          "reduction": {
+            "tool_calls_pct": 55.6,
+            "bytes_pct": -251.1
+          }
+        },
+        {
+          "task": "change the case updated event payload consumed from kafka",
+          "seed": "CaseUpdatedEvent",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 14,
+            "grep_terms": 6,
+            "files_opened": 8,
+            "bytes": 5257,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 1069,
+            "files_opened": 2,
+            "bytes": 10226,
+            "working_set_found": 2,
+            "query_ms": 1260,
+            "candidates_returned": 9
+          },
+          "reduction": {
+            "tool_calls_pct": 71.4,
+            "bytes_pct": -94.5
+          }
+        },
+        {
+          "task": "change the case service interface",
+          "seed": "CaseService",
+          "working_set": 3,
+          "baseline": {
+            "tool_calls": 7,
+            "grep_terms": 3,
+            "files_opened": 4,
+            "bytes": 3676,
+            "working_set_found": 3
+          },
+          "graph": {
+            "tool_calls": 5,
+            "query_bytes": 2219,
+            "files_opened": 3,
+            "bytes": 14401,
+            "working_set_found": 3,
+            "query_ms": 1312,
+            "candidates_returned": 9
+          },
+          "reduction": {
+            "tool_calls_pct": 28.6,
+            "bytes_pct": -291.8
+          }
+        }
+      ],
+      "totals": {
+        "baseline_tool_calls": 44,
+        "graph_tool_calls": 19,
+        "baseline_bytes": 19048,
+        "graph_bytes": 56970,
+        "tool_call_reduction_pct": 56.8,
+        "byte_reduction_pct": -199.1,
+        "working_set_recall_pct": 100.0
+      }
+    },
+    "spring-petclinic": {
+      "repository": "spring-petclinic",
+      "repo_files": 131,
+      "repo_source_bytes": 1400953,
+      "first_intake_ms": 1354,
+      "noop_refresh_ms": 907,
+      "tasks": [
+        {
+          "task": "change the owner entity and everything that reads or writes it",
+          "seed": "Owner",
+          "working_set": 3,
+          "baseline": {
+            "tool_calls": 22,
+            "grep_terms": 4,
+            "files_opened": 18,
+            "bytes": 122302,
+            "working_set_found": 3
+          },
+          "graph": {
+            "tool_calls": 5,
+            "query_bytes": 14505,
+            "files_opened": 3,
+            "bytes": 38877,
+            "working_set_found": 3,
+            "query_ms": 1745,
+            "candidates_returned": 25
+          },
+          "reduction": {
+            "tool_calls_pct": 77.3,
+            "bytes_pct": 68.2
+          }
+        },
+        {
+          "task": "modify the pet type validation and the controller that uses it",
+          "seed": "PetType",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 57,
+            "grep_terms": 4,
+            "files_opened": 53,
+            "bytes": 497535,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 14541,
+            "files_opened": 2,
+            "bytes": 35081,
+            "working_set_found": 2,
+            "query_ms": 1692,
+            "candidates_returned": 12
+          },
+          "reduction": {
+            "tool_calls_pct": 93.0,
+            "bytes_pct": 92.9
+          }
+        },
+        {
+          "task": "change the visit booking flow",
+          "seed": "Visit",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 18,
+            "grep_terms": 3,
+            "files_opened": 15,
+            "bytes": 333099,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 13145,
+            "files_opened": 2,
+            "bytes": 29131,
+            "working_set_found": 2,
+            "query_ms": 1715,
+            "candidates_returned": 12
+          },
+          "reduction": {
+            "tool_calls_pct": 77.8,
+            "bytes_pct": 91.3
+          }
+        }
+      ],
+      "totals": {
+        "baseline_tool_calls": 97,
+        "graph_tool_calls": 13,
+        "baseline_bytes": 952936,
+        "graph_bytes": 103089,
+        "tool_call_reduction_pct": 86.6,
+        "byte_reduction_pct": 89.2,
+        "working_set_recall_pct": 100.0
+      }
+    },
+    "axios": {
+      "repository": "axios",
+      "repo_files": 464,
+      "repo_source_bytes": 3532551,
+      "first_intake_ms": 2212,
+      "noop_refresh_ms": 1021,
+      "tasks": [
+        {
+          "task": "change how request configuration is merged",
+          "seed": "mergeConfig",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 66,
+            "grep_terms": 3,
+            "files_opened": 63,
+            "bytes": 1390925,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 3,
+            "query_bytes": 10184,
+            "files_opened": 1,
+            "bytes": 25806,
+            "working_set_found": 1,
+            "query_ms": 2372,
+            "candidates_returned": 20
+          },
+          "reduction": {
+            "tool_calls_pct": 95.5,
+            "bytes_pct": 98.1
+          }
+        },
+        {
+          "task": "modify the xhr adapter behaviour",
+          "seed": "xhrAdapter",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 50,
+            "grep_terms": 3,
+            "files_opened": 47,
+            "bytes": 1157318,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 2759,
+            "files_opened": 2,
+            "bytes": 21140,
+            "working_set_found": 2,
+            "query_ms": 2161,
+            "candidates_returned": 9
+          },
+          "reduction": {
+            "tool_calls_pct": 92.0,
+            "bytes_pct": 98.2
+          }
+        },
+        {
+          "task": "change interceptor handling",
+          "seed": "InterceptorManager",
+          "working_set": 2,
+          "baseline": {
+            "tool_calls": 22,
+            "grep_terms": 2,
+            "files_opened": 20,
+            "bytes": 462006,
+            "working_set_found": 2
+          },
+          "graph": {
+            "tool_calls": 4,
+            "query_bytes": 2501,
+            "files_opened": 2,
+            "bytes": 21805,
+            "working_set_found": 2,
+            "query_ms": 2069,
+            "candidates_returned": 13
+          },
+          "reduction": {
+            "tool_calls_pct": 81.8,
+            "bytes_pct": 95.3
+          }
+        }
+      ],
+      "totals": {
+        "baseline_tool_calls": 138,
+        "graph_tool_calls": 11,
+        "baseline_bytes": 3010249,
+        "graph_bytes": 68751,
+        "tool_call_reduction_pct": 92.0,
+        "byte_reduction_pct": 97.7,
+        "working_set_recall_pct": 83.3
+      }
+    },
+    "streamlit": {
+      "repository": "streamlit",
+      "repo_files": 9655,
+      "repo_source_bytes": 149023714,
+      "first_intake_ms": 176407,
+      "noop_refresh_ms": 54572,
+      "tasks": [
+        {
+          "task": "change the session state implementation",
+          "seed": "SessionState",
+          "working_set": 1,
+          "baseline": {
+            "tool_calls": 10,
+            "grep_terms": 3,
+            "files_opened": 7,
+            "bytes": 769155,
+            "working_set_found": 1
+          },
+          "graph": {
+            "tool_calls": 3,
+            "query_bytes": 14825,
+            "files_opened": 1,
+            "bytes": 98093,
+            "working_set_found": 1,
+            "query_ms": 26848,
+            "candidates_returned": 18
+          },
+          "reduction": {
+            "tool_calls_pct": 70.0,
+            "bytes_pct": 87.2
+          }
+        },
+        {
+          "task": "modify the dataframe element serialisation",
+          "seed": "DataFrame",
+          "working_set": 1,
+          "baseline": {
+            "tool_calls": 14,
+            "grep_terms": 3,
+            "files_opened": 11,
+            "bytes": 645262,
+            "working_set_found": 1
+          },
+          "graph": {
+            "tool_calls": 3,
+            "query_bytes": 14414,
+            "files_opened": 1,
+            "bytes": 79247,
+            "working_set_found": 1,
+            "query_ms": 17127,
+            "candidates_returned": 24
+          },
+          "reduction": {
+            "tool_calls_pct": 78.6,
+            "bytes_pct": 87.7
+          }
+        }
+      ],
+      "totals": {
+        "baseline_tool_calls": 24,
+        "graph_tool_calls": 6,
+        "baseline_bytes": 1414417,
+        "graph_bytes": 177340,
+        "tool_call_reduction_pct": 75.0,
+        "byte_reduction_pct": 87.5,
+        "working_set_recall_pct": 100.0
+      }
+    }
+  }
+}

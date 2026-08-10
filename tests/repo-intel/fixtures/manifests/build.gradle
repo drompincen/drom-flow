@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.acme'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'com.google.code.gson:gson:2.11.0'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    // version string that looks like a package name (numeric-looking artifact segment)
+    implementation 'org.example:lib-1.0-snapshot:1.2.3'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.assertj:assertj-core:3.26.0'
+}

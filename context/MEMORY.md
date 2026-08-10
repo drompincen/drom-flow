@@ -119,3 +119,37 @@ reliable; the 97% figure is an estimate and is suppressed until trustworthy.
   `percent: null`, predictive trigger off.
 
 Hook cost: PostToolUse check runs in **0.2s**, outside Claude's context, zero Claude tokens.
+
+## Repository intelligence — repo-intel (2026-08-09, v0.10.0)
+
+Private, automatic repository-awareness layer. Zero-dependency Java 21 engine (JBang-compatible,
+prefers a cached `javac` compile), state under `.claude/.state/repo-intel/`, invisible to host users.
+
+### Hard-won facts
+- **The JDK here is a Windows binary reached from WSL.** It cannot see `/tmp` or any WSL-native
+  path and cannot run WSL's git. Everything must go through `wslpath -w`, and the file list is
+  computed in bash and passed via `DROMFLOW_REPO_INTEL_FILELIST`. Same class of problem as grok.exe.
+- **A version constant is not a cache key.** Editing an extractor without bumping `ENGINE_VERSION`
+  left an old graph in service and every measurement taken against it was wrong. The launcher now
+  fingerprints the engine sources into `DROMFLOW_REPO_INTEL_ENGINE_STAMP`.
+- **Linear scans per call site are quadratic per file.** Three extractors looked up the enclosing
+  scope by scanning all scopes; a 9,655-file repo never finished indexing. A cursor over scopes
+  sorted by start fixed it — 191 s, and that is IO-bound (raw read of the same files: 236 s).
+- **`bin/` is not build output** in shell projects. Excluding it silently dropped every entrypoint.
+- **Masked comments cost search recall.** Extractors mask comments (correct for structure), but in
+  a shell/config repo the searchable vocabulary lives there. One header-comment line per file is
+  kept as a `summary` attribute; that is what made "install update uninstall" find `init.sh`.
+- **The repo's own `.gitignore` ignored `*.sh`** — 0 of 138 tracked files were shell, including
+  `init.sh`. A fresh clone could not install drom-flow at all. Negations added.
+- Fixture ground truth authored independently (by grok) is worth the trouble: it caught the `bin/`
+  exclusion, the block-scope typing bug, and the TS re-export matcher, none of which self-written
+  tests would have questioned.
+
+### Measured
+- Fixtures: declarations 170/170 (100%), relations 181/186 (97.3%), cross-file 61/66 (92.4%),
+  **0 of 489 confident edges wrong**.
+- Discovery cost (scripted grep-then-read baseline vs one bounded query): spring-petclinic
+  97→13 tool calls (−86.6%), 952KB→106KB (−88.9%); axios 138→11 (−92.0%), 3.01MB→69KB (−97.7%).
+- Edit hook 20 ms, no JVM. Warm query ~250 ms in-engine. 12/12 release gates.
+- Skill adoption judged by 5 independent grok agents on 12 unlabelled tasks: 30/30 complex used
+  it, 30/30 trivial did not.

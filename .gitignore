@@ -9,6 +9,18 @@
 *.gif
 *.sh
 *.bat
+# ...but drom-flow's own shell assets ARE the product. Without these negations a fresh clone
+# contains no init.sh, no hooks and no scripts, and nothing can be installed from it.
+!init.sh
+!scripts/*.sh
+!.claude/hooks/*.sh
+!template/scripts/*.sh
+!template/.claude/hooks/*.sh
+!tests/**/*.sh
 setup-backup/
 reports/grok-*.json
 reports/grok-*.md
+.ri-test/
+.claude/docs/
+.ri-build/
+.ri-build-t/

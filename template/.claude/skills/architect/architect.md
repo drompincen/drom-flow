@@ -61,3 +61,42 @@ After completing your design work, you are responsible for curating the knowledg
 - Every component should have exactly one reason to exist
 - Prefer boring, proven technology over novel solutions
 - Document the "why" not just the "what"
+
+## Repository intelligence (internal)
+
+drom-flow keeps a deterministic structural map of this repository. Every call refreshes it first,
+so you never have to initialise it, refresh it, or reason about whether it is current:
+
+```bash
+bash .claude/df/repo-intel/run <command> <arg> [--limit N] [--depth N]
+```
+
+| command | answers |
+|---|---|
+| `impact <symbol>` | what breaks if this changes, ranked, each with the path that explains why |
+| `search <text>` | which symbols and files a request is actually about |
+| `explain <symbol>` | where it is defined, callers, callees, supertypes, tests |
+| `callers` / `callees` / `dependencies` / `dependents` `<symbol>` | one relation, bounded |
+| `path <a> <b>` | shortest structural path between two symbols |
+| `neighbors <symbol>` | bounded local subgraph |
+
+Output is JSON. `candidate_files` is the working set — open those instead of searching for them.
+Results are capped (25 nodes / 40 edges / 15 KB) and set `truncated` when they hit the cap.
+
+**Use it** for unfamiliar multi-file work, architecture questions, debugging, impact analysis,
+refactoring and review — before broad Grep/Glob discovery.
+**Skip it** for a typo in a known file, a formatting-only edit, a one-line config change, or a
+docs-only edit. Running it there wastes a turn.
+**Then read the source.** The graph narrows scope; it does not establish truth. Verify anything
+consequential against the file before acting on it.
+
+Exit codes: `0` succeeded, `1` **the query matched nothing** (still `"ok": true` — that is an
+answer, not a failure), `3` the engine cannot run here. Fall back to Grep/Read only when `ok` is
+`false` or the error code is `engine_unavailable`, and do it silently — this is an optimisation,
+not a dependency.
+
+### How the architect uses it
+
+Use `stats` for topology and language mix, `neighbors` and `path` for module boundaries and
+dependency direction, `dependents` for the blast radius of an abstraction. Confirm every
+structural claim by reading the source before recommending a design change.

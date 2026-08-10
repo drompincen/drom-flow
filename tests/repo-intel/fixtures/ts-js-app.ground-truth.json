@@ -1,0 +1,494 @@
+{
+  "fixture": "ts-js-app",
+  "language": "typescript",
+  "declarations": [
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CaseStatus",
+      "type": "enum"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CaseStatus.Open",
+      "type": "constant"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CaseStatus.Closed",
+      "type": "constant"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CaseStatus.Pending",
+      "type": "constant"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:Case",
+      "type": "interface"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CaseId",
+      "type": "type"
+    },
+    {
+      "file": "src/model/Case.ts",
+      "qualified_name": "src/model/Case.ts:CASE_DEFAULT_TITLE",
+      "type": "constant"
+    },
+    {
+      "file": "src/util/helper.ts",
+      "qualified_name": "src/util/helper.ts:format",
+      "type": "function"
+    },
+    {
+      "file": "src/util/helper.ts",
+      "qualified_name": "src/util/helper.ts:padId",
+      "type": "function"
+    },
+    {
+      "file": "src/util/helper.ts",
+      "qualified_name": "src/util/helper.ts:Case",
+      "type": "constant"
+    },
+    {
+      "file": "src/util/helper.ts",
+      "qualified_name": "src/util/helper.ts:toUpper",
+      "type": "function"
+    },
+    {
+      "file": "src/other/helper.ts",
+      "qualified_name": "src/other/helper.ts:format",
+      "type": "function"
+    },
+    {
+      "file": "src/other/helper.ts",
+      "qualified_name": "src/other/helper.ts:unusedOther",
+      "type": "function"
+    },
+    {
+      "file": "src/service/BaseService.ts",
+      "qualified_name": "src/service/BaseService.ts:BaseService",
+      "type": "class"
+    },
+    {
+      "file": "src/service/BaseService.ts",
+      "qualified_name": "src/service/BaseService.ts:BaseService.constructor",
+      "type": "constructor"
+    },
+    {
+      "file": "src/service/BaseService.ts",
+      "qualified_name": "src/service/BaseService.ts:BaseService.serviceName",
+      "type": "field"
+    },
+    {
+      "file": "src/service/BaseService.ts",
+      "qualified_name": "src/service/BaseService.ts:BaseService.getName",
+      "type": "method"
+    },
+    {
+      "file": "src/service/BaseService.ts",
+      "qualified_name": "src/service/BaseService.ts:BaseService.log",
+      "type": "method"
+    },
+    {
+      "file": "src/repo/caseRepo.ts",
+      "qualified_name": "src/repo/caseRepo.ts:store",
+      "type": "constant"
+    },
+    {
+      "file": "src/repo/caseRepo.ts",
+      "qualified_name": "src/repo/caseRepo.ts:findById",
+      "type": "function"
+    },
+    {
+      "file": "src/repo/caseRepo.ts",
+      "qualified_name": "src/repo/caseRepo.ts:save",
+      "type": "function"
+    },
+    {
+      "file": "src/repo/caseRepo.ts",
+      "qualified_name": "src/repo/caseRepo.ts:create",
+      "type": "function"
+    },
+    {
+      "file": "src/repo/caseRepo.ts",
+      "qualified_name": "src/repo/caseRepo.ts:findByIdAsync",
+      "type": "function"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService",
+      "type": "class"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.constructor",
+      "type": "constructor"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.getCase",
+      "type": "method"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.createCase",
+      "type": "method"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.ghostMethod",
+      "type": "method"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.trapAnyCall",
+      "type": "method"
+    },
+    {
+      "file": "src/service/CaseService.ts",
+      "qualified_name": "src/service/CaseService.ts:CaseService.commentAndTemplateTraps",
+      "type": "method"
+    },
+    {
+      "file": "src/api/routes.ts",
+      "qualified_name": "src/api/routes.ts:router",
+      "type": "constant"
+    },
+    {
+      "file": "src/api/routes.ts",
+      "qualified_name": "src/api/routes.ts:caseService",
+      "type": "constant"
+    },
+    {
+      "file": "src/legacy/legacyClient.js",
+      "qualified_name": "src/legacy/legacyClient.js:loadLegacyConfig",
+      "type": "function"
+    },
+    {
+      "file": "src/legacy/legacyClient.js",
+      "qualified_name": "src/legacy/legacyClient.js:describeLegacy",
+      "type": "function"
+    },
+    {
+      "file": "src/index.ts",
+      "qualified_name": "src/index.ts:createApp",
+      "type": "function"
+    },
+    {
+      "file": "tests/CaseService.test.ts",
+      "qualified_name": "tests/CaseService.test.ts",
+      "type": "test"
+    }
+  ],
+  "relations": [
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/repo/caseRepo.ts",
+      "to": "src/model/Case.ts:Case"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/repo/caseRepo.ts",
+      "to": "src/model/Case.ts:CaseStatus"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/repo/caseRepo.ts:create",
+      "to": "src/repo/caseRepo.ts:save",
+      "from_file": "src/repo/caseRepo.ts",
+      "cross_file": false
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/repo/caseRepo.ts:findByIdAsync",
+      "to": "src/repo/caseRepo.ts:findById",
+      "from_file": "src/repo/caseRepo.ts",
+      "cross_file": false
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/service/BaseService.ts:BaseService"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/repo/caseRepo.ts"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/util/helper.ts:format"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/util/helper.ts:padId"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/model/Case.ts:Case"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/model/Case.ts:CaseStatus"
+    },
+    {
+      "relation": "EXTENDS",
+      "from": "src/service/CaseService.ts:CaseService",
+      "to": "src/service/BaseService.ts:BaseService"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.constructor",
+      "to": "src/service/BaseService.ts:BaseService.constructor",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.getCase",
+      "to": "src/service/BaseService.ts:BaseService.log",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.getCase",
+      "to": "src/util/helper.ts:format",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.getCase",
+      "to": "src/util/helper.ts:padId",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.getCase",
+      "to": "src/repo/caseRepo.ts:findByIdAsync",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.createCase",
+      "to": "src/repo/caseRepo.ts:create",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.createCase",
+      "to": "src/repo/caseRepo.ts:save",
+      "from_file": "src/service/CaseService.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/api/routes.ts",
+      "to": "express"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/api/routes.ts",
+      "to": "src/service/CaseService.ts:CaseService"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/api/routes.ts",
+      "to": "src/service/CaseService.ts:CaseService.constructor",
+      "from_file": "src/api/routes.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/api/routes.ts",
+      "to": "src/service/CaseService.ts:CaseService.getCase",
+      "from_file": "src/api/routes.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/api/routes.ts",
+      "to": "src/service/CaseService.ts:CaseService.createCase",
+      "from_file": "src/api/routes.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/legacy/legacyClient.js",
+      "to": "path"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/api/routes.ts"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/service/CaseService.ts:CaseService"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/util/helper.ts:format"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/model/Case.ts:CaseStatus"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/model/Case.ts:Case"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/index.ts",
+      "to": "src/model/Case.ts:CaseId"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/index.ts:createApp",
+      "to": "src/service/CaseService.ts:CaseService.constructor",
+      "from_file": "src/index.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/index.ts:createApp",
+      "to": "src/util/helper.ts:format",
+      "from_file": "src/index.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "tests/CaseService.test.ts",
+      "to": "src/service/CaseService.ts:CaseService"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "tests/CaseService.test.ts",
+      "to": "src/model/Case.ts:CaseStatus"
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests/CaseService.test.ts",
+      "to": "src/service/CaseService.ts:CaseService.constructor",
+      "from_file": "tests/CaseService.test.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests/CaseService.test.ts",
+      "to": "src/service/CaseService.ts:CaseService.createCase",
+      "from_file": "tests/CaseService.test.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests/CaseService.test.ts",
+      "to": "src/service/CaseService.ts:CaseService.getCase",
+      "from_file": "tests/CaseService.test.ts",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests/CaseService.test.ts",
+      "to": "src/service/BaseService.ts:BaseService.getName",
+      "from_file": "tests/CaseService.test.ts",
+      "cross_file": true
+    }
+  ],
+  "negatives": [
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.getCase",
+      "to": "src/other/helper.ts:format",
+      "why": "same simple name format() and same basename helper.ts; CaseService imports only from ../util/helper, never from other/helper"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/other/helper.ts:format",
+      "why": "other/helper is never imported; only util/helper is"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/api/routes.ts",
+      "to": "src/api/express.ts",
+      "why": "express is an external package default import, not a repository symbol or local file"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/api/routes.ts",
+      "to": "src/express.ts",
+      "why": "external npm package express must not resolve to any local path"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.trapAnyCall",
+      "to": "src/service/CaseService.ts:CaseService.ghostMethod",
+      "why": "receiver is typed any; name match alone is insufficient for deterministic resolution"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.trapAnyCall",
+      "to": "src/repo/caseRepo.ts:findById",
+      "why": "dyn.findById is a call on any; must not resolve to caseRepo.findById by name alone"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.commentAndTemplateTraps",
+      "to": "src/repo/caseRepo.ts:findById",
+      "why": "text appears only inside a // line comment, not executable syntax"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.commentAndTemplateTraps",
+      "to": "src/repo/caseRepo.ts:save",
+      "why": "text appears only inside a /* */ block comment, not executable syntax"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/service/CaseService.ts:CaseService.commentAndTemplateTraps",
+      "to": "src/repo/caseRepo.ts:findByIdAsync",
+      "why": "text appears only inside a template literal string, not a real call expression"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/service/CaseService.ts",
+      "to": "src/util/helper.ts:Case",
+      "why": "import type { Case } binds the interface from model/Case.ts, not the const Case exported by util/helper.ts (same simple name, different files)"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/repo/caseRepo.ts",
+      "to": "src/util/helper.ts:Case",
+      "why": "type-only Case import resolves to model/Case.ts interface, not util/helper const Case"
+    },
+    {
+      "relation": "CALLS",
+      "from": "src/legacy/legacyClient.js:loadLegacyConfig",
+      "to": "src/util/helper.ts:format",
+      "why": "require('path') is Node built-in; path.join must not map to any local helper"
+    },
+    {
+      "relation": "IMPORTS",
+      "from_file": "src/legacy/legacyClient.js",
+      "to": "src/legacy/path.js",
+      "why": "CommonJS require('path') is an external Node built-in, not a local module"
+    }
+  ]
+}

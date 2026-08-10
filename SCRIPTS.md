@@ -3678,3 +3678,34 @@ The following files are **identical** to their counterparts above. After generat
 | `scripts/df-research.sh` | `template/scripts/df-research.sh` |
 | `scripts/df-research-audit.sh` | `template/scripts/df-research-audit.sh` |
 | `scripts/df-research-verify.sh` | `template/scripts/df-research-verify.sh` |
+
+## .claude/df/repo-intel/run
+
+Private repository-intelligence launcher. Chooses cached classes -> javac -> jbang -> jbang
+bootstrap -> graceful unavailable, translates paths when the JVM is a Windows binary reached from
+WSL, and fingerprints the engine sources so an edited extractor cannot keep serving an old graph.
+Not a user command.
+
+## .claude/hooks/repo-intel-mark.sh
+
+PostToolUse dirty marker. Appends one line and returns: no JVM, no parsing, no blocking. Measured
+at ~20 ms per edit.
+
+## .claude/hooks/repo-intel-session.sh
+
+SessionStart check. Inspects metadata only and starts intake detached when it is genuinely
+needed. Silent when healthy.
+
+## .claude/hooks/repo-intel-path.sh
+
+Sourced helper resolving where the graph lives: `DROMFLOW_REPO_INTEL_STATE`, then
+`REPO_INTEL_STATE` in `.claude/.state/drom-flow.conf`, then the default inside the project.
+
+## scripts/repo-intel-verify.sh
+
+Release gates for repository intelligence; writes `reports/repo-intel.json`.
+
+## scripts/repo-intel-bench.sh
+
+Discovery-cost benchmark: grep-then-read baseline versus one bounded graph query. Writes
+`reports/repo-intel-bench.json`.

@@ -1,0 +1,17 @@
+[project]
+name = "fixture-app"
+version = "1.0.0"
+description = "Package-manifest fixture for dependency extractors"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.32.0",
+    "pydantic==2.7.4",
+    "click~=8.1.7",
+    "httpx[http2]>=0.27.0",
+    "PyYAML==6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+]

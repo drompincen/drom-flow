@@ -1,0 +1,108 @@
+#!/bin/bash
+# drom-flow — gates for the documentation site.
+#   docs-verify.sh [--json]
+# Writes reports/docs-site.json. Exit 0 only when every gate passes.
+
+set -uo pipefail
+R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT="$R/reports/docs-site.json"; mkdir -p "$R/reports"
+SITE_URL="${DOCS_SITE_URL:-https://drompincen.github.io/drom-flow/}"
+G=(); FAIL=0
+g(){ G+=("{\"id\":\"$1\",\"status\":\"$2\",\"detail\":$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$3")}")
+     [ "$2" = PASS ] || FAIL=1; echo "[docs] $1: $2 — $3" >&2; }
+
+# 1 builds — config + every page has front matter and a title
+miss=""; for f in "$R"/docs/*.md; do head -1 "$f" | grep -q '^---$' || miss="$miss $(basename "$f")"; done
+if [ -f "$R/docs/_config.yml" ] && [ -z "$miss" ]; then
+  g builds PASS "_config.yml + $(ls "$R"/docs/*.md | wc -l | tr -d ' ') pages, all with front matter"
+else g builds FAIL "config=$([ -f "$R/docs/_config.yml" ] && echo ok || echo missing) missing-front-matter:${miss:-none}"; fi
+
+# 2 live
+code=$(curl -s -o /dev/null -w '%{http_code}' -m 25 "$SITE_URL" 2>/dev/null || echo 000)
+[ "$code" = 200 ] && g live PASS "$SITE_URL returns 200" || g live FAIL "$SITE_URL returned $code (enable Pages: main branch, /docs)"
+
+# 3 orchestrator section covers the required ground
+O="$R/docs/orchestration.md"; needed=(cache_creation "Routing" "filesystem" "resume" "collect --brief" "sandbox"); missing=""
+for n in "${needed[@]}"; do grep -qi -- "$n" "$O" 2>/dev/null || missing="$missing '$n'"; done
+[ -f "$O" ] && [ -z "$missing" ] && g orchestrator PASS "$(wc -c < "$O") bytes covering model, measurements, routing, lifecycle, resume, limits" \
+  || g orchestrator FAIL "missing:${missing:-file absent}"
+
+# 4 reference completeness — counted against the filesystem, never by eye
+python3 - "$R" > /tmp/dv_ref 2>/dev/null <<'PY'
+import os,glob,re,sys
+R=sys.argv[1]
+sk={os.path.basename(d) for b in ('.claude/skills','template/.claude/skills')
+    for d in glob.glob(os.path.join(R,b,'*')) if os.path.isdir(d)
+    and os.path.exists(os.path.join(d,os.path.basename(d)+'.md'))}
+doc=open(os.path.join(R,'docs','skills.md'),encoding='utf-8',errors='replace').read()
+msk=[s for s in sk if f'`/{s}`' not in doc]
+sc={os.path.basename(f) for f in glob.glob(os.path.join(R,'scripts','*.sh'))}
+sdoc=open(os.path.join(R,'docs','scripts.md'),encoding='utf-8',errors='replace').read()
+msc=[s for s in sc if s not in sdoc]
+hk={os.path.basename(f) for f in glob.glob(os.path.join(R,'.claude/hooks','*.sh'))}
+hdoc=open(os.path.join(R,'docs','hooks.md'),encoding='utf-8',errors='replace').read()
+mhk=[h for h in hk if h not in hdoc]
+wf={os.path.basename(f) for f in glob.glob(os.path.join(R,'workflows','*.md'))}
+wdoc=open(os.path.join(R,'docs','workflows.md'),encoding='utf-8',errors='replace').read()
+mwf=[w for w in wf if w not in wdoc]
+print(f"{len(sk)}|{len(sc)}|{len(hk)}|{len(wf)}|{','.join(msk+msc+mhk+mwf)}")
+PY
+IFS='|' read -r ns nsc nh nw missing < /tmp/dv_ref 2>/dev/null || missing="parse-failed"
+[ -z "${missing:-}" ] && g reference PASS "$ns skills, $nsc scripts, $nh hooks, $nw workflows — all documented" \
+  || g reference FAIL "undocumented: $missing"
+
+# 5 links — internal .md targets must exist
+bad=""
+for f in "$R"/docs/*.md; do
+  for l in $(grep -o '](\([a-z0-9_-]*\.md\)' "$f" 2>/dev/null | sed 's/](//'); do
+    [ -f "$R/docs/$l" ] || bad="$bad $(basename "$f")->$l"
+  done
+done
+[ -z "$bad" ] && g links PASS "all internal page links resolve" || g links FAIL "broken:$bad"
+
+# 6 truth — skill parity between repo and template must be explicit
+py=$(python3 - "$R" <<'PY'
+import os,glob,sys
+R=sys.argv[1]
+def s(b): return {os.path.basename(d) for d in glob.glob(os.path.join(R,b,'*')) if os.path.isdir(d)}
+only=s('.claude/skills')-s('template/.claude/skills')
+print(','.join(sorted(only)))
+PY
+)
+doc=$(cat "$R/docs/skills.md" 2>/dev/null)
+if [ -z "$py" ]; then g truth PASS "no repo-only skills — full parity with template"
+elif echo "$doc" | grep -q 'repo only'; then g truth PASS "repo-only skills documented as such: $py"
+else g truth FAIL "repo-only skills not disclosed: $py"; fi
+
+# 7 separation — docs/ must never reach a host project
+TMP=$(mktemp -d); ( cd "$TMP" && git init -q . ) 2>/dev/null
+bash "$R/init.sh" --update "$TMP" >/dev/null 2>&1
+leak=""
+for f in "$R"/docs/*.md; do b=$(basename "$f"); [ -f "$TMP/docs/$b" ] && leak="$leak $b"; done
+rb=$([ -f "$TMP/.claude/docs/runbook.md" ] && echo yes || echo no)
+ign=$(cd "$TMP" && git check-ignore .claude/docs/runbook.md >/dev/null 2>&1 && echo yes || echo no)
+rm -rf "$TMP"
+[ -z "$leak" ] && [ "$rb" = yes ] && [ "$ign" = yes ] \
+  && g separation PASS "fresh install: no docs/ page shipped, .claude/docs/ present and gitignored" \
+  || g separation FAIL "leaked:${leak:-none} runbook=$rb gitignored=$ign"
+
+# 8 runbook covers the first hour
+RB="$R/template/.claude/docs/runbook.md"; need=(doctor spawn status stop df-research resume); m=""
+for n in "${need[@]}"; do grep -q -- "$n" "$RB" 2>/dev/null || m="$m $n"; done
+[ -f "$RB" ] && [ -z "$m" ] && g runbook PASS "$(wc -c < "$RB") bytes covering ${need[*]}" || g runbook FAIL "missing:${m:-file absent}"
+
+# 9 scripts tested — syntax + executed smoke test
+st=""; for s in docs-gen.sh docs-verify.sh; do bash -n "$R/scripts/$s" 2>/dev/null || st="$st $s(syntax)"; done
+bash "$R/scripts/docs-gen.sh" >/dev/null 2>&1 || st="$st docs-gen(run)"
+[ -z "$st" ] && g scripts_tested PASS "docs-gen.sh + docs-verify.sh: bash -n clean and docs-gen executes" || g scripts_tested FAIL "failed:$st"
+
+# 10 ship
+sh=$(cat "$R/.claude/.state/docs_ship" 2>/dev/null || echo no)
+[ "$sh" = pass ] && g ship PASS "$(cat "$R/.claude/.state/docs_ship_detail" 2>/dev/null)" || g ship FAIL "not shipped yet"
+
+IFS=,; cat > "$OUT" <<EOF
+{"ok":$([ $FAIL -eq 0 ] && echo true || echo false),"ts":"$(date -Iseconds)","gates":[${G[*]}]}
+EOF
+[ "${1:-}" = --json ] && cat "$OUT"
+echo "[docs] gates: $(grep -o '"status":"PASS"' "$OUT" | wc -l)/${#G[@]} PASS" >&2
+exit $FAIL

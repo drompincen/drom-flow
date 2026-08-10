@@ -1,0 +1,267 @@
+{
+  "fixture": "python-app",
+  "language": "python",
+  "declarations": [
+    { "file": "acme/__init__.py", "qualified_name": "acme", "type": "module" },
+    { "file": "acme/__init__.py", "qualified_name": "acme.PACKAGE_NAME", "type": "constant" },
+
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case", "type": "module" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.CASE_DEFAULT_PRIORITY", "type": "constant" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.CaseStatus", "type": "enum" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.CaseStatus.OPEN", "type": "constant" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.CaseStatus.CLOSED", "type": "constant" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.CaseStatus.PENDING", "type": "constant" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case", "type": "class" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.id", "type": "field" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.title", "type": "field" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.status", "type": "field" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.is_open", "type": "method" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.from_dict", "type": "method" },
+    { "file": "acme/model/case.py", "qualified_name": "acme.model.case.Case.create_new", "type": "method" },
+
+    { "file": "acme/util/helper.py", "qualified_name": "acme.util.helper", "type": "module" },
+    { "file": "acme/util/helper.py", "qualified_name": "acme.util.helper.DEFAULT_PREFIX", "type": "constant" },
+    { "file": "acme/util/helper.py", "qualified_name": "acme.util.helper.help_with", "type": "function" },
+    { "file": "acme/util/helper.py", "qualified_name": "acme.util.helper.format_id", "type": "function" },
+
+    { "file": "acme/other/helper.py", "qualified_name": "acme.other.helper", "type": "module" },
+    { "file": "acme/other/helper.py", "qualified_name": "acme.other.helper.DEFAULT_PREFIX", "type": "constant" },
+    { "file": "acme/other/helper.py", "qualified_name": "acme.other.helper.help_with", "type": "function" },
+
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo", "type": "module" },
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo.MAX_BATCH", "type": "constant" },
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo.CaseRepository", "type": "class" },
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo.CaseRepository.find_by_id", "type": "method" },
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo.CaseRepository.save", "type": "method" },
+    { "file": "acme/repo/case_repo.py", "qualified_name": "acme.repo.case_repo.CaseRepository.delete", "type": "method" },
+
+    { "file": "acme/service/base.py", "qualified_name": "acme.service.base", "type": "module" },
+    { "file": "acme/service/base.py", "qualified_name": "acme.service.base.SERVICE_VERSION", "type": "constant" },
+    { "file": "acme/service/base.py", "qualified_name": "acme.service.base.BaseService", "type": "class" },
+    { "file": "acme/service/base.py", "qualified_name": "acme.service.base.BaseService.__init__", "type": "constructor" },
+    { "file": "acme/service/base.py", "qualified_name": "acme.service.base.BaseService.ping", "type": "method" },
+
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service", "type": "module" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.LOG_LEVEL", "type": "constant" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.untyped_factory", "type": "function" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.format_id", "type": "function" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.process_label", "type": "function" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.CaseService", "type": "class" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.CaseService.__init__", "type": "constructor" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.CaseService.get_case", "type": "method" },
+    { "file": "acme/service/case_service.py", "qualified_name": "acme.service.case_service.CaseService.create_case", "type": "method" },
+
+    { "file": "acme/api/routes.py", "qualified_name": "acme.api.routes", "type": "module" },
+    { "file": "acme/api/routes.py", "qualified_name": "acme.api.routes.get_case", "type": "function" },
+    { "file": "acme/api/routes.py", "qualified_name": "acme.api.routes.create_case", "type": "function" },
+
+    { "file": "tests/test_case_service.py", "qualified_name": "tests.test_case_service", "type": "module" },
+    { "file": "tests/test_case_service.py", "qualified_name": "tests.test_case_service.test_get_case", "type": "test" },
+    { "file": "tests/test_case_service.py", "qualified_name": "tests.test_case_service.test_create_case", "type": "test" }
+  ],
+  "relations": [
+    { "relation": "IMPORTS", "from_file": "acme/model/case.py", "to": "dataclasses.dataclass" },
+    { "relation": "IMPORTS", "from_file": "acme/model/case.py", "to": "enum.Enum" },
+
+    { "relation": "IMPORTS", "from_file": "acme/repo/case_repo.py", "to": "acme.model.case.Case" },
+    { "relation": "IMPORTS", "from_file": "acme/repo/case_repo.py", "to": "acme.model.case.CaseStatus" },
+
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "logging" },
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "acme.repo.case_repo.CaseRepository" },
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "acme.model.case.Case" },
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "acme.model.case.CaseStatus" },
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "acme.util.helper" },
+    { "relation": "IMPORTS", "from_file": "acme/service/case_service.py", "to": "acme.service.base.BaseService" },
+
+    { "relation": "IMPORTS", "from_file": "acme/api/routes.py", "to": "fastapi.APIRouter" },
+    { "relation": "IMPORTS", "from_file": "acme/api/routes.py", "to": "acme.service.case_service.CaseService" },
+
+    { "relation": "IMPORTS", "from_file": "tests/test_case_service.py", "to": "acme.service.case_service.CaseService" },
+
+    { "relation": "EXTENDS", "from": "acme.model.case.CaseStatus", "to": "enum.Enum" },
+    { "relation": "EXTENDS", "from": "acme.service.case_service.CaseService", "to": "acme.service.base.BaseService" },
+
+    {
+      "relation": "CALLS",
+      "from": "acme.model.case.Case.from_dict",
+      "to": "acme.model.case.Case",
+      "from_file": "acme/model/case.py",
+      "cross_file": false
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.model.case.Case.create_new",
+      "to": "acme.model.case.Case",
+      "from_file": "acme/model/case.py",
+      "cross_file": false
+    },
+
+    {
+      "relation": "CALLS",
+      "from": "acme.repo.case_repo.CaseRepository.find_by_id",
+      "to": "acme.model.case.Case",
+      "from_file": "acme/repo/case_repo.py",
+      "cross_file": true
+    },
+
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.untyped_factory",
+      "to": "acme.repo.case_repo.CaseRepository",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.__init__",
+      "to": "acme.service.base.BaseService.__init__",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.__init__",
+      "to": "acme.repo.case_repo.CaseRepository",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.util.helper.help_with",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "logging.getLogger",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.repo.case_repo.CaseRepository.find_by_id",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.service.case_service.untyped_factory",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": false
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.create_case",
+      "to": "acme.model.case.Case.create_new",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.create_case",
+      "to": "acme.repo.case_repo.CaseRepository.save",
+      "from_file": "acme/service/case_service.py",
+      "cross_file": true
+    },
+
+    {
+      "relation": "CALLS",
+      "from": "acme.api.routes",
+      "to": "fastapi.APIRouter",
+      "from_file": "acme/api/routes.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.api.routes",
+      "to": "acme.service.case_service.CaseService",
+      "from_file": "acme/api/routes.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.api.routes.get_case",
+      "to": "acme.service.case_service.CaseService.get_case",
+      "from_file": "acme/api/routes.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.api.routes.create_case",
+      "to": "acme.service.case_service.CaseService.create_case",
+      "from_file": "acme/api/routes.py",
+      "cross_file": true
+    },
+
+    {
+      "relation": "CALLS",
+      "from": "tests.test_case_service.test_get_case",
+      "to": "acme.service.case_service.CaseService",
+      "from_file": "tests/test_case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests.test_case_service.test_get_case",
+      "to": "acme.service.case_service.CaseService.get_case",
+      "from_file": "tests/test_case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests.test_case_service.test_create_case",
+      "to": "acme.service.case_service.CaseService",
+      "from_file": "tests/test_case_service.py",
+      "cross_file": true
+    },
+    {
+      "relation": "CALLS",
+      "from": "tests.test_case_service.test_create_case",
+      "to": "acme.service.case_service.CaseService.create_case",
+      "from_file": "tests/test_case_service.py",
+      "cross_file": true
+    }
+  ],
+  "negatives": [
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.other.helper.help_with",
+      "why": "same simple name help_with, different package (other vs util); only acme.util.helper is imported here"
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.repo.case_repo.CaseRepository.save",
+      "why": "mystery.save(case) — receiver is return value of untyped_factory(); type unknown without inference"
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.process_label",
+      "to": "acme.service.case_service.format_id",
+      "why": "local variable format_id = str shadows the module-level function of the same name"
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.repo.case_repo.CaseRepository.delete",
+      "why": "self.repo.delete(999) appears only inside a triple-quoted docstring, not executable code"
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.repo.case_repo.CaseRepository.delete",
+      "why": "self.repo.delete(0) appears only inside a # comment, not executable code"
+    },
+    {
+      "relation": "CALLS",
+      "from": "acme.service.case_service.CaseService.get_case",
+      "to": "acme.repo.case_repo.CaseRepository.delete",
+      "why": "getattr(self.repo, \"delete\")(case_id) is dynamic dispatch; method name is a string, not a static attribute load"
+    }
+  ]
+}

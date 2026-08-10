@@ -1,0 +1,8 @@
+# Production pins for the fixture service
+flask==3.0.3
+requests
+django[bcrypt]>=4.2
+# not-a-real-dep==9.9.9
+-r other.txt
+sqlalchemy==2.0.31
+celery==5.4.0

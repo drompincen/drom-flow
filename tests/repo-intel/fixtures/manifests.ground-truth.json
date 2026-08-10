@@ -1,0 +1,117 @@
+{
+  "fixture": "manifests",
+  "language": "config",
+  "declarations": [
+    { "file": "pom.xml", "qualified_name": "pom.xml", "type": "config" },
+    { "file": "build.gradle", "qualified_name": "build.gradle", "type": "config" },
+    { "file": "build.gradle.kts", "qualified_name": "build.gradle.kts", "type": "config" },
+    { "file": "package.json", "qualified_name": "package.json", "type": "config" },
+    { "file": "pyproject.toml", "qualified_name": "pyproject.toml", "type": "config" },
+    { "file": "requirements.txt", "qualified_name": "requirements.txt", "type": "config" },
+    { "file": "go.mod", "qualified_name": "go.mod", "type": "config" },
+    { "file": "go.mod", "qualified_name": "github.com/acme/fixture-app", "type": "module" }
+  ],
+  "relations": [
+    { "relation": "DEPENDS_ON", "from_file": "pom.xml", "to": "maven:com.fasterxml.jackson.core:jackson-databind" },
+    { "relation": "DEPENDS_ON", "from_file": "pom.xml", "to": "maven:org.slf4j:slf4j-api" },
+    { "relation": "DEPENDS_ON", "from_file": "pom.xml", "to": "maven:com.google.guava:guava" },
+    { "relation": "DEPENDS_ON", "from_file": "pom.xml", "to": "maven:org.junit.jupiter:junit-jupiter" },
+
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:com.google.code.gson:gson" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:org.apache.commons:commons-collections4" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:com.squareup.okhttp3:okhttp" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:org.example:lib-1.0-snapshot" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:org.mockito:mockito-core" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle", "to": "maven:org.assertj:assertj-core" },
+
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:io.ktor:ktor-client-core" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:org.jetbrains.kotlinx:kotlinx-coroutines-core" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:com.squareup.retrofit2:retrofit" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:com.acme:widget-2.0.0-rc1" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:io.kotest:kotest-runner-junit5" },
+    { "relation": "DEPENDS_ON", "from_file": "build.gradle.kts", "to": "maven:io.mockk:mockk" },
+
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:express" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:lodash" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:uuid" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:semver" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:@types/node" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:typescript" },
+    { "relation": "DEPENDS_ON", "from_file": "package.json", "to": "npm:jest" },
+
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:requests" },
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:pydantic" },
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:click" },
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:httpx" },
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:PyYAML" },
+    { "relation": "DEPENDS_ON", "from_file": "pyproject.toml", "to": "pypi:pytest" },
+
+    { "relation": "DEPENDS_ON", "from_file": "requirements.txt", "to": "pypi:flask" },
+    { "relation": "DEPENDS_ON", "from_file": "requirements.txt", "to": "pypi:requests" },
+    { "relation": "DEPENDS_ON", "from_file": "requirements.txt", "to": "pypi:django" },
+    { "relation": "DEPENDS_ON", "from_file": "requirements.txt", "to": "pypi:sqlalchemy" },
+    { "relation": "DEPENDS_ON", "from_file": "requirements.txt", "to": "pypi:celery" },
+
+    { "relation": "DEPENDS_ON", "from_file": "go.mod", "to": "go:github.com/gin-gonic/gin" },
+    { "relation": "DEPENDS_ON", "from_file": "go.mod", "to": "go:github.com/google/uuid" },
+    { "relation": "DEPENDS_ON", "from_file": "go.mod", "to": "go:github.com/stretchr/testify" },
+    { "relation": "DEPENDS_ON", "from_file": "go.mod", "to": "go:golang.org/x/sync" },
+    { "relation": "DEPENDS_ON", "from_file": "go.mod", "to": "go:gopkg.in/yaml.v3", "indirect": true }
+  ],
+  "negatives": [
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "pom.xml",
+      "to": "maven:org.apache.commons:commons-lang3",
+      "why": "declared only under dependencyManagement — pins a version but does not add a project dependency"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "requirements.txt",
+      "to": "pypi:not-a-real-dep",
+      "why": "commented-out line (# not-a-real-dep==9.9.9), not an active dependency"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "requirements.txt",
+      "to": "pypi:other.txt",
+      "why": "-r other.txt is a requirements include directive, not a package dependency"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "package.json",
+      "to": "npm:7.6.2",
+      "why": "version string of the semver package that looks like a package name to a naive token splitter; not a dependency name"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "build.gradle",
+      "to": "maven:org.example:1.2.3",
+      "why": "version segment of org.example:lib-1.0-snapshot:1.2.3 mistaken for artifactId; real artifact is lib-1.0-snapshot (name looks like a version)"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "build.gradle.kts",
+      "to": "maven:com.acme:0.9.1",
+      "why": "version segment of com.acme:widget-2.0.0-rc1:0.9.1 mistaken for artifactId; artifact widget-2.0.0-rc1 deliberately looks like a version string"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "go.mod",
+      "to": "go:github.com/acme/fixture-app",
+      "why": "module path declares this package, it is not a require dependency"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "pyproject.toml",
+      "to": "pypi:http2",
+      "why": "extra marker on httpx[http2], not a separate package name"
+    },
+    {
+      "relation": "DEPENDS_ON",
+      "from_file": "requirements.txt",
+      "to": "pypi:bcrypt",
+      "why": "extra on django[bcrypt], not a top-level requirement line package"
+    }
+  ]
+}

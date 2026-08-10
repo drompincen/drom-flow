@@ -1,0 +1,119 @@
+{
+  "ok": true,
+  "generated": "2026-08-09T11:32:03",
+  "passed": 12,
+  "total": 12,
+  "gates": [
+    {
+      "id": "correctness",
+      "status": "PASS",
+      "detail": "decl 100.0% rel 97.3% cross-file 92.4% false-positive 0.0% over 489 confident edges",
+      "metrics": {
+        "declaration_recall_pct": 100.0,
+        "relation_recall_pct": 97.3,
+        "cross_file_recall_pct": 92.4,
+        "false_positive_pct": 0.0,
+        "confident_edges": 489
+      }
+    },
+    {
+      "id": "incremental_equivalence",
+      "status": "PASS",
+      "detail": "add+modify+delete+rename incremental (incremental) is byte-identical to a clean rebuild",
+      "metrics": {
+        "mutations": 4,
+        "incremental_action": "incremental"
+      }
+    },
+    {
+      "id": "stable_identity",
+      "status": "PASS",
+      "detail": "unchanged repo: action=noop, 0 files parsed; a line shift left all 99 node ids unchanged",
+      "metrics": {
+        "noop_parsed": 0,
+        "nodes": 99
+      }
+    },
+    {
+      "id": "bounded_output",
+      "status": "PASS",
+      "detail": "worst case 14952B, 25 nodes, 21 edges even with --limit 500 --depth 6",
+      "metrics": {
+        "max_bytes": 14952,
+        "max_nodes": 25,
+        "max_edges": 21
+      }
+    },
+    {
+      "id": "security",
+      "status": "PASS",
+      "detail": "no secret/binary/oversized/symlink-escape/traversal indexed; malformed source isolated; path with spaces indexed",
+      "metrics": {
+        "violations": 0
+      }
+    },
+    {
+      "id": "edit_hook",
+      "status": "PASS",
+      "detail": "10 marks in 25.2ms average, no JVM process started",
+      "metrics": {
+        "avg_ms": 25.2,
+        "marks": 10,
+        "jvm_launched": "no"
+      }
+    },
+    {
+      "id": "freshness",
+      "status": "PASS",
+      "detail": "external edit detected without any hook (action=incremental) and the dirty journal is consumed",
+      "metrics": {
+        "external_detected": true,
+        "action": "incremental"
+      }
+    },
+    {
+      "id": "failure_isolation",
+      "status": "PASS",
+      "detail": "no-JVM, corrupt graph, read-only state and offline all degrade to structured JSON; drom-flow keeps working",
+      "metrics": {
+        "scenarios": 4
+      }
+    },
+    {
+      "id": "lifecycle",
+      "status": "PASS",
+      "detail": "fresh install wires everything, automatic intake built 977 nodes with no user command, schema downgrade self-rebuilt, uninstall left host source intact",
+      "metrics": {
+        "auto_intake_nodes": 977,
+        "upgrade_action": "full_intake"
+      }
+    },
+    {
+      "id": "graph_validation",
+      "status": "PASS",
+      "detail": "validator reports 0 integrity errors",
+      "metrics": {
+        "errors": 0
+      }
+    },
+    {
+      "id": "state_location",
+      "status": "PASS",
+      "detail": "env override and drom-flow.conf both relocate the graph; default stays in the host project",
+      "metrics": {
+        "env_override": true,
+        "conf_override": true
+      }
+    },
+    {
+      "id": "impact",
+      "status": "PASS",
+      "detail": "critical downstream files surfaced in 8/8 cases (100.0%), bounded result sizes: CaseStatus:7 CaseService:3 CaseRepository:6 Case:11 Helper:1",
+      "metrics": {
+        "critical_files_found": 8,
+        "critical_files_total": 8,
+        "recall_pct": 100.0
+      }
+    }
+  ]
+}

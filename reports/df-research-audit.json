@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "workdir": "/mnt/c/Users/drom/IdeaProjects/drom-flow/research/llm-code-review",
+  "checks": [
+    {
+      "check": "distinct_sources",
+      "status": "PASS",
+      "detail": "38 distinct source URLs in corpus (need >=20); 3 marked derivative"
+    },
+    {
+      "check": "citations_resolve",
+      "status": "PASS",
+      "detail": "30 citations, unresolved: none"
+    },
+    {
+      "check": "contradictions",
+      "status": "PASS",
+      "detail": "6 contradiction cluster(s)"
+    },
+    {
+      "check": "no_uncited_claims",
+      "status": "PASS",
+      "detail": "0 uncited claim(s) in Findings"
+    },
+    {
+      "check": "social_labelled",
+      "status": "PASS",
+      "detail": "3 social source(s) in corpus; labelled in report: True"
+    },
+    {
+      "check": "citecheck",
+      "status": "PASS",
+      "detail": "supported=149 partial=3 unsupported=0 missing=0 fabricated=0"
+    }
+  ]
+}

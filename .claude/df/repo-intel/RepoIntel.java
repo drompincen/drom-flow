@@ -1,9 +1,9 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 21+
-//SOURCES Json.java Lex.java GraphModel.java Extractor.java JavaExtractor.java PythonExtractor.java
-//SOURCES JsTsExtractor.java BashExtractor.java ManifestExtractor.java ExtractorRegistry.java
+//SOURCES Json.java Lex.java Syntax.java GraphModel.java Extractor.java JavaExtractor.java JavaDecl.java PythonExtractor.java PySyntax.java PyDecl.java PyImports.java
+//SOURCES JsTsExtractor.java JsTsSyntax.java JsTsScan.java JsTsImports.java JsTsDecl.java JsTsEmit.java BashExtractor.java ManifestExtractor.java ManifestJvm.java ManifestWeb.java ExtractorRegistry.java
 //SOURCES RepositoryScanner.java ManifestStore.java JsonStore.java Resolver.java
-//SOURCES IncrementalUpdater.java GraphQuery.java GraphValidator.java
+//SOURCES IncrementalUpdater.java GraphQuery.java GraphValidator.java ResolverIndex.java
 
 import java.nio.file.Files;
 import java.nio.file.Path;

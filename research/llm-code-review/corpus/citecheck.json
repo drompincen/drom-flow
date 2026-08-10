@@ -1,0 +1,918 @@
+{
+  "checks": [
+    {
+      "sentence": "The best controlled same-PR human-overlap comparison shows low overlap with human-reported issues (~10% match while recommending ~2.4× more changes)",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Quote: ChatGPT recommends ∼2.4× more changes but spots only 10% of human-reported quality issues."
+    },
+    {
+      "sentence": "block-level correctness classification accuracy (~64–69%) rather than generated PR review comments",
+      "citation": "S1",
+      "verdict": "supported",
+      "note": "GPT-4o 68.50% / Gemini 63.89% correctness classification with problem descriptions; unit-test oracle, not PR comments."
+    },
+    {
+      "sentence": "scoped best-practice tip usefulness (~60% useful vs an 80% deployment target)",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "Rater useful ratio 60% vs 80% wider-deployment target."
+    },
+    {
+      "sentence": "live acceptance of generated comments (~7–8%; not shown as a published target miss)",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "8.1% and 7.2% acceptance in two orgs; parenthetical is editorial, not a source figure."
+    },
+    {
+      "sentence": "multi-tool offline recall of known issues (no tool recovering more than ~63%) with no human baseline",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "No tool found more than 63% of known issues; source has no human baseline (correct negative)."
+    },
+    {
+      "sentence": "Vendor self-metrics often report high resolution/acceptance or low FP (e.g., ≥70% resolved flags; <3% FP claims)",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "Resolution rate from 52% to over 70%."
+    },
+    {
+      "sentence": "Vendor self-metrics often report high resolution/acceptance or low FP (e.g., ≥70% resolved flags; <3% FP claims)",
+      "citation": "S16",
+      "verdict": "supported",
+      "note": "Graphite claims <3% false-positive rate across tens of thousands of changes."
+    },
+    {
+      "sentence": "these metrics are product KPIs under non-shared FP definitions and are not validated as true-positive defect rates against independent oracles",
+      "citation": "S13",
+      "verdict": "partial",
+      "note": "S13 flags vendor-bench bias, gold incompleteness, and multi-tool ceilings; it does not directly audit Cursor/Graphite KPI definitions as non-shared or unvalidated."
+    },
+    {
+      "sentence": "these metrics are product KPIs under non-shared FP definitions and are not validated as true-positive defect rates against independent oracles",
+      "citation": "S10",
+      "verdict": "unsupported",
+      "note": "RevMate reports live acceptance (~7–8%); it does not evaluate vendor self-metrics, FP definitions, or independent-oracle validation of those KPIs."
+    },
+    {
+      "sentence": "Human-in-the-loop and heavily tuned deployments can raise address rates and catch some bugs humans miss in anecdotes",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "Auth-breaking one-liner anecdote (engineer would have missed); internal process metrics."
+    },
+    {
+      "sentence": "Human-in-the-loop and heavily tuned deployments can raise address rates and catch some bugs humans miss in anecdotes",
+      "citation": "S14",
+      "verdict": "partial",
+      "note": "Supports raised resolution rate (52%→70%+) and more resolved bugs/PR; does not establish catches humans would miss."
+    },
+    {
+      "sentence": "Human-in-the-loop and heavily tuned deployments can raise address rates and catch some bugs humans miss in anecdotes",
+      "citation": "S22",
+      "verdict": "unsupported",
+      "note": "GitHub post covers adoption (>1 in 5 reviews), 71% actionable / 29% silence, thumbs/resolution tracking—not raised address rates or human-miss bug catches."
+    },
+    {
+      "sentence": "field measurements do not show reliable replacement of human defect-finding or consistent review-time savings",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "A/B: no significant change in review duration, active time, or comment-response iterations."
+    },
+    {
+      "sentence": "field measurements do not show reliable replacement of human defect-finding or consistent review-time savings",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "Mean PR closure time rose ~5h52m→~8h20m; human comment drop not significant."
+    },
+    {
+      "sentence": "field measurements do not show reliable replacement of human defect-finding or consistent review-time savings",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Authors: further check on top of humans, not alternative or time-saver."
+    },
+    {
+      "sentence": "On the same PRs, ChatGPT-4 matches only ~10% of quality issues humans report while proposing ~2.4× more changes",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Direct match to study quote."
+    },
+    {
+      "sentence": "broader PR context access was tested and did not raise human-issue match",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Broader PR context actually lowers match rate of human issues."
+    },
+    {
+      "sentence": "GPT-4o / Gemini classify correctness correctly only ~68.5% / ~63.9% of the time (with problem descriptions); authors conclude fully automated review is unreliable",
+      "citation": "S1",
+      "verdict": "supported",
+      "note": "Exact percentages and unreliable fully-automated conclusion in quotes."
+    },
+    {
+      "sentence": "ChatGPT succeeds on only 13% (19/150) of code-to-comment cases vs specialized SOTA",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "19/150=13%, less performant than SOTA."
+    },
+    {
+      "sentence": "no tool found more than 63% of known issues; the best still missed about a third",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Verbatim offline ceiling."
+    },
+    {
+      "sentence": "Greptile 82% on 50 known bugs; Augment 55% recall on golden comments",
+      "citation": "S18",
+      "verdict": "supported",
+      "note": "Greptile 82% catch rate; methodology implies known-bug set (50 bugs in corpus claim)."
+    },
+    {
+      "sentence": "Greptile 82% on 50 known bugs; Augment 55% recall on golden comments",
+      "citation": "S19",
+      "verdict": "supported",
+      "note": "Augment table 55% recall; golden-comment definition present."
+    },
+    {
+      "sentence": "Martian notes offline gold was seeded from Augment/Greptile datasets and may be biased toward those tools' issue types",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Started with Augment and Greptile datasets; may be biased toward those tools' issue kinds."
+    },
+    {
+      "sentence": "SWR-Bench: top ACR+LLM F1 only ~19%; four of five techniques had precision <10%",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "Top F1 19.38%; other four techniques precision below 10%."
+    },
+    {
+      "sentence": "RevMate (Mozilla & Ubisoft, live): only ~8.1% / ~7.2% of LLM-generated comments accepted by professional reviewers",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "Exact figures in quote."
+    },
+    {
+      "sentence": "Greptile's own pre-filter audit: ~19% good, ~2% flat-out incorrect, 79% nits",
+      "citation": "S23",
+      "verdict": "supported",
+      "note": "Exact pre-filter audit breakdown."
+    },
+    {
+      "sentence": "about 1 in 5 comments were good catches contributors would have missed",
+      "citation": "S21",
+      "verdict": "supported",
+      "note": "Only about 1 in 5 comments were actually good catches the contributor would have missed."
+    },
+    {
+      "sentence": "a top tool is framed at ~49% (roughly one in two comments leads to a code change)",
+      "citation": "S20",
+      "verdict": "supported",
+      "note": "49.2% precision means roughly one in two comments leads to a code change."
+    },
+    {
+      "sentence": "Vendor claims of very low FP (<3% Graphite; <1% incorrect at Anthropic; low FP Bugbot marketing)",
+      "citation": "S16",
+      "verdict": "supported",
+      "note": "<3% false-positive rate."
+    },
+    {
+      "sentence": "Vendor claims of very low FP (<3% Graphite; <1% incorrect at Anthropic; low FP Bugbot marketing)",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "Less than 1% of findings marked incorrect."
+    },
+    {
+      "sentence": "Vendor claims of very low FP (<3% Graphite; <1% incorrect at Anthropic; low FP Bugbot marketing)",
+      "citation": "S15",
+      "verdict": "supported",
+      "note": "Product page: low false positive rate."
+    },
+    {
+      "sentence": "functional ~4.8–5.2% accepted vs refactoring ~18% in RevMate",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "Refactoring 18.2%/18.6% vs functional 4.8%/5.2%."
+    },
+    {
+      "sentence": "Functional/defect-oriented comments dominate volume in live generation but have lower acceptance than refactoring/style",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "79.2%/84.9% classified functional yet lower acceptance than refactoring."
+    },
+    {
+      "sentence": "Google AutoCommenter targets best-practice URL tips (not general bugs); ~40% estimated resolution; covers 68% of historical human best-practice-URL comments",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "~40% resolution estimate; URL set covers 68% of historical human best-practice-URL comments; scope is coding practices/best-practice URLs."
+    },
+    {
+      "sentence": "Greptile's vendor severity table claims mid-to-high catch by severity band on its own bench",
+      "citation": "S18",
+      "verdict": "partial",
+      "note": "Table has Critical 58% (mid), High 100%, Medium 89%, Low 87%. 'Mid-to-high' flattens Critical; still roughly descriptive of bands overall."
+    },
+    {
+      "sentence": "Security/static hybrid work shows LLMs still fail on long context, cascaded constraints, and weak semantic understanding; enterprise static warnings themselves can exceed 90% FP when incomplete cases are counted",
+      "citation": "S12",
+      "verdict": "supported",
+      "note": "Failure modes listed; FP higher than 90% when discarded incomplete cases counted."
+    },
+    {
+      "sentence": "CodeReviewer-era models struggle on multi-component changes limited to single hunks",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "Struggle on complex multi-component changes; view limited to single function/diff hunk."
+    },
+    {
+      "sentence": "vendor/auth catch anecdote (catch, not residual)",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "One-line auth-breaking change flagged and fixed before merge."
+    },
+    {
+      "sentence": "marketing security framing",
+      "citation": "S15",
+      "verdict": "unsupported",
+      "note": "S15 quotes emphasize hardest logic bugs, low FP, resolution rate, and generic bug testimonials—not security-specific marketing framing."
+    },
+    {
+      "sentence": "refactoring/style higher acceptance than functional; AutoCommenter best-practice URL scope (not general bugs)",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "Refactoring acceptance higher than functional."
+    },
+    {
+      "sentence": "AutoCommenter best-practice URL scope (not general bugs)",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "Best-practice URL tips system."
+    },
+    {
+      "sentence": "DL/LLM review is a further quality check on top of humans, not a replacement or time-saver, because humans must still inspect and validate bot claims",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Near-verbatim author conclusion."
+    },
+    {
+      "sentence": "Google AutoCommenter A/B (~half of developers): no statistically significant change in total review duration, active review time, or comment-response iterations",
+      "citation": "S4",
+      "verdict": "partial",
+      "note": "Null A/B outcomes fully supported by quote. '~half of developers' appears only in corpus claim paraphrase, not in the verbatim quote."
+    },
+    {
+      "sentence": "Beko industrial bot: 73.8% of bot comments labeled resolved, yet mean PR closure time rose (~5h52m → ~8h20m); human comment volume drop was not significant",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "All three figures/results in quotes."
+    },
+    {
+      "sentence": "self-review with Copilot before opening a PR cut trivial nit back-and-forth by roughly a third",
+      "citation": "S25",
+      "verdict": "supported",
+      "note": "Cutting back-and-forth by roughly a third on trivial nits."
+    },
+    {
+      "sentence": "Greptile reports address rate rising 19% → 55%+ after noise filtering",
+      "citation": "S23",
+      "verdict": "supported",
+      "note": "Address rate 19% to 55+% after filter rollout."
+    },
+    {
+      "sentence": "OSS maintainer reports large quality jump after custom instructions",
+      "citation": "S21",
+      "verdict": "supported",
+      "note": "After tuning, noise dropped dramatically and comments became more useful."
+    },
+    {
+      "sentence": "bots catch issues before teammates review so humans focus on big picture",
+      "citation": "S16",
+      "verdict": "supported",
+      "note": "Squash bugs before teammates review; focus on the big picture rather than nits."
+    },
+    {
+      "sentence": "bots catch issues before teammates review so humans focus on big picture",
+      "citation": "S17",
+      "verdict": "unsupported",
+      "note": "S17 quotes cover 96% positive feedback / 67% implementation and competitor FP claims—not the before-teammates / big-picture framing (that is S16)."
+    },
+    {
+      "sentence": "offline recall ceiling ≤~63% of known issues",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "No tool more than 63%."
+    },
+    {
+      "sentence": "online F1 for leading tools ~half (e.g., CodeRabbit summary of Martian: ~51% F1, ~49% precision, ~53–54% recall framing)",
+      "citation": "S20",
+      "verdict": "supported",
+      "note": "51.2% F1, 49.2% precision, 53.5% recall summary."
+    },
+    {
+      "sentence": "SWR-Bench top F1 ~19% with precision often <10%",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "F1 19.38%; precision below 10% for four techniques."
+    },
+    {
+      "sentence": "Cursor resolution rate 52%→70%+ (~0.5 resolved bugs per PR by their AI-judged metric)",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "52% to over 70%; ~0.5 resolved bugs/PR; AI resolution metric defined."
+    },
+    {
+      "sentence": "GitHub actionable feedback in 71% of reviews (silence in 29%) and thumbs/resolution tracking",
+      "citation": "S22",
+      "verdict": "supported",
+      "note": "71%/29% silence; thumbs and pre-merge resolution as production signals."
+    },
+    {
+      "sentence": "Anthropic <1% marked incorrect, substantive comments on 54% of PRs after rollout",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "16%→54% substantive; <1% marked incorrect."
+    },
+    {
+      "sentence": "Graphite 96% positive feedback / 67% implementation appears only in an undated vendor guide",
+      "citation": "S17",
+      "verdict": "partial",
+      "note": "96% positive / 67% implementation supported. Corpus dates the guide ~2025 (title/year), not strictly undated."
+    },
+    {
+      "sentence": "authors apply ML edit for 7.5% of all reviewer comments",
+      "citation": "S6",
+      "verdict": "supported",
+      "note": "Authors address 7.5% of all reviewer comments by applying ML-suggested edit; system resolves human comments, not LLM defect discovery."
+    },
+    {
+      "sentence": "Offline data suggest volume–precision association; online data complicate that story—high-volume tools can still see substantial act-on; high-precision/low-recall tools comment rarely",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Offline volume→lower precision; online complicates; Graphite highest precision/lowest recall (comments rarely)."
+    },
+    {
+      "sentence": "Online vs offline rankings disagree; incomplete gold understates precision and overstates recall enough to change rankings",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Online/offline disagree; incompleteness large enough to change rankings."
+    },
+    {
+      "sentence": "Correctness accuracy flips across datasets for GPT-4o vs Gemini",
+      "citation": "S1",
+      "verdict": "supported",
+      "note": "HumanEval-style results reverse mixed-dataset ranking (Gemini 66.67% vs GPT-4o 42.07%)."
+    },
+    {
+      "sentence": "Vendor tool order flips across Greptile, Augment, and Martian protocols",
+      "citation": "S18",
+      "verdict": "supported",
+      "note": "Greptile ranks self first; order differs from Augment/Martian tables (joint with S19/S13)."
+    },
+    {
+      "sentence": "Vendor tool order flips across Greptile, Augment, and Martian protocols",
+      "citation": "S19",
+      "verdict": "supported",
+      "note": "Augment ranks self first with different ordering than Greptile."
+    },
+    {
+      "sentence": "Vendor tool order flips across Greptile, Augment, and Martian protocols",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Independent multi-tool ranking and vendor-bias discussion; order differs from vendor self-benches."
+    },
+    {
+      "sentence": "Static offline sets risk training leakage; continuous online sampling is proposed as anti-gaming",
+      "citation": "S13",
+      "verdict": "unsupported",
+      "note": "Corpus quotes for Martian post (report S13) cover online/offline disagreement, incomplete gold, and vendor bias—not training leakage or continuous sampling as anti-gaming. That language is only in the separate Martian GitHub methodology notes (not report S13)."
+    },
+    {
+      "sentence": "Dataset mining noise (~25% of inspected instances; only ~64% of sampled CodeReviewer training comments valid)",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "~25% noise in inspected instances."
+    },
+    {
+      "sentence": "Dataset mining noise (~25% of inspected instances; only ~64% of sampled CodeReviewer training comments valid)",
+      "citation": "S5",
+      "verdict": "supported",
+      "note": "Only 64% of sampled CodeReviewer training comments valid."
+    },
+    {
+      "sentence": "Longitudinal industrial snapshots exist (Beko, AutoCommenter) but are point-in-time relative to rapidly changing models",
+      "citation": "S11",
+      "verdict": "partial",
+      "note": "Supports existence of industrial Beko snapshot and time/outcome metrics; 'rapidly changing models' framing is report inference, not in source quotes."
+    },
+    {
+      "sentence": "Longitudinal industrial snapshots exist (Beko, AutoCommenter) but are point-in-time relative to rapidly changing models",
+      "citation": "S4",
+      "verdict": "partial",
+      "note": "Supports AutoCommenter industrial A/B snapshot; model-churn durability claim not in quotes."
+    },
+    {
+      "sentence": "product marketing may name multi-language stacks, e.g. Java/Python static/LLM hybrid work",
+      "citation": "S12",
+      "verdict": "unsupported",
+      "note": "Report S12 (static FP reduction with LLMs) quotes long-context/cascaded-constraint limits and >90% incomplete-case FP—not Java/Python multi-language product marketing. Java/Python appears in AWS CodeGuru notes, a different corpus item not mapped to report S12."
+    },
+    {
+      "sentence": "industrial snapshots are single-org point-in-time",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "Single industrial deployment case study."
+    },
+    {
+      "sentence": "industrial snapshots are single-org point-in-time",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "Google AutoCommenter single-org industrial study."
+    },
+    {
+      "sentence": "Acceptance/resolution ≠ defect true positive; refactoring comments are accepted more than functional ones",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "Higher acceptance for refactoring vs functional."
+    },
+    {
+      "sentence": "resolved can coexist with longer cycle time and irrelevant comments",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "73.8% resolved with longer closure; faulty/irrelevant comments noted."
+    },
+    {
+      "sentence": "Cursor uses AI to judge resolved",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "Resolution rate uses AI to determine which bugs were resolved."
+    },
+    {
+      "sentence": "Offline sets miss real issues, distorting P/R",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Gold incompleteness understates precision and overstates recall."
+    },
+    {
+      "sentence": "Textual similarity and exact match poorly measure issue coverage",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "BLEU/textual similarity inadequate for whether crucial issues are identified."
+    },
+    {
+      "sentence": "Textual similarity and exact match poorly measure issue coverage",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "EM/BLEU invalidated because same concept can use different wording."
+    },
+    {
+      "sentence": "Textual similarity and exact match poorly measure issue coverage",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "Quantitative % success can hide low-value changes; noise undermines evaluation."
+    },
+    {
+      "sentence": "Publishers rank their own tools first; Martian flags bias and gold seeding from vendor datasets",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Vendor benchmarks potentially biased; offline gold started from Augment/Greptile datasets."
+    },
+    {
+      "sentence": "Publishers rank their own tools first; Martian flags bias and gold seeding from vendor datasets",
+      "citation": "S18",
+      "verdict": "supported",
+      "note": "Greptile self-bench ranks Greptile first."
+    },
+    {
+      "sentence": "Publishers rank their own tools first; Martian flags bias and gold seeding from vendor datasets",
+      "citation": "S19",
+      "verdict": "supported",
+      "note": "Augment self-bench ranks Augment first."
+    },
+    {
+      "sentence": "Best-practice tips (AutoCommenter) ≠ general defects",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "Scope is coding-practice / best-practice URL tips."
+    },
+    {
+      "sentence": "quality-estimation F1 ~0.72 is a binary needs-comment gate, not bug recall",
+      "citation": "S3",
+      "verdict": "supported",
+      "note": "CodeReviewer quality estimation F1 71.53 (binary needs-comment)."
+    },
+    {
+      "sentence": "On static-analysis warning actionability, human–model α ~0.15 vs human–human 0.80",
+      "citation": "S7",
+      "verdict": "supported",
+      "note": "Human-model 0.15 vs human-human 0.80 on static analysis warnings rating."
+    },
+    {
+      "sentence": "Defaults vs months of custom instructions and noise filters materially change effectiveness",
+      "citation": "S21",
+      "verdict": "partial",
+      "note": "Supports defaults noisy vs post-custom-instruction improvement; source does not say 'months'."
+    },
+    {
+      "sentence": "Defaults vs months of custom instructions and noise filters materially change effectiveness",
+      "citation": "S23",
+      "verdict": "partial",
+      "note": "Supports filter changing address rate 19%→55+% within two weeks—not 'months' of tuning."
+    },
+    {
+      "sentence": "Single-hunk views fail on multi-component defects",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "Multi-component struggle; view limited to single hunk."
+    },
+    {
+      "sentence": "broader PR context did not improve human-issue match for ChatGPT in one study",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Broader context lowers match."
+    },
+    {
+      "sentence": "hybrid SAST/LLM work documents incomplete-case FP and long-context failure modes",
+      "citation": "S12",
+      "verdict": "supported",
+      "note": "Long context failure and >90% FP when incomplete cases counted."
+    },
+    {
+      "sentence": "Copilot code review >1 in 5 reviews on GitHub after large growth",
+      "citation": "S22",
+      "verdict": "supported",
+      "note": "10X growth; more than one in five code reviews on GitHub."
+    },
+    {
+      "sentence": "Bugbot marketed at millions of PRs/month",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "Reviews more than two million PRs per month."
+    },
+    {
+      "sentence": "Anthropic reports large rise in PRs with substantive comments and rare incorrect marks; one auth-breaking one-liner anecdote",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "16%→54%; <1% incorrect; auth anecdote."
+    },
+    {
+      "sentence": "default bots too noisy (maintainers want them off)",
+      "citation": "S21",
+      "verdict": "supported",
+      "note": "Maintainers asked to turn it off; too noisy / low value."
+    },
+    {
+      "sentence": "senior engineers report systematically wrong comments that waste time",
+      "citation": "S26",
+      "verdict": "supported",
+      "note": "Every AI review wrong/nonsensical; wastes time."
+    },
+    {
+      "sentence": "Secondary industry analysis notes the debate remains unresolved",
+      "citation": "S29",
+      "verdict": "supported",
+      "note": "Whether tools truly lighten burden remains hotly debated."
+    },
+    {
+      "sentence": "Real-defect catch unmeasured beyond vendor/internal anecdotes (e.g. auth-breaking one-liner)",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "Internal anecdote of catch, not residual-incident series."
+    },
+    {
+      "sentence": "Real-defect catch unmeasured beyond vendor/internal anecdotes",
+      "citation": "S15",
+      "verdict": "supported",
+      "note": "Customer testimonials of catching bugs after human pass—anecdotal, not controlled residual series."
+    },
+    {
+      "sentence": "RevMate ~7–8% live acceptance",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "7.2%/8.1%."
+    },
+    {
+      "sentence": "Greptile address rate 19%→55%+ after filtering",
+      "citation": "S23",
+      "verdict": "supported",
+      "note": "Exact address-rate lift."
+    },
+    {
+      "sentence": "Anthropic <1% marked incorrect under internal process",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "Less than 1% marked incorrect."
+    },
+    {
+      "sentence": "careful human review remains the best anti-slop guardrail",
+      "citation": "S27",
+      "verdict": "supported",
+      "note": "Most effective guardrail against slop is talented engineers doing thoughtful human code review."
+    },
+    {
+      "sentence": "~50% FP / ~50% miss on public benches only helps if humans attend",
+      "citation": "S28",
+      "verdict": "supported",
+      "note": "Almost 50% false positives; almost 50% of real issues missed; only if you read and attend."
+    },
+    {
+      "sentence": "FP noise slows parsing and iteration",
+      "citation": "S30",
+      "verdict": "supported",
+      "note": "False positives make noise:signal harder/slower; iteration loops worse."
+    },
+    {
+      "sentence": "C1 Side A: Graphite <3% FP; Diamond 96% positive feedback; Anthropic <1% incorrect; Bugbot low FP marketing",
+      "citation": "S16",
+      "verdict": "supported",
+      "note": "<3% FP."
+    },
+    {
+      "sentence": "C1 Side A: Diamond 96% positive feedback",
+      "citation": "S17",
+      "verdict": "supported",
+      "note": "96% positive feedback rate."
+    },
+    {
+      "sentence": "C1 Side A: Anthropic <1% incorrect",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "<1% marked incorrect."
+    },
+    {
+      "sentence": "C1 Side A: Bugbot low FP marketing",
+      "citation": "S15",
+      "verdict": "supported",
+      "note": "Low false positive rate claim."
+    },
+    {
+      "sentence": "C1 Side B: SWR-Bench precision often <10%; RevMate ~7–8%; Greptile 79% nits; online act-on ~50%; maintainer ~1/5 good",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "Precision below 10% for four techniques."
+    },
+    {
+      "sentence": "C1 Side B high noise cluster",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "~7–8% acceptance."
+    },
+    {
+      "sentence": "C1 Side B high noise cluster",
+      "citation": "S23",
+      "verdict": "supported",
+      "note": "79% nits."
+    },
+    {
+      "sentence": "C1 Side B high noise cluster",
+      "citation": "S20",
+      "verdict": "supported",
+      "note": "~49% act-on precision framing."
+    },
+    {
+      "sentence": "C1 Side B high noise cluster",
+      "citation": "S21",
+      "verdict": "supported",
+      "note": "~1/5 good catches."
+    },
+    {
+      "sentence": "C2 Side A: Greptile 82% catch; Augment 55% recall / 59% F; Cursor rising resolved bugs/PR",
+      "citation": "S18",
+      "verdict": "supported",
+      "note": "82% catch rate."
+    },
+    {
+      "sentence": "C2 Side A vendor catch",
+      "citation": "S19",
+      "verdict": "supported",
+      "note": "55% recall / 59% F-score."
+    },
+    {
+      "sentence": "C2 Side A vendor catch",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "Resolved bugs/PR roughly doubled to ~0.5."
+    },
+    {
+      "sentence": "C2 Side B: Martian ≤63%; SWR-Bench F1 ~19%; human-issue match ~10%; correctness ~64–69%",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "≤63% known issues."
+    },
+    {
+      "sentence": "C2 Side B independent/low figures",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "F1 ~19%."
+    },
+    {
+      "sentence": "C2 Side B independent/low figures",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "10% human-issue match."
+    },
+    {
+      "sentence": "C2 Side B independent/low figures",
+      "citation": "S1",
+      "verdict": "supported",
+      "note": "68.5%/63.9% correctness classification."
+    },
+    {
+      "sentence": "C3 Side A: Catch earlier / less manual effort; self-review cuts nit back-and-forth ~1/3",
+      "citation": "S17",
+      "verdict": "partial",
+      "note": "S17 supports positive feedback/implementation as value framing; does not clearly quantify less manual effort or earlier catch beyond general vendor guide framing."
+    },
+    {
+      "sentence": "C3 Side A: self-review cuts nit back-and-forth ~1/3",
+      "citation": "S25",
+      "verdict": "supported",
+      "note": "Roughly a third reduction in trivial nit back-and-forth."
+    },
+    {
+      "sentence": "C3 Side B: Not a valid alternative or time saver; review duration unchanged (Google A/B) or worse (Beko); practitioners report wasted time",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "Not alternative or time-saver."
+    },
+    {
+      "sentence": "C3 Side B time outcomes",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "No significant duration change."
+    },
+    {
+      "sentence": "C3 Side B time outcomes",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "Longer PR closure."
+    },
+    {
+      "sentence": "C3 Side B time outcomes",
+      "citation": "S26",
+      "verdict": "supported",
+      "note": "Wasted time from wrong reviews."
+    },
+    {
+      "sentence": "C4 Side A: Resolution/implementation rates as value proxies",
+      "citation": "S14",
+      "verdict": "supported",
+      "note": "Resolution rate treated as product success metric."
+    },
+    {
+      "sentence": "C4 Side A value proxies",
+      "citation": "S17",
+      "verdict": "supported",
+      "note": "67% implementation framed as actionable/valuable."
+    },
+    {
+      "sentence": "C4 Side A value proxies",
+      "citation": "S22",
+      "verdict": "supported",
+      "note": "Thumbs and resolution as production quality signals."
+    },
+    {
+      "sentence": "C4 Side A value proxies",
+      "citation": "S23",
+      "verdict": "supported",
+      "note": "Address rate treated as impact metric after filtering."
+    },
+    {
+      "sentence": "C4 Side B: Acceptance higher for style/refactor than functional; resolved with longer cycles; online/offline disagree; BLEU/EM/acceptance ≠ issue coverage",
+      "citation": "S10",
+      "verdict": "supported",
+      "note": "Refactor > functional acceptance."
+    },
+    {
+      "sentence": "C4 Side B construct validity",
+      "citation": "S11",
+      "verdict": "supported",
+      "note": "Resolved labels with longer closure / irrelevant comments."
+    },
+    {
+      "sentence": "C4 Side B construct validity",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Online/offline disagree; gold incompleteness."
+    },
+    {
+      "sentence": "C4 Side B construct validity",
+      "citation": "S8",
+      "verdict": "supported",
+      "note": "BLEU inadequate for issue identification."
+    },
+    {
+      "sentence": "C4 Side B construct validity",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "EM/BLEU inadequate; volume ≠ matched human issues."
+    },
+    {
+      "sentence": "C5 Side A: Undated product-page testimonials",
+      "citation": "S15",
+      "verdict": "supported",
+      "note": "Customer testimonials of catching bugs humans passed."
+    },
+    {
+      "sentence": "C5 Side A: dated internal anecdote",
+      "citation": "S24",
+      "verdict": "supported",
+      "note": "Auth-breaking catch anecdote."
+    },
+    {
+      "sentence": "C5 Side A: vendor secondary leaderboard restatement find more real bugs among tools, not vs humans",
+      "citation": "S20",
+      "verdict": "supported",
+      "note": "CodeRabbit finds more real bugs than anyone else—among tools on Martian leaderboard."
+    },
+    {
+      "sentence": "C5 Side B: ~10% human-issue overlap; 13% human-like comment success; moderate correctness; AutoCommenter 60% vs 80%; human–model α 0.15",
+      "citation": "S9",
+      "verdict": "supported",
+      "note": "10% human-issue overlap."
+    },
+    {
+      "sentence": "C5 Side B systematic comparison figures",
+      "citation": "S2",
+      "verdict": "supported",
+      "note": "13% code-to-comment success."
+    },
+    {
+      "sentence": "C5 Side B systematic comparison figures",
+      "citation": "S1",
+      "verdict": "supported",
+      "note": "Moderate correctness accuracy / unreliable full automation."
+    },
+    {
+      "sentence": "C5 Side B systematic comparison figures",
+      "citation": "S4",
+      "verdict": "supported",
+      "note": "60% useful vs 80% target."
+    },
+    {
+      "sentence": "C5 Side B systematic comparison figures",
+      "citation": "S7",
+      "verdict": "supported",
+      "note": "α 0.15 human–model on related judgment."
+    },
+    {
+      "sentence": "C5 Side B practitioner insistence on human review is social signal only",
+      "citation": "S27",
+      "verdict": "supported",
+      "note": "Social post arguing human review as guardrail; correctly labeled social."
+    },
+    {
+      "sentence": "C6 Side A: Treat Greptile/Augment/Graphite self-wins as rankings",
+      "citation": "S18",
+      "verdict": "supported",
+      "note": "Greptile self-win ranking."
+    },
+    {
+      "sentence": "C6 Side A self-wins",
+      "citation": "S19",
+      "verdict": "supported",
+      "note": "Augment self-win ranking."
+    },
+    {
+      "sentence": "C6 Side A self-wins",
+      "citation": "S17",
+      "verdict": "supported",
+      "note": "Graphite guide ranks/frames own Diamond metrics favorably."
+    },
+    {
+      "sentence": "C6 Side B: Martian warns vendor bias; gold seeding; rank instability across protocols",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Vendor bias, gold seeding, online/offline rank disagreement."
+    },
+    {
+      "sentence": "Magnitude of gold-set incompleteness correction factors usable in synthesis (S13 flags bias; no correction factors in corpus)",
+      "citation": "S13",
+      "verdict": "supported",
+      "note": "Flags incompleteness/bias large enough to change rankings; no numeric correction factors provided."
+    },
+    {
+      "sentence": "How much effectiveness is defaults vs months of tuning",
+      "citation": "S21",
+      "verdict": "partial",
+      "note": "Shows defaults vs tuned quality difference; duration not 'months'."
+    },
+    {
+      "sentence": "How much effectiveness is defaults vs months of tuning",
+      "citation": "S23",
+      "verdict": "partial",
+      "note": "Shows filter impact within two weeks; not months."
+    },
+    {
+      "sentence": "Whether confident-wrong advice harms juniors beyond anecdote",
+      "citation": "S26",
+      "verdict": "supported",
+      "note": "Source raises junior/intern persuasion risk; report correctly treats it as anecdote-level for the gap."
+    }
+  ],
+  "fabricated_quotes": [],
+  "figure_mismatches": [],
+  "counts": {
+    "supported": 133,
+    "partial": 12,
+    "unsupported": 6,
+    "missing": 0
+  }
+}

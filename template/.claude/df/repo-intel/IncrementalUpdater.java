@@ -280,7 +280,7 @@ final class IncrementalUpdater {
             if (f.namespace != null && !f.namespace.isEmpty()) fn.attrs.put("namespace", f.namespace);
             if (f.error != null) fn.attrs.put("parse_error", f.error);
             if (f.summary != null && !f.summary.isEmpty()) fn.attrs.put("summary", f.summary);
-            if (JavaExtractor.isTestPath(p)) fn.attrs.put("test", true);
+            if (Syntax.isTestPath(p)) fn.attrs.put("test", true);
             g.addNode(fn);
             g.addEdge(new GraphModel.Edge(repo.id, fn.id, "CONTAINS", GraphModel.EXTRACTED, p, 0, "scan"));
             for (GraphModel.Node n : f.nodes) g.addNode(n);

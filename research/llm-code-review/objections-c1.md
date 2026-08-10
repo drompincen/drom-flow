@@ -1,0 +1,43 @@
+# Critic: c1 (coverage gaps: sub-questions from the plan that the report leaves unanswered or answers thinly)
+
+## O1 [blocking]
+sentence: "### 2. False-positive / noise rate vs humans"
+problem: Plan sub-question 2 asks for the false-positive / noise rate of LLM review comments **compared to humans**. The section is titled as a comparison but only reports absolute LLM noise (SWR-Bench precision, RevMate acceptance, Greptile nits, Martian act-on). It never states a human false-positive, nit, or invalid-comment rate on matched or comparable reviews, so a reader cannot judge relative noise. Gaps and Disagreements C1 also stay inside LLM self-metrics vs LLM-independent metrics—still not human FP baselines.
+fix: Either (a) add any corpus human baseline for invalid/nit/non-defect comments (even if only sparse) and compute or narrate the LLM-vs-human gap, or (b) rename the section and open with an explicit null result: “No corpus study reports human FP/noise rates on the same labeling scheme as LLM tools; relative noise is unmeasured,” then keep absolute LLM figures as secondary.
+
+## O2 [blocking]
+sentence: "**Tradeoff pattern:** High-recall / high-volume tools raise act-on counts and noise; high-precision / low-recall tools comment rarely [S13]. No independent production setting shows LLM tools dominating human precision–recall on real defects without collapsing into nits or heavy filtering."
+problem: Plan sub-question 5 requires the precision–recall (or F1 / usefulness) tradeoff for LLM tools **and how that compares to typical human review outcomes**. The body of §5 is entirely LLM/tool KPIs (Martian, SWR-Bench, Cursor, Graphite, GitHub, Anthropic). The closing comparative claim asserts LLM tools do not dominate human P/R without citing any human production precision, recall, F1, or usefulness numbers. That leaves the human side of the sub-question unanswered while implying a resolved comparison.
+fix: Add a short subsection “Human production P/R baselines (corpus)” with whatever human figures exist, or state flatly that the corpus has **no** quantified human production P/R/F1 for defect comments and therefore the second half of sub-question 5 is **unanswered**—and soften the last sentence to “cannot be shown to dominate human P/R because human P/R is not measured in-corpus,” not “no setting shows dominating.”
+
+## O3 [major]
+sentence: "**Reading:** Human-in-the-loop with tuning can improve signal and author self-fix; LLM-only is not supported as equivalent to human review. Net time savings are unproven and sometimes reverse under load."
+problem: Plan sub-question 4 asks how effectiveness changes across **human-only vs LLM-only vs human-in-the-loop**, with evidence measuring **defects found, merge outcomes, and residual bugs** under the three modes. §4 and this reading answer with process metrics (review duration, address rates, nit reduction, human comment volume) and replacement rhetoric—not defect counts or residual/escaped bugs by mode. Gaps later lists multi-site escape rates as unestablished, but §4 never maps that null result onto the three-mode design the plan requires, so the sub-question’s primary outcomes stay thin/unanswered in the Findings path a decision-maker will read first.
+fix: Structure §4 around the three modes with a table or bullets for: (i) defects found / residual bugs, (ii) merge/cycle outcomes, (iii) process proxies. For each cell, put the best corpus number **or** “not measured.” Explicitly state that no A/B or field experiment in the corpus reports residual production defects under human-only vs HITL vs LLM-only.
+
+## O4 [major]
+sentence: "### 3. Differences by defect class"
+problem: Plan sub-question 3 requires stratified differences for **security, concurrency, logic, API misuse, style-only, and maintainability** (LLM vs human catch/miss). §3 only supplies (a) functional vs refactoring **acceptance** (not catch rates), (b) AutoCommenter best-practice scope, (c) an unreplicated vendor severity table, (d) one SAST/LLM hybrid bullet, and (e) multi-hunk limits. Security, concurrency, logic, and API misuse never get even a one-line “no stratified rate in corpus” treatment beyond a single closing “Not established” sentence that bundles them. That is thinner than a full sub-question warrants for a decision on whether LLMs miss the classes humans prioritize.
+fix: Add a class-by-class mini-matrix (security / concurrency / logic / API misuse / style / maintainability) with: evidence cited, metric type (acceptance vs recall vs anecdote), LLM vs human if available, else “no stratified evidence in corpus.” Pull any security-relevant claims from [S12]/[S15]/[S24]/[S28] into the security row so the thinness is documented rather than implied.
+
+## O5 [major]
+sentence: "### 8. Practitioner and industrial deployment signal"
+problem: Plan sub-question 8 asks what deployments report about **real defect catch rate, comment acceptance, and residual production incidents** when adopting LLM code review. §8 covers adoption scale, internal “incorrect” marks, noisy defaults, and social takes on FP/miss—but **residual production incidents** (bugs that ship after LLM review, or incident rate change post-adoption) are not addressed in the section body at all. Comment acceptance is mixed into anecdotes without a clear industrial acceptance synthesis; real defect catch rate stays vendor anecdote + “adoption ≠ superiority.”
+fix: Split §8 into three explicit buckets matching the plan: (1) measured real-defect catch (with “unmeasured beyond anecdotes” if true), (2) comment acceptance / address rates across deployments, (3) residual production incidents / escape metrics—with [S24] auth anecdote labeled as catch-not-residual, and a hard line that **no** non-vendor multi-site residual-incident series exists in-corpus.
+
+## O6 [major]
+sentence: "**Reading:** Reported effectiveness is protocol-, tool-, and time-sensitive. Corpus does **not** support stable effect sizes across model generations and orgs."
+problem: Plan sub-question 6 asks durability across **model generations, languages/frameworks, and codebases outside the original evaluation set**. §6 covers protocol sensitivity, online/offline rank flips, dataset noise, and point-in-time industrial snapshots (model/time/org). It does **not** answer languages/frameworks (e.g., Java vs Python vs multi-language PR stacks) or out-of-distribution codebases beyond “orgs,” so two of the three durability axes the plan names remain unanswered in Findings.
+fix: Add bullets for language/framework stratification and OOD codebases: cite any multi-language notes in [S2]/[S1]/vendor benches, or state “no cross-language effect sizes in corpus.” Extend the Reading line to name all three axes (models, languages/frameworks, OOD codebases) with support/null status each.
+
+## O7 [minor]
+sentence: "### 7. Confounding factors"
+problem: Plan sub-question 7 enumerates specific confounds: **diff size, reviewer seniority, time budget, PR quality, static-analysis baseline, prompt/tooling, ground-truth labeling method**. §7 is strong on metric construct, gold incompleteness, BLEU/EM, vendor COI, scope mismatch, human–model α, tuning, and context limits—but it never systematically treats **reviewer seniority**, **time budget**, **diff size** (beyond multi-hunk context), or **PR quality** as biases that distort LLM-vs-human comparisons. Gaps mentions senior vs junior only as “what we could not establish,” disconnected from the confound list a methodology reader expects under §7.
+fix: Add a short checklist aligned to the plan’s confound list; for each item, one sentence of corpus evidence or “not controlled in any comparative study in-corpus.” Move senior-vs-junior and time-budget from Gaps into §7 as named confounds with null status.
+
+## O8 [minor]
+sentence: "On the same PRs, ChatGPT-4 matches only ~10% of quality issues humans report while proposing ~2.4× more changes [S9]."
+problem: Plan sub-question 1’s evidence standard includes matched conditions and **comparable review effort/context**. §1 leads with human-issue overlap and other proxies but never discusses whether effort, time budget, or access to CI/tests/context were matched between ChatGPT and humans in [S9] (or other proxies). Without that, “measured defect-finding rate vs humans” remains a thin apples-to-oranges figure even though the section is otherwise the strongest in the report.
+fix: After the [S9] bullet, add one sentence on effort/context matching (or lack thereof) from the study methodology; if unknown in-corpus, say so and flag it as a confound that bounds interpretation of the 10% / 2.4× numbers.
+
+RESULT: blocking=2 major=4 minor=2

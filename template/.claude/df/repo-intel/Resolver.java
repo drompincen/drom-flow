@@ -18,18 +18,14 @@ import java.util.Set;
 final class Resolver {
 
     private static final int MAX_CANDIDATES = 4;
-    private static final Set<String> CALLABLE = Set.of("method", "constructor", "function");
 
     private final GraphModel.Graph g;
     private final Map<String, Extractor.FileFacts> facts;
-    private final Map<String, List<GraphModel.Node>> byQname = new HashMap<>();
-    private final Map<String, List<GraphModel.Node>> bySimple = new HashMap<>();
-    private final Map<String, List<GraphModel.Node>> byFile = new HashMap<>();
-    private final Map<String, String> parentOf = new HashMap<>();
-    private final Set<String> repoFiles = new LinkedHashSet<>();
     private final Map<String, Set<String>> includes = new HashMap<>();
 
     int resolved, ambiguous, unresolved;
+
+    private ResolverIndex idx;
 
     Resolver(GraphModel.Graph g, Map<String, Extractor.FileFacts> facts) {
         this.g = g;
@@ -42,7 +38,7 @@ final class Resolver {
     }
 
     void run() {
-        index();
+        idx = new ResolverIndex(g, facts);
         for (Extractor.FileFacts f : facts.values()) resolveImports(f);
         buildIncludeClosure();
         for (Extractor.FileFacts f : facts.values()) {
@@ -61,70 +57,6 @@ final class Resolver {
     }
 
     // ---------- indexes ----------
-
-    private void index() {
-        for (GraphModel.Node n : g.nodes.values()) {
-            if ("file".equals(n.type)) { repoFiles.add(n.qname == null || n.qname.isEmpty() ? n.name : n.qname); continue; }
-            if (n.qname != null && !n.qname.isEmpty()) byQname.computeIfAbsent(n.qname, k -> new ArrayList<>()).add(n);
-            if (n.name != null && !n.name.isEmpty()) bySimple.computeIfAbsent(n.name, k -> new ArrayList<>()).add(n);
-            if (n.file != null) byFile.computeIfAbsent(n.file, k -> new ArrayList<>()).add(n);
-        }
-        repoFiles.clear();
-        repoFiles.addAll(facts.keySet());
-        for (GraphModel.Edge e : g.edges) {
-            if ("CONTAINS".equals(e.relation) || "DEFINES".equals(e.relation)) parentOf.putIfAbsent(e.target, e.source);
-        }
-    }
-
-    private static boolean isTypeNode(GraphModel.Node n) {
-        return "class".equals(n.type) || "interface".equals(n.type) || "enum".equals(n.type)
-                || "record".equals(n.type) || "type".equals(n.type);
-    }
-
-    private List<GraphModel.Node> typesByQ(String q) {
-        List<GraphModel.Node> out = new ArrayList<>();
-        for (GraphModel.Node n : byQname.getOrDefault(q, List.of())) if (isTypeNode(n)) out.add(n);
-        return out;
-    }
-
-    private List<GraphModel.Node> callableByQ(String q) {
-        List<GraphModel.Node> out = new ArrayList<>();
-        for (GraphModel.Node n : byQname.getOrDefault(q, List.of())) if (CALLABLE.contains(n.type)) out.add(n);
-        return out;
-    }
-
-    private GraphModel.Node enclosingType(String nodeId) {
-        String cur = nodeId;
-        for (int i = 0; i < 8 && cur != null; i++) {
-            GraphModel.Node n = g.nodes.get(cur);
-            if (n != null && isTypeNode(n)) return n;
-            cur = parentOf.get(cur);
-        }
-        return null;
-    }
-
-    private List<GraphModel.Node> methodsOf(GraphModel.Node type, String name, int arity, int depth) {
-        List<GraphModel.Node> out = new ArrayList<>();
-        if (type == null || depth > 4) return out;
-        for (GraphModel.Edge e : g.outgoing(type.id)) {
-            if (!"CONTAINS".equals(e.relation)) continue;
-            GraphModel.Node c = g.nodes.get(e.target);
-            if (c != null && name.equals(c.name) && CALLABLE.contains(c.type)) out.add(c);
-        }
-        if (!out.isEmpty()) return byArity(out, arity);
-        for (GraphModel.Edge e : g.outgoing(type.id)) {
-            if (!"EXTENDS".equals(e.relation) && !"IMPLEMENTS".equals(e.relation)) continue;
-            out.addAll(methodsOf(g.nodes.get(e.target), name, arity, depth + 1));
-        }
-        return byArity(out, arity);
-    }
-
-    private static List<GraphModel.Node> byArity(List<GraphModel.Node> in, int arity) {
-        if (arity < 0 || in.size() < 2) return in;
-        List<GraphModel.Node> exact = new ArrayList<>();
-        for (GraphModel.Node n : in) if (n.id.endsWith("(" + arity + ")")) exact.add(n);
-        return exact.isEmpty() ? in : exact;
-    }
 
     private void emit(String from, List<GraphModel.Node> cands, String relation, String file,
                       int line, String resolverName, String singleConfidence) {
@@ -156,10 +88,10 @@ final class Resolver {
                         // and every repository type it actually brings into scope.
                         String pkg = im.module == null ? "" : im.module;
                         if (pkg.isEmpty()) continue;
-                        GraphModel.Node pn = packageNode(pkg);
+                        GraphModel.Node pn = idx.packageNode(pkg);
                         g.addEdge(new GraphModel.Edge(fileId, pn.id, "IMPORTS", GraphModel.EXTRACTED,
                                 f.path, im.line, "java-wildcard-import"));
-                        for (GraphModel.Node n : typesInPackage(pkg)) {
+                        for (GraphModel.Node n : idx.typesInPackage(pkg)) {
                             g.addEdge(new GraphModel.Edge(fileId, n.id, "IMPORTS", GraphModel.EXTRACTED,
                                     f.path, im.line, "java-wildcard-import"));
                         }
@@ -167,32 +99,32 @@ final class Resolver {
                     }
                     String q = im.module == null || im.module.isEmpty() ? im.member : im.module + "." + im.member;
                     if (q == null) continue;
-                    List<GraphModel.Node> c = new ArrayList<>(byQname.getOrDefault(q, List.of()));
+                    List<GraphModel.Node> c = new ArrayList<>(idx.byQname.getOrDefault(q, List.of()));
                     if (!c.isEmpty()) {
                         emit(fileId, c, "IMPORTS", f.path, im.line, "java-import", GraphModel.EXTRACTED);
                     } else {
                         // The import names a symbol this repository does not define. That is still
                         // a fact worth keeping: it is how "who uses Spring" gets answered.
-                        GraphModel.Node ext = externalNode("java", q);
+                        GraphModel.Node ext = idx.externalNode("java", q);
                         g.addEdge(new GraphModel.Edge(fileId, ext.id, "IMPORTS", GraphModel.EXTRACTED, f.path, im.line, "java-import-external"));
                     }
                 }
                 case "python" -> {
                     String q = im.member == null || im.member.isEmpty() ? im.module : im.module + "." + im.member;
-                    List<GraphModel.Node> c = new ArrayList<>(byQname.getOrDefault(q, List.of()));
-                    if (c.isEmpty() && repoFiles.contains(moduleToPath(q))) {
-                        GraphModel.Node fn = g.nodes.get(GraphModel.fileId(moduleToPath(q)));
+                    List<GraphModel.Node> c = new ArrayList<>(idx.byQname.getOrDefault(q, List.of()));
+                    if (c.isEmpty() && idx.repoFiles.contains(ResolverIndex.moduleToPath(q))) {
+                        GraphModel.Node fn = g.nodes.get(GraphModel.fileId(ResolverIndex.moduleToPath(q)));
                         if (fn != null) c.add(fn);
                     }
                     if (!c.isEmpty()) {
                         emit(fileId, c, "IMPORTS", f.path, im.line, "python-import", GraphModel.EXTRACTED);
                     } else if (q != null && !q.isEmpty()) {
-                        GraphModel.Node ext = externalNode("python", q);
+                        GraphModel.Node ext = idx.externalNode("python", q);
                         g.addEdge(new GraphModel.Edge(fileId, ext.id, "IMPORTS", GraphModel.EXTRACTED, f.path, im.line, "python-import-external"));
                     }
                 }
                 case "es", "cjs" -> {
-                    String target = resolveSpec(f.path, im.module);
+                    String target = idx.resolveSpec(f.path, im.module);
                     if (target != null) {
                         GraphModel.Node fn = g.nodes.get(GraphModel.fileId(target));
                         if (fn != null) emit(fileId, List.of(fn), "IMPORTS", f.path, im.line, "es-module-path", GraphModel.EXTRACTED);
@@ -203,8 +135,8 @@ final class Resolver {
                         }
                     } else if (im.module != null && !im.module.isEmpty()
                             && !im.module.startsWith(".") && !im.module.startsWith("/")) {
-                        String pkg = externalNpmName(im.module);
-                        GraphModel.Node n = pkgNode("npm", pkg);
+                        String pkg = ResolverIndex.externalNpmName(im.module);
+                        GraphModel.Node n = idx.pkgNode("npm", pkg);
                         g.addEdge(new GraphModel.Edge(fileId, n.id, "IMPORTS", GraphModel.EXTRACTED, f.path, im.line, "external-module"));
                     }
                 }
@@ -213,69 +145,6 @@ final class Resolver {
             }
         }
     }
-
-    private static String externalNpmName(String spec) {
-        String s = spec;
-        if (s.startsWith("@")) {
-            int second = s.indexOf('/', s.indexOf('/') + 1);
-            return second < 0 ? s : s.substring(0, second);
-        }
-        int slash = s.indexOf('/');
-        return slash < 0 ? s : s.substring(0, slash);
-    }
-
-    private Map<String, List<GraphModel.Node>> byPackage;
-
-    /** Top-level types declared directly in a package. Built once; a per-import scan of every
-     *  node was quadratic on repositories with many wildcard imports. */
-    private List<GraphModel.Node> typesInPackage(String pkg) {
-        if (byPackage == null) {
-            byPackage = new HashMap<>();
-            for (GraphModel.Node n : g.nodes.values()) {
-                if (!isTypeNode(n) || n.qname == null) continue;
-                int dot = n.qname.lastIndexOf('.');
-                if (dot <= 0) continue;
-                byPackage.computeIfAbsent(n.qname.substring(0, dot), k -> new ArrayList<>()).add(n);
-            }
-        }
-        return byPackage.getOrDefault(pkg, List.of());
-    }
-
-    private GraphModel.Node packageNode(String pkg) {
-        String id = "pkg:package:" + pkg;
-        GraphModel.Node n = g.nodes.get(id);
-        if (n == null) {
-            n = new GraphModel.Node(id, "package", pkg.substring(pkg.lastIndexOf('.') + 1), pkg, "java", null);
-            g.addNode(n);
-        }
-        return n;
-    }
-
-    /** A symbol this repository imports but does not define. Keyed by its written name. */
-    private GraphModel.Node externalNode(String eco, String qname) {
-        String id = GraphModel.pkgId(eco, qname);
-        GraphModel.Node n = g.nodes.get(id);
-        if (n == null) {
-            String simple = qname.contains(".") ? qname.substring(qname.lastIndexOf('.') + 1) : qname;
-            n = new GraphModel.Node(id, "external_package", simple, qname, eco, null);
-            n.attrs.put("external", true);
-            g.addNode(n);
-        }
-        return n;
-    }
-
-    private GraphModel.Node pkgNode(String eco, String name) {
-        String id = GraphModel.pkgId(eco, name);
-        GraphModel.Node n = g.nodes.get(id);
-        if (n == null) {
-            n = new GraphModel.Node(id, "external_package", name, name, eco, null);
-            n.attrs.put("ecosystem", eco);
-            g.addNode(n);
-        }
-        return n;
-    }
-
-    private static String moduleToPath(String dotted) { return dotted.replace('.', '/') + ".py"; }
 
     // ---------- inheritance ----------
 
@@ -295,7 +164,7 @@ final class Resolver {
                 String q = im.module == null || im.module.isEmpty() ? im.member : im.module + "." + im.member;
                 if (q == null || q.isEmpty()) continue;
                 String eco = "python".equals(f.language) ? "python" : "java".equals(f.language) ? "java" : "npm";
-                GraphModel.Node ext = externalNode(eco, q);
+                GraphModel.Node ext = idx.externalNode(eco, q);
                 g.addEdge(new GraphModel.Edge(t.from, ext.id, t.relation, GraphModel.EXTRACTED,
                         f.path, t.line, f.language + "-external-supertype"));
                 break;
@@ -310,7 +179,7 @@ final class Resolver {
         String simple = name.contains(".") ? name.substring(name.lastIndexOf('.') + 1) : name;
 
         if (name.contains(".")) {
-            c.nodes.addAll(typesByQ(name));
+            c.nodes.addAll(idx.typesByQ(name));
             if (!c.nodes.isEmpty()) { c.direct = true; return c; }
         }
         for (Extractor.ImportRef im : f.imports) {
@@ -319,29 +188,29 @@ final class Resolver {
             if ("java".equals(im.kind) || "java-static".equals(im.kind) || "python".equals(im.kind)) {
                 q = im.module == null || im.module.isEmpty() ? im.member : im.module + "." + im.member;
             } else if ("es".equals(im.kind) || "cjs".equals(im.kind)) {
-                String tf = resolveSpec(f.path, im.module);
+                String tf = idx.resolveSpec(f.path, im.module);
                 if (tf != null) {
-                    for (GraphModel.Node n : byFile.getOrDefault(tf, List.of())) {
-                        if (isTypeNode(n) && (n.name.equals(im.member) || n.name.equals(simple))) c.nodes.add(n);
+                    for (GraphModel.Node n : idx.byFile.getOrDefault(tf, List.of())) {
+                        if (ResolverIndex.isTypeNode(n) && (n.name.equals(im.member) || n.name.equals(simple))) c.nodes.add(n);
                     }
                 }
             }
-            if (q != null) c.nodes.addAll(typesByQ(q));
+            if (q != null) c.nodes.addAll(idx.typesByQ(q));
             if (!c.nodes.isEmpty()) { c.direct = true; return c; }
         }
         for (Extractor.ImportRef im : f.imports) {
-            if (im.wildcard && im.module != null && !im.module.isEmpty()) c.nodes.addAll(typesByQ(im.module + "." + simple));
+            if (im.wildcard && im.module != null && !im.module.isEmpty()) c.nodes.addAll(idx.typesByQ(im.module + "." + simple));
         }
         if (!c.nodes.isEmpty()) { c.direct = true; return c; }
         if (f.namespace != null && !f.namespace.isEmpty()) {
-            c.nodes.addAll(typesByQ(f.namespace + "." + simple));
+            c.nodes.addAll(idx.typesByQ(f.namespace + "." + simple));
             if (!c.nodes.isEmpty()) { c.direct = true; return c; }
         }
-        for (GraphModel.Node n : byFile.getOrDefault(f.path, List.of())) {
-            if (isTypeNode(n) && simple.equals(n.name)) c.nodes.add(n);
+        for (GraphModel.Node n : idx.byFile.getOrDefault(f.path, List.of())) {
+            if (ResolverIndex.isTypeNode(n) && simple.equals(n.name)) c.nodes.add(n);
         }
         if (!c.nodes.isEmpty()) { c.direct = true; return c; }
-        for (GraphModel.Node n : bySimple.getOrDefault(simple, List.of())) if (isTypeNode(n)) c.nodes.add(n);
+        for (GraphModel.Node n : idx.bySimple.getOrDefault(simple, List.of())) if (ResolverIndex.isTypeNode(n)) c.nodes.add(n);
         return c;
     }
 
@@ -349,7 +218,7 @@ final class Resolver {
 
     private void resolveDeps(Extractor.FileFacts f) {
         for (Extractor.DepRef d : f.deps) {
-            GraphModel.Node n = pkgNode(d.ecosystem, d.name);
+            GraphModel.Node n = idx.pkgNode(d.ecosystem, d.name);
             if (d.version != null && !d.version.isEmpty()) n.attrs.putIfAbsent("version", d.version);
             g.addEdge(new GraphModel.Edge(GraphModel.fileId(f.path), n.id, "DEPENDS_ON", GraphModel.EXTRACTED,
                     f.path, d.line, d.indirect ? "manifest-indirect" : "manifest"));
@@ -372,7 +241,7 @@ final class Resolver {
             }
             if ("new".equals(r.kind)) {
                 Cand tc = typeCandidates(f, r.name);
-                for (GraphModel.Node t : tc.nodes) c.addAll(methodsOf(t, JavaExtractor.simple(t.qname), r.arity, 0));
+                for (GraphModel.Node t : tc.nodes) c.addAll(idx.methodsOf(t, Syntax.simple(t.qname), r.arity, 0));
                 if (c.isEmpty() && tc.direct) {
                     emit(r.from, tc.nodes, "REFERENCES", f.path, r.line, "java-constructor", GraphModel.EXTRACTED);
                     continue;
@@ -381,20 +250,20 @@ final class Resolver {
                 continue;
             }
             if (r.receiver == null) {
-                GraphModel.Node t = enclosingType(r.from);
-                c.addAll(methodsOf(t, r.name, r.arity, 0));
+                GraphModel.Node t = idx.enclosingType(r.from);
+                c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
                 if (c.isEmpty() && staticImports.containsKey(r.name)) {
-                    for (GraphModel.Node st : typesByQ(staticImports.get(r.name))) {
-                        c.addAll(methodsOf(st, r.name, r.arity, 0));
+                    for (GraphModel.Node st : idx.typesByQ(staticImports.get(r.name))) {
+                        c.addAll(idx.methodsOf(st, r.name, r.arity, 0));
                     }
                 }
             } else if (r.receiverType != null) {
-                for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(methodsOf(t, r.name, r.arity, 0));
+                for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
             } else if ("this".equals(r.receiver)) {
-                c.addAll(methodsOf(enclosingType(r.from), r.name, r.arity, 0));
+                c.addAll(idx.methodsOf(idx.enclosingType(r.from), r.name, r.arity, 0));
             } else if (!r.receiver.isEmpty() && Character.isUpperCase(r.receiver.charAt(0))) {
                 Cand tc = typeCandidates(f, r.receiver);
-                if (tc.direct) for (GraphModel.Node t : tc.nodes) c.addAll(methodsOf(t, r.name, r.arity, 0));
+                if (tc.direct) for (GraphModel.Node t : tc.nodes) c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
             }
             emit(r.from, c, "CALLS", f.path, r.line, "java-import-and-type-resolution", GraphModel.INFERRED);
         }
@@ -411,31 +280,31 @@ final class Resolver {
             List<GraphModel.Node> c = new ArrayList<>();
             if ("cls".equals(r.receiver) || "cls".equals(r.name)) {
                 // inside a classmethod, cls IS the enclosing class
-                GraphModel.Node t = enclosingType(r.from);
+                GraphModel.Node t = idx.enclosingType(r.from);
                 if (t != null) {
-                    List<GraphModel.Node> ctor = "cls".equals(r.name) ? methodsOf(t, "__init__", -1, 0)
-                            : methodsOf(t, r.name, r.arity, 0);
+                    List<GraphModel.Node> ctor = "cls".equals(r.name) ? idx.methodsOf(t, "__init__", -1, 0)
+                            : idx.methodsOf(t, r.name, r.arity, 0);
                     emit(r.from, ctor.isEmpty() ? List.of(t) : ctor, "CALLS", f.path, r.line,
                             "python-classmethod", GraphModel.INFERRED);
                     continue;
                 }
             }
             if ("super".equals(r.receiver)) {
-                GraphModel.Node t = enclosingType(r.from);
+                GraphModel.Node t = idx.enclosingType(r.from);
                 if (t != null) {
                     for (GraphModel.Edge e : g.outgoing(t.id)) {
-                        if ("EXTENDS".equals(e.relation)) c.addAll(methodsOf(g.nodes.get(e.target), r.name, r.arity, 0));
+                        if ("EXTENDS".equals(e.relation)) c.addAll(idx.methodsOf(g.nodes.get(e.target), r.name, r.arity, 0));
                     }
                 }
                 emit(r.from, c, "CALLS", f.path, r.line, "python-super", GraphModel.INFERRED);
                 continue;
             }
             if (r.receiver == null) {
-                if (bind.containsKey(r.name)) c.addAll(callableByQ(bind.get(r.name)));
+                if (bind.containsKey(r.name)) c.addAll(idx.callableByQ(bind.get(r.name)));
                 if (c.isEmpty() && f.namespace != null && !f.namespace.isEmpty()) {
-                    c.addAll(callableByQ(f.namespace + "." + r.name));
+                    c.addAll(idx.callableByQ(f.namespace + "." + r.name));
                 }
-                if (c.isEmpty()) c.addAll(methodsOf(enclosingType(r.from), r.name, r.arity, 0));
+                if (c.isEmpty()) c.addAll(idx.methodsOf(idx.enclosingType(r.from), r.name, r.arity, 0));
                 if (c.isEmpty()) {
                     // `Case(...)` where Case is a class is a construction, not an unknown call.
                     Cand tc = typeCandidates(f, r.name);
@@ -443,12 +312,12 @@ final class Resolver {
                         // Construction is both a use of the class and a call of its initialiser.
                         emit(r.from, tc.nodes, "CALLS", f.path, r.line, "python-construction", GraphModel.INFERRED);
                         List<GraphModel.Node> ctor = new ArrayList<>();
-                        for (GraphModel.Node t : tc.nodes) ctor.addAll(methodsOf(t, "__init__", -1, 0));
+                        for (GraphModel.Node t : tc.nodes) ctor.addAll(idx.methodsOf(t, "__init__", -1, 0));
                         if (!ctor.isEmpty()) emit(r.from, ctor, "CALLS", f.path, r.line, "python-construction", GraphModel.INFERRED);
                         continue;
                     }
                     if (bind.containsKey(r.name)) {
-                        GraphModel.Node ext = externalNode("python", bind.get(r.name));
+                        GraphModel.Node ext = idx.externalNode("python", bind.get(r.name));
                         g.addEdge(new GraphModel.Edge(r.from, ext.id, "CALLS", GraphModel.EXTRACTED,
                                 f.path, r.line, "python-external-call"));
                         continue;
@@ -457,16 +326,16 @@ final class Resolver {
             } else {
                 String base = bind.get(r.receiver);
                 if (base != null) {
-                    c.addAll(callableByQ(base + "." + r.name));
-                    if (c.isEmpty()) for (GraphModel.Node t : typesByQ(base)) c.addAll(methodsOf(t, r.name, r.arity, 0));
+                    c.addAll(idx.callableByQ(base + "." + r.name));
+                    if (c.isEmpty()) for (GraphModel.Node t : idx.typesByQ(base)) c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
                 }
                 if (c.isEmpty() && r.receiverType != null) {
-                    for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(methodsOf(t, r.name, r.arity, 0));
+                    for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
                 }
                 if (c.isEmpty() && base != null) {
                     // the receiver is an imported module this repository does not define:
                     // `logging.getLogger(...)`. The dependency is real even if the target is not ours.
-                    GraphModel.Node ext = externalNode("python", base + "." + r.name);
+                    GraphModel.Node ext = idx.externalNode("python", base + "." + r.name);
                     g.addEdge(new GraphModel.Edge(r.from, ext.id, "CALLS", GraphModel.EXTRACTED,
                             f.path, r.line, "python-external-call"));
                     continue;
@@ -480,18 +349,18 @@ final class Resolver {
         Map<String, String[]> bind = new LinkedHashMap<>();   // alias -> [targetFile, member|null]
         for (Extractor.ImportRef im : f.imports) {
             if (im.alias == null) continue;
-            String tf = resolveSpec(f.path, im.module);
+            String tf = idx.resolveSpec(f.path, im.module);
             if (tf == null) continue;
             bind.put(im.alias, new String[]{tf, im.wildcard ? null : im.member});
         }
         for (Extractor.Ref r : f.refs) {
             List<GraphModel.Node> c = new ArrayList<>();
             if ("super".equals(r.name) || "super".equals(r.receiver)) {
-                GraphModel.Node t = enclosingType(r.from);
+                GraphModel.Node t = idx.enclosingType(r.from);
                 if (t != null) {
                     String member = "super".equals(r.name) ? "constructor" : r.name;
                     for (GraphModel.Edge e : g.outgoing(t.id)) {
-                        if ("EXTENDS".equals(e.relation)) c.addAll(methodsOf(g.nodes.get(e.target), member, -1, 0));
+                        if ("EXTENDS".equals(e.relation)) c.addAll(idx.methodsOf(g.nodes.get(e.target), member, -1, 0));
                     }
                 }
                 emit(r.from, c, "CALLS", f.path, r.line, "es-super", GraphModel.INFERRED);
@@ -503,34 +372,34 @@ final class Resolver {
                     List<GraphModel.Node> bound = exported(b[0], b[1] == null ? r.name : b[1]);
                     // a bound name that turns out to be a class means construction
                     for (GraphModel.Node n : bound) {
-                        List<GraphModel.Node> ctor = isTypeNode(n) ? methodsOf(n, "constructor", -1, 0) : List.of();
+                        List<GraphModel.Node> ctor = ResolverIndex.isTypeNode(n) ? idx.methodsOf(n, "constructor", -1, 0) : List.of();
                         if (!ctor.isEmpty()) c.addAll(ctor); else c.add(n);
                     }
                 }
                 if (c.isEmpty()) {
-                    for (GraphModel.Node n : byFile.getOrDefault(f.path, List.of())) {
-                        if (r.name.equals(n.name) && CALLABLE.contains(n.type)) c.add(n);
+                    for (GraphModel.Node n : idx.byFile.getOrDefault(f.path, List.of())) {
+                        if (r.name.equals(n.name) && ResolverIndex.CALLABLE.contains(n.type)) c.add(n);
                     }
                 }
                 if (c.isEmpty()) {
                     Cand tc = typeCandidates(f, r.name);
                     if (!tc.nodes.isEmpty()) {
                         List<GraphModel.Node> ctor = new ArrayList<>();
-                        for (GraphModel.Node t : tc.nodes) ctor.addAll(methodsOf(t, "constructor", -1, 0));
+                        for (GraphModel.Node t : tc.nodes) ctor.addAll(idx.methodsOf(t, "constructor", -1, 0));
                         emit(r.from, ctor.isEmpty() ? tc.nodes : ctor, "CALLS", f.path, r.line,
                                 "es-construction", GraphModel.INFERRED);
                         continue;
                     }
                 }
-                if (c.isEmpty()) c.addAll(methodsOf(enclosingType(r.from), r.name, r.arity, 0));
+                if (c.isEmpty()) c.addAll(idx.methodsOf(idx.enclosingType(r.from), r.name, r.arity, 0));
             } else {
                 String[] b = bind.get(r.receiver);
                 if (b != null) c.addAll(exported(b[0], r.name));
                 if (c.isEmpty() && r.receiverType != null && !"any".equals(r.receiverType)) {
-                    for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(methodsOf(t, r.name, r.arity, 0));
+                    for (GraphModel.Node t : typeCandidates(f, r.receiverType).nodes) c.addAll(idx.methodsOf(t, r.name, r.arity, 0));
                 }
                 if (c.isEmpty() && ("this".equals(r.receiver) || r.receiver.startsWith("this."))) {
-                    c.addAll(methodsOf(enclosingType(r.from), r.name, r.arity, 0));
+                    c.addAll(idx.methodsOf(idx.enclosingType(r.from), r.name, r.arity, 0));
                 }
             }
             emit(r.from, c, "CALLS", f.path, r.line, "es-module-and-type-resolution", GraphModel.INFERRED);
@@ -548,36 +417,10 @@ final class Resolver {
                 if (n != null) { out.add(n); return out; }
             }
         }
-        for (GraphModel.Node n : byFile.getOrDefault(file, List.of())) {
-            if (member.equals(n.name) && (CALLABLE.contains(n.type) || isTypeNode(n))) out.add(n);
+        for (GraphModel.Node n : idx.byFile.getOrDefault(file, List.of())) {
+            if (member.equals(n.name) && (ResolverIndex.CALLABLE.contains(n.type) || ResolverIndex.isTypeNode(n))) out.add(n);
         }
         return out;
-    }
-
-    private String resolveSpec(String fromFile, String spec) {
-        if (spec == null || spec.isEmpty()) return null;
-        if (!(spec.startsWith("./") || spec.startsWith("../") || spec.startsWith("/"))) return null;
-        String dir = fromFile.contains("/") ? fromFile.substring(0, fromFile.lastIndexOf('/')) : "";
-        String joined = normalize(spec.startsWith("/") ? spec.substring(1) : dir + "/" + spec);
-        String[] exts = {"", ".ts", ".tsx", ".d.ts", ".js", ".jsx", ".mjs", ".cjs",
-                "/index.ts", "/index.tsx", "/index.js", "/index.jsx"};
-        for (String e : exts) if (repoFiles.contains(joined + e)) return joined + e;
-        // an import written without extension may also point at a .js emitted from .ts
-        if (joined.endsWith(".js")) {
-            String base = joined.substring(0, joined.length() - 3);
-            for (String e : new String[]{".ts", ".tsx"}) if (repoFiles.contains(base + e)) return base + e;
-        }
-        return null;
-    }
-
-    static String normalize(String p) {
-        List<String> out = new ArrayList<>();
-        for (String seg : p.split("/")) {
-            if (seg.isEmpty() || seg.equals(".")) continue;
-            if (seg.equals("..")) { if (!out.isEmpty()) out.remove(out.size() - 1); continue; }
-            out.add(seg);
-        }
-        return String.join("/", out);
     }
 
     // ---------- shell ----------
@@ -588,7 +431,7 @@ final class Resolver {
             if (!"bash".equals(f.language)) continue;
             Set<String> targets = new LinkedHashSet<>();
             for (String inc : f.includes) {
-                String t = matchInclude(f.path, inc);
+                String t = idx.matchInclude(f.path, inc);
                 if (t != null) {
                     targets.add(t);
                     GraphModel.Node fn = g.nodes.get(GraphModel.fileId(t));
@@ -612,26 +455,6 @@ final class Resolver {
         }
     }
 
-    private String matchInclude(String fromFile, String raw) {
-        if (raw == null) return null;
-        String s = raw.trim().replace("\"", "").replace("'", "");
-        s = s.replaceAll("\\$\\([^)]*\\)", "").replaceAll("\\$\\{[^}]*\\}", "").replace("$0", "");
-        while (s.startsWith("/")) s = s.substring(1);
-        s = normalize(s);
-        if (s.isEmpty()) return null;
-        if (repoFiles.contains(s)) return s;
-        String dir = fromFile.contains("/") ? fromFile.substring(0, fromFile.lastIndexOf('/')) : "";
-        String rel = normalize(dir + "/" + s);
-        if (repoFiles.contains(rel)) return rel;
-        String best = null;
-        for (String f : repoFiles) {
-            if (f.endsWith("/" + s) || f.equals(s)) {
-                if (best == null || f.length() < best.length()) best = f;
-            }
-        }
-        return best;
-    }
-
     private void bashRefs(Extractor.FileFacts f) {
         Set<String> scope = new LinkedHashSet<>();
         scope.add(f.path);
@@ -639,7 +462,7 @@ final class Resolver {
         for (Extractor.Ref r : f.refs) {
             List<GraphModel.Node> c = new ArrayList<>();
             for (String file : scope) {
-                for (GraphModel.Node n : byFile.getOrDefault(file, List.of())) {
+                for (GraphModel.Node n : idx.byFile.getOrDefault(file, List.of())) {
                     if ("function".equals(n.type) && r.name.equals(n.name)) c.add(n);
                 }
             }

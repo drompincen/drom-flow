@@ -3,7 +3,7 @@ title: Codex sub-agent runner alongside grok
 status: completed
 created: 2026-08-10
 updated: 2026-08-10
-current_chapter: 8
+current_chapter: 9
 ---
 
 # Plan: Codex sub-agent runner alongside grok
@@ -192,6 +192,38 @@ terminal `end` event out of `stream.jsonl` and learned the hard way that `struct
 - [x] `docs/orchestration.md` updated; `docs/scripts.md` regenerated so the docs gates stay green
 - [x] README: one line. This is an internal capability, not a product surface
 - [x] `SCRIPTS.md` entries, and the new scripts ship as `*.sh.txt` like every other shell asset
+
+## Chapter 9: One front door, and a routing decision the planner can actually make
+**Status:** completed
+**Depends on:** Chapters 3-8
+
+The caller is Claude. Two entry points means the decision of *which runner* leaks into every
+plan, and gets made ad hoc or not at all. This chapter gives that decision a home.
+
+- [x] `scripts/fleet.sh` — one dispatcher: `doctor | route | spawn | status | collect | stop | resume`
+- [x] `--backend auto|grok|codex`, default `auto`
+- [x] `status`/`collect`/`stop`/`resume` locate the run by looking in **both** control planes, so a
+      caller never has to remember which runner produced a run id
+- [x] `fleet.sh route <kind>` prints the chosen backend **and the reason**, so the choice is
+      auditable rather than folklore
+- [x] Availability overrides preference: one runner installed means one choice; neither installed
+      means structured refusal and exit 3, never a crash
+- [x] Gates: routing picks correctly per kind; run lookup finds a run in either plane; `auto`
+      with only one runner available uses it; with neither, refuses cleanly
+
+### The routing table, and why
+
+Measured on this machine, not assumed:
+
+| Work kind | Backend | Why |
+|---|---|---|
+| `research`, `web`, `social` | **grok** | codex's sandbox has **no network** — probed: DNS resolution fails. grok has web and X search. This is not a preference, it is a capability. |
+| `audit`, `review`, `analysis` | **codex** | reads the repository reliably, and the sandbox *enforces* that it cannot write outside its own directory instead of asking it not to |
+| `author`, `implement` | **codex** | same containment, plus real `item.completed` progress and resume by thread id |
+| `bulk` | **grok** if available | breadth is what grok is for; codex accounting is per-token |
+| anything else | **codex**, else grok | fewer moving parts: native binary, no path translation |
+
+Availability always wins over preference, and the reason string says which rule fired.
 
 ---
 

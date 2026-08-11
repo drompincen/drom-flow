@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "generated": "2026-08-11T07:19:21",
+  "passed": 5,
+  "total": 5,
+  "gates": [
+    {
+      "id": "host_content_survives",
+      "status": "PASS",
+      "detail": "host-owned skill, its extra files and host source survive install, update and uninstall"
+    },
+    {
+      "id": "modified_skill_preserved",
+      "status": "PASS",
+      "detail": "a host-edited skill is kept, the new version lands as .dromflow-new, and the run says so"
+    },
+    {
+      "id": "updates_still_flow",
+      "status": "PASS",
+      "detail": "a managed skill that matches its baseline is still updated \u2014 the policy preserves, it does not freeze"
+    },
+    {
+      "id": "no_spurious_new",
+      "status": "PASS",
+      "detail": "an untouched install produces no .dromflow-new files"
+    },
+    {
+      "id": "uninstall_keeps_edits",
+      "status": "PASS",
+      "detail": "uninstall keeps skills the host edited, reports them, and still removes untouched ones"
+    }
+  ]
+}

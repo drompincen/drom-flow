@@ -158,6 +158,40 @@ PY
   fi
 fi
 
+
+# ---------------------------------------------------------------- G8 front door + routing
+if ! skip routing; then
+  F="$R/scripts/fleet.sh"
+  probs=""
+  [ -x "$F" ] || probs="$probs fleet.sh-not-materialised"
+  pick() { bash "$F" route "$1" 2>/dev/null | python3 -c "import json,sys;print(json.load(sys.stdin)['backend'])" 2>/dev/null; }
+  # capability, not taste: codex has no network, so web work must never route to it when grok exists
+  if bash "$F" doctor 2>/dev/null | grep -q '"grok":true'; then
+    [ "$(pick research)" = grok ] || probs="$probs research-not-grok"
+    [ "$(pick bulk)" = grok ] || probs="$probs bulk-not-grok"
+  fi
+  if bash "$F" doctor 2>/dev/null | grep -q '"codex":true'; then
+    [ "$(pick audit)" = codex ] || probs="$probs audit-not-codex"
+    [ "$(pick author)" = codex ] || probs="$probs author-not-codex"
+  fi
+  # availability beats preference
+  [ "$(CODEX_DISABLE=1 pick audit)" = grok ] || probs="$probs no-codex-fallback"
+  [ "$(GROK_DISABLE=1 pick research)" = codex ] || probs="$probs no-grok-fallback"
+  # neither: structured refusal, exit 3, and doctor still answers 0
+  GROK_DISABLE=1 CODEX_DISABLE=1 bash "$F" route audit >/dev/null 2>&1
+  [ $? -eq 3 ] || probs="$probs route-none-exit"
+  GROK_DISABLE=1 CODEX_DISABLE=1 bash "$F" doctor >/dev/null 2>&1
+  [ $? -eq 0 ] || probs="$probs doctor-none-exit"
+  # a run is found without the caller knowing which runner made it
+  if [ -d "$R/.claude/.fleet/codex-gate" ]; then
+    bash "$F" collect --run-id codex-gate --brief >/dev/null 2>&1 || probs="$probs codex-run-lookup"
+  fi
+  bash "$F" status --run-id definitely-no-such-run >/dev/null 2>&1
+  [ $? -eq 2 ] || probs="$probs unknown-run-exit"
+  [ -z "$probs" ] && g routing PASS "routes by measured capability, availability overrides preference, runs resolve in either control plane" \
+                  || g routing FAIL "problems:$probs"
+fi
+
 # ---------------------------------------------------------------- report
 python3 - "$OUT" "$FAIL" "${G[@]}" <<'PY'
 import json,sys,datetime

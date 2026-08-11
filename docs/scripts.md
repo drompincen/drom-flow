@@ -48,6 +48,12 @@ drom-flow — generate the reference pages from the repo itself.
 
 drom-flow — gates for the documentation site.
 
+### `fleet.sh`
+
+drom-flow — one front door to the sub-agent runners.
+
+Subcommands: `analysis`, `audit`, `author`, `breadth`, `bulk`, `code`, `codex`, `collect`, `doctor`, `grok`, `implement`, `refactor`, `research`, `resume`, `review`, `route`, `search`, `social`, `spawn`, `status`, `stop`, `sweep`, `test`, `web`
+
 ### `grok-fleet.sh`
 
 drom-flow — grok sub-agent fleet: filesystem-controlled fan-out from WSL to grok CLI (Windows).
@@ -61,6 +67,10 @@ drom-flow — resume support for the grok fleet.
 ### `grok-verify.sh`
 
 drom-flow — closed-loop verifier for the grok sub-agent fleet.
+
+### `install-verify.sh`
+
+drom-flow — gates for install/update/uninstall behaviour around host-owned content.
 
 ### `limit-verify.sh`
 

@@ -105,7 +105,7 @@ EOF
 
   local IFS=,
   cat > "$REPORT_DIR/grok-doctor.json" <<EOF
-{"ok":$ok,"binary":$(json_escape "$bin"),"version":$(json_escape "$ver"),
+{"ok":$ok,"available":true,"binary":$(json_escape "$bin"),"version":$(json_escape "$ver"),
  "fleet_root":$(json_escape "$FLEET_ROOT"),"model":$(json_escape "$GROK_MODEL"),
  "checks":[${checks[*]}],"live_test":$live_json}
 EOF

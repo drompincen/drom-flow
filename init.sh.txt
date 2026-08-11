@@ -49,6 +49,51 @@ USER_FILES=(
   "scripts/orchestrate.sh"
 )
 
+# --- Skill merge policy -------------------------------------------------------------------
+# Skills are prompts a team tunes. Replacing one is destroying work, so drom-flow records the
+# hash of every skill file it writes and only updates a file that still matches that record.
+# A file the host changed is kept, and the new version lands beside it as `.dromflow-new`.
+# Scope is skills only: freezing hooks or the engine on a local edit would silently deny a host
+# every future bug fix, which is the worse failure.
+SKILL_BASELINE=""
+declare -A BASELINE_HASH=()
+declare -A NEW_HASH=()
+PRESERVED=()
+
+hash_of() { [ -f "$1" ] && sha256sum "$1" 2>/dev/null | cut -c1-32 || echo ""; }
+
+load_baseline() {
+  SKILL_BASELINE="$1/.claude/.state/drom-flow-skills.json"
+  [ -f "$SKILL_BASELINE" ] || return 0
+  while IFS=$'\t' read -r k v; do
+    [ -n "$k" ] && BASELINE_HASH["$k"]="$v"
+  done < <(python3 -c "
+import json,sys
+try:
+    d=json.load(open(sys.argv[1]))
+except Exception:
+    d={}
+for k,v in (d.get('files') or {}).items(): print(k+chr(9)+v)
+" "$SKILL_BASELINE" 2>/dev/null)
+}
+
+save_baseline() {
+  [ -n "$SKILL_BASELINE" ] || return 0
+  mkdir -p "$(dirname "$SKILL_BASELINE")" 2>/dev/null || return 0
+  python3 - "$SKILL_BASELINE" "${!NEW_HASH[@]}" <<'PYEOF' 2>/dev/null || true
+import json, sys, os
+out = sys.argv[1]; keys = sys.argv[2:]
+vals = os.environ.get('DF_HASHES', '').split('\x1f')
+files = {}
+for i, k in enumerate(keys):
+    if i < len(vals) and vals[i]:
+        files[k] = vals[i]
+json.dump({'files': files}, open(out, 'w'), indent=2)
+PYEOF
+}
+
+is_skill_file() { case "$1" in .claude/skills/*) return 0 ;; *) return 1 ;; esac; }
+
 # Text-at-rest mapping: template/foo/bar.sh.txt -> foo/bar.sh, run.txt -> run.
 dest_rel() {
   local rel="$1"
@@ -83,9 +128,19 @@ NEW_VERSION=$(tr -d '[:space:]' < "$SCRIPT_DIR/VERSION")
 collect_managed_files() {
   local target="$1"
   managed=()
+  kept_skills=()
+  load_baseline "$target"
   while IFS= read -r -d '' file; do
     rel="$(dest_rel "${file#$TEMPLATE_DIR/}")"
     if ! is_user_file "$rel" && [ -f "$target/$rel" ]; then
+      # A skill the host edited is their work, not ours to delete on the way out.
+      if is_skill_file "$rel"; then
+        cur="$(hash_of "$target/$rel")"
+        base="${BASELINE_HASH[$rel]:-}"
+        if [ -n "$base" ] && [ "$cur" != "$base" ]; then
+          kept_skills+=("$rel"); continue
+        fi
+      fi
       managed+=("$rel")
     fi
   done < <(find "$TEMPLATE_DIR" -type f -print0)
@@ -219,6 +274,10 @@ if [ "$MODE" = "uninstall" ]; then
   done
 
   echo ""
+  if [ ${#kept_skills[@]} -gt 0 ]; then
+    echo "Kept (skills you modified):"
+    for k in "${kept_skills[@]}"; do echo "  keep:   $k"; done
+  fi
   echo "Protected (kept):"
   for uf in "${USER_FILES[@]}"; do
     if [ -f "$TARGET_DIR/$uf" ]; then
@@ -286,6 +345,8 @@ if [ "$MODE" = "check" ]; then
   echo ""
   echo "Files that would be updated (--update):"
   would_update=0
+  would_preserve=0
+  load_baseline "$TARGET_DIR"
   while IFS= read -r -d '' file; do
     rel="$(dest_rel "${file#$TEMPLATE_DIR/}")"
     target="$TARGET_DIR/$rel"
@@ -293,6 +354,14 @@ if [ "$MODE" = "check" ]; then
       continue
     fi
     if [ -f "$target" ]; then
+      if is_skill_file "$rel"; then
+        cur="$(hash_of "$target")"; src="$(hash_of "$file")"; base="${BASELINE_HASH[$rel]:-}"
+        if [ "$cur" != "$src" ] && { [ -z "$base" ] || [ "$cur" != "$base" ]; }; then
+          echo "  preserve: $rel (you modified it — the new version would be written alongside)"
+          would_preserve=$((would_preserve + 1))
+          continue
+        fi
+      fi
       if ! diff -q "$file" "$target" > /dev/null 2>&1; then
         echo "  changed: $rel"
         would_update=$((would_update + 1))
@@ -304,6 +373,7 @@ if [ "$MODE" = "check" ]; then
   done < <(find "$TEMPLATE_DIR" -type f -print0)
   echo ""
   echo "$would_update file(s) would be updated."
+  [ "${would_preserve:-0}" -gt 0 ] && echo "$would_preserve skill(s) you modified would be preserved."
   echo ""
   echo "Protected (never overwritten):"
   for uf in "${USER_FILES[@]}"; do
@@ -330,6 +400,7 @@ copied=0
 updated=0
 skipped=0
 backed_up=0
+load_baseline "$TARGET_DIR"
 
 BACKUP_DIR="$TARGET_DIR/setup-backup/$(date +%Y%m%d-%H%M%S)"
 
@@ -349,6 +420,24 @@ while IFS= read -r -d '' file; do
   target_dir="$(dirname "$target")"
 
   mkdir -p "$target_dir"
+
+  if is_skill_file "$rel" && [ -f "$target" ]; then
+    cur="$(hash_of "$target")"; src="$(hash_of "$file")"
+    base="${BASELINE_HASH[$rel]:-}"
+    if [ "$cur" = "$src" ]; then
+      NEW_HASH["$rel"]="$src"; skipped=$((skipped + 1)); continue
+    elif [ -n "$base" ] && [ "$cur" = "$base" ]; then
+      : # ours and untouched: fall through to the normal update
+    else
+      # changed by the host (or no baseline, so assume so): keep it, offer the new one
+      cp "$file" "$target.dromflow-new"
+      PRESERVED+=("$rel")
+      NEW_HASH["$rel"]="$base"
+      echo "  preserve: $rel (locally modified — new version at $rel.dromflow-new)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+  fi
 
   if [ -f "$target" ]; then
     if [ "$MODE" = "update" ]; then
@@ -377,7 +466,23 @@ while IFS= read -r -d '' file; do
     echo "  copy: $rel"
     copied=$((copied + 1))
   fi
+  is_skill_file "$rel" && NEW_HASH["$rel"]="$(hash_of "$target")"
 done < <(find "$TEMPLATE_DIR" -type f -print0)
+
+# persist the baseline: what WE wrote, so a later update can tell our file from the host's
+if [ -n "$SKILL_BASELINE" ] || load_baseline "$TARGET_DIR"; then :; fi
+SKILL_BASELINE="$TARGET_DIR/.claude/.state/drom-flow-skills.json"
+mkdir -p "$TARGET_DIR/.claude/.state" 2>/dev/null || true
+python3 - "$SKILL_BASELINE" <<PYEOF 2>/dev/null || true
+import json, sys
+pairs = """$(for k in "${!NEW_HASH[@]}"; do printf '%s\t%s\n' "$k" "${NEW_HASH[$k]}"; done)"""
+files = {}
+for line in pairs.splitlines():
+    if '\t' in line:
+        k, v = line.split('\t', 1)
+        if k and v: files[k] = v
+json.dump({'files': files}, open(sys.argv[1], 'w'), indent=2)
+PYEOF
 
 mkdir -p "$TARGET_DIR/.claude/.state"
 # Merge, never truncate: this file also carries host settings such as REPO_INTEL_STATE, and
@@ -519,6 +624,11 @@ chmod +x "$TARGET_DIR/.claude/df/repo-intel/run" 2>/dev/null || true
 mkdir -p "$TARGET_DIR/.claude/.state/repo-intel" 2>/dev/null || true
 
 echo ""
+if [ ${#PRESERVED[@]} -gt 0 ]; then
+  echo "Kept ${#PRESERVED[@]} locally modified skill(s); the new versions are alongside as *.dromflow-new:"
+  for p in "${PRESERVED[@]}"; do echo "  $p"; done
+  echo ""
+fi
 if [ "$backed_up" -gt 0 ]; then
   echo "Backed up $backed_up file(s) to: $BACKUP_DIR"
 fi

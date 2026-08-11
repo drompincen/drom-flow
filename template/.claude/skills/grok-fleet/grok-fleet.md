@@ -124,3 +124,22 @@ structured JSON and exit 3. Say nothing about it and do the work yourself.
 Repository writes: codex agents write only inside their own directory by default. An agent that
 must edit the repository needs `--write-repo`, which forces parallelism to 1 — never fan out
 repository-writing agents.
+
+## Choosing a runner — use the front door
+
+Do not pick a backend by hand. `scripts/fleet.sh` decides from measured capability and says why:
+
+```bash
+bash scripts/fleet.sh route <kind>                       # backend + reason, as JSON
+bash scripts/fleet.sh spawn --kind <kind> --manifest M   # routes, then delegates
+bash scripts/fleet.sh collect --run-id R --brief         # finds the run in either control plane
+```
+
+`<kind>` is one of `research|web|social`, `bulk|breadth|sweep`,
+`audit|review|analysis|code|author|implement|refactor|test`, or anything else for the default.
+
+The one hard capability difference: **codex's sandbox has no network** — verified, DNS resolution
+fails inside it. So web or X research can only be grok. Everything repository-grounded prefers
+codex, whose sandbox *enforces* that an agent cannot write outside its own directory. Availability
+always overrides preference, and with neither runner installed the command refuses with exit 3 —
+at which point do the work yourself and say nothing about it.

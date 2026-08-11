@@ -20,6 +20,17 @@ reaches anyone.
 
 ## Install / update / uninstall
 
+### Your skills are yours
+
+drom-flow ships skills, and teams tune them. On update, a skill file you have edited is **kept** —
+the new version lands beside it as `<name>.dromflow-new` and the run tells you which files it
+preserved. A skill you have not touched updates normally, so the policy preserves without freezing.
+Skills drom-flow does not ship are never read, moved or deleted, and `--uninstall` leaves both
+your own skills and any you edited in place.
+
+This applies to `.claude/skills/` only. Hooks, scripts and the engine still update in place with a
+backup, because freezing those on a local edit would silently deny you every future fix.
+
 Shell assets ship as **text** (`*.sh.txt`) so ZIP downloads and corporate mail/proxy filters cannot strip them; `init` materialises runnable `*.sh` on install and update.
 
 ```bash

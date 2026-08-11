@@ -1,0 +1,104 @@
+#!/bin/bash
+# drom-flow — gates for install/update/uninstall behaviour around host-owned content.
+#   install-verify.sh [--json]
+# Writes reports/install-merge.json. Exit 0 only when every gate passes.
+#
+# The property under test: a host project's own work survives every lifecycle operation, and a
+# skill the host edited is never silently replaced.
+
+set -uo pipefail
+R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT="$R/reports/install-merge.json"; mkdir -p "$R/reports"
+W="$R/.ri-test/installgate"; rm -rf "$W"; mkdir -p "$W"
+INIT="$R/init.sh.txt"
+G=(); FAIL=0
+j() { python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$1"; }
+g() { G+=("{\"id\":\"$1\",\"status\":\"$2\",\"detail\":$(j "$3")}"); [ "$2" = PASS ] || FAIL=1
+      printf '[install] %-24s %-4s %s\n' "$1" "$2" "$3" >&2; }
+
+host() { # fresh fixture host with team content
+  local h="$1"; rm -rf "$h"; mkdir -p "$h/.claude/skills/team-skill" "$h/src"
+  ( cd "$h" && git init -q . ) >/dev/null 2>&1
+  printf -- '---\nname: team-skill\n---\n# team\n' > "$h/.claude/skills/team-skill/team-skill.md"
+  printf 'notes\n' > "$h/.claude/skills/team-skill/NOTES.md"
+  printf 'public class A {}\n' > "$h/src/A.java"
+}
+
+# ---------------------------------------------------------------- G1 host-owned content survives
+H="$W/h1"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+bash "$INIT" --update "$H" >/dev/null 2>&1
+probs=""
+[ -f "$H/.claude/skills/team-skill/team-skill.md" ] || probs="$probs skill-lost"
+[ -f "$H/.claude/skills/team-skill/NOTES.md" ] || probs="$probs extra-file-lost"
+[ -f "$H/src/A.java" ] || probs="$probs source-lost"
+bash "$INIT" --uninstall "$H" >/dev/null 2>&1
+[ -f "$H/.claude/skills/team-skill/team-skill.md" ] || probs="$probs skill-lost-on-uninstall"
+[ -f "$H/.claude/skills/team-skill/NOTES.md" ] || probs="$probs extra-file-lost-on-uninstall"
+[ -f "$H/src/A.java" ] || probs="$probs source-lost-on-uninstall"
+[ -z "$probs" ] && g host_content_survives PASS "host-owned skill, its extra files and host source survive install, update and uninstall" \
+                || g host_content_survives FAIL "lost:$probs"
+
+# ---------------------------------------------------------------- G2 modified skill preserved
+H="$W/h2"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+printf -- '---\nname: planner\n---\n# CUSTOMISED\n' > "$H/.claude/skills/planner/planner.md"
+out="$(bash "$INIT" --update "$H" 2>&1)"
+probs=""
+grep -q CUSTOMISED "$H/.claude/skills/planner/planner.md" || probs="$probs overwritten"
+[ -f "$H/.claude/skills/planner/planner.md.dromflow-new" ] || probs="$probs no-new-version-offered"
+echo "$out" | grep -q 'preserve: .claude/skills/planner' || probs="$probs not-reported"
+[ -z "$probs" ] && g modified_skill_preserved PASS "a host-edited skill is kept, the new version lands as .dromflow-new, and the run says so" \
+                || g modified_skill_preserved FAIL "problems:$probs"
+
+# ---------------------------------------------------------------- G3 policy does not freeze updates
+H="$W/h3"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+# pretend drom-flow shipped a newer skill by editing the installed copy back to an older form,
+# exactly as an unmodified managed file would look before an update
+printf 'OLD CONTENT\n' > "$H/.claude/skills/architect/architect.md"
+python3 - "$H" <<'PY'
+import json, hashlib, sys, os
+h = sys.argv[1]; p = os.path.join(h, '.claude/.state/drom-flow-skills.json')
+d = json.load(open(p))
+f = os.path.join(h, '.claude/skills/architect/architect.md')
+d['files']['.claude/skills/architect/architect.md'] = hashlib.sha256(open(f,'rb').read()).hexdigest()[:32]
+json.dump(d, open(p, 'w'), indent=2)
+PY
+bash "$INIT" --update "$H" >/dev/null 2>&1
+if cmp -s "$R/template/.claude/skills/architect/architect.md" "$H/.claude/skills/architect/architect.md"; then
+  g updates_still_flow PASS "a managed skill that matches its baseline is still updated — the policy preserves, it does not freeze"
+else
+  g updates_still_flow FAIL "an unmodified managed skill did not receive the update"
+fi
+
+# ---------------------------------------------------------------- G4 no spurious .dromflow-new
+H="$W/h4"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+bash "$INIT" --update "$H" >/dev/null 2>&1
+n=$(find "$H/.claude/skills" -name '*.dromflow-new' | wc -l | tr -d ' ')
+[ "$n" -eq 0 ] && g no_spurious_new PASS "an untouched install produces no .dromflow-new files" \
+               || g no_spurious_new FAIL "$n unexpected .dromflow-new files after a clean update"
+
+# ---------------------------------------------------------------- G5 uninstall keeps edits
+H="$W/h5"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+printf -- '---\nname: debugger\n---\n# MINE\n' > "$H/.claude/skills/debugger/debugger.md"
+out="$(bash "$INIT" --uninstall "$H" 2>&1)"
+probs=""
+grep -q MINE "$H/.claude/skills/debugger/debugger.md" 2>/dev/null || probs="$probs edited-skill-deleted"
+echo "$out" | grep -q 'Kept (skills you modified)' || probs="$probs not-reported"
+[ -f "$H/.claude/skills/reviewer/reviewer.md" ] && probs="$probs unmodified-skill-left-behind"
+[ -z "$probs" ] && g uninstall_keeps_edits PASS "uninstall keeps skills the host edited, reports them, and still removes untouched ones" \
+                || g uninstall_keeps_edits FAIL "problems:$probs"
+
+python3 - "$OUT" "$FAIL" "${G[@]}" <<'PY'
+import json,sys,datetime
+out,fail=sys.argv[1],sys.argv[2]
+gates=[json.loads(x) for x in sys.argv[3:]]
+p=sum(1 for g in gates if g['status']=='PASS')
+json.dump({'ok':fail=='0','generated':datetime.datetime.now().isoformat(timespec='seconds'),
+           'passed':p,'total':len(gates),'gates':gates}, open(out,'w'), indent=2)
+print(f"\n{p}/{len(gates)} gates pass -> {out}")
+PY
+exit $FAIL

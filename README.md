@@ -71,6 +71,17 @@ Files that already exist won't be overwritten. Safe to re-run.
 
 ### Updating an existing installation
 
+### Your skills are yours
+
+drom-flow ships skills, and teams tune them. On update, a skill file you have edited is **kept** —
+the new version lands beside it as `<name>.dromflow-new` and the run tells you which files it
+preserved. A skill you have not touched updates normally, so the policy preserves without freezing.
+Skills drom-flow does not ship are never read, moved or deleted, and `--uninstall` leaves both
+your own skills and any you edited in place.
+
+This applies to `.claude/skills/` only. Hooks, scripts and the engine still update in place with a
+backup, because freezing those on a local edit would silently deny you every future fix.
+
 When drom-flow has a new version, update your projects without losing customizations.
 
 If you downloaded a new ZIP, generate scripts first (see Step 1 above), then:

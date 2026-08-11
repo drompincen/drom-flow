@@ -134,6 +134,7 @@ Use these agent profiles when the task calls for a specialized role.
 - `/orchestrator` — Design and run closed-loop pipelines
 - `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
 - `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
+- `/dynamodb-architect` — DynamoDB data modelling, key and index design, capacity and cost, and migration paths for changes that cannot be made in place
 - `/grok-fleet` — Fan out parallel grok CLI sub-agents with filesystem progress, monitoring, and stop control (combines with Claude sub-agents)
 - `/df-research` — Deep research on the grok fleet: multi-perspective sweep, independence + contradiction audit, adversarial critics, cite-check gate
 - `/add-javaducker` — Set up JavaDucker companion tool for semantic code search

@@ -5,7 +5,7 @@ nav_order: 4
 
 # Skills
 
-**30 skills.** Invoke with `/<name>`. Generated from skill frontmatter — this page cannot drift.
+**31 skills.** Invoke with `/<name>`. Generated from skill frontmatter — this page cannot drift.
 
 ## Engineering
 
@@ -61,3 +61,9 @@ nav_order: 4
 |---|---|---|
 | `/add-javaducker` | yes | Configure JavaDucker as an optional companion tool for semantic code search and indexing |
 | `/remove-javaducker` | yes | Remove JavaDucker companion tool configuration from this project |
+
+## Other
+
+| Skill | Ships | What it does |
+|---|---|---|
+| `/dynamodb-architect` | yes | Design, review, refactor and debug DynamoDB data layers — access patterns first, key and index design, capacity and cost, and the migration paths for changes that cannot be made in place. Use whenever work touches a DynamoDB table, schema, GSI, or a throttling or cost problem. |

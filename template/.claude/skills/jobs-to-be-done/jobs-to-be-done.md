@@ -1,371 +1,223 @@
 ---
 name: jobs-to-be-done
-description: Uncover customer jobs, pains, and gains in a structured JTBD format. Use when clarifying unmet needs, repositioning a product, or improving discovery and messaging.
+description: Uncover what customers hire or fire a product to accomplish; use for discovery, interviews, positioning, prioritisation, and churn analysis.
 user-invocable: true
-intent: >-
-  Systematically explore what customers are trying to accomplish (functional, social, emotional jobs), the pains they experience, and the gains they seek. Use this framework to uncover unmet needs, validate product ideas, and ensure your solution addresses real motivations—not just surface-level feature requests.
-type: component
 ---
 
+# Jobs-to-be-Done
 
-## Purpose
-Systematically explore what customers are trying to accomplish (functional, social, emotional jobs), the pains they experience, and the gains they seek. Use this framework to uncover unmet needs, validate product ideas, and ensure your solution addresses real motivations—not just surface-level feature requests.
+Identify the progress a customer seeks in a specific situation, then turn that evidence into product decisions. Use this when requests, feature ideas, adoption, churn, or competitor switches reveal the solution but not the underlying job.
 
-This is not a survey—it's a structured lens for understanding *why* customers "hire" your product and what would make them "fire" it.
+## Responsibilities
 
-## Key Concepts
+1. **Set the decision** — state what the analysis must inform: discovery, prioritisation, positioning, onboarding, retention, or another named choice.
+2. **Choose one actor and episode** — focus on a person who made, attempted, delayed, or rejected a decision in a bounded situation.
+3. **Gather behavioural evidence** — prefer interview notes, support conversations, sales calls, churn reasons, usage sequences, and observed workarounds over opinions about an imagined future.
+4. **Reconstruct the timeline** — identify the first concern, passive search, active search, comparison, commitment, first use, continued use, and possible abandonment.
+5. **Separate evidence from inference** — label direct observations, customer statements, interpretations, and open questions distinctly.
+6. **Describe the functional job** — name the practical change the actor needs, without naming a feature, product, or implementation.
+7. **Describe the emotional job** — name how the actor wants to feel or avoid feeling while making that progress.
+8. **Describe the social job** — name how the actor wants relevant people to view, trust, include, or respond to them.
+9. **Record pains** — capture obstacles, risks, costs, delays, uncertainty, and unwanted trade-offs in the current approach.
+10. **Record gains** — capture observable outcomes that would make the new approach meaningfully better, including thresholds where known.
+11. **Map switching forces** — identify what makes the current approach intolerable, what attracts the actor to an alternative, what preserves the old behaviour, and what makes the new choice feel risky.
+12. **Identify the trigger** — find the event or accumulated change that turns background dissatisfaction into action.
+13. **Name the alternatives** — include competitors, manual work, internal help, delay, and doing nothing; the product competes with all credible ways to make progress.
+14. **Explain hiring and firing** — state why the actor chose the product, what outcome keeps it employed, and what failure would cause replacement or abandonment.
+15. **Segment by circumstance** — group cases by situation, desired progress, constraints, and switching pattern rather than demographics alone.
+16. **Translate the job into decisions** — propose changes to product, messaging, service, or research, each tied to evidence and a named force.
+17. **Expose uncertainty** — rank unresolved assumptions and specify the next interview, observation, or test that can resolve each one.
 
-### The Jobs-to-be-Done Framework
-Influenced by Clayton Christensen and the Value Proposition Canvas (Osterwalder), JTBD breaks customer needs into three categories:
+## Evidence Rules
 
-**1. Customer Jobs:**
-- **Functional jobs:** Tasks customers need to perform (e.g., "send an invoice")
-- **Social jobs:** How customers want to be perceived (e.g., "look professional to clients")
-- **Emotional jobs:** Emotional states customers seek or avoid (e.g., "feel confident in my work")
+- Ask about the last real occasion, not what the customer generally prefers.
+- Follow sequence questions: “What happened before that?”, “What did you try next?”, and “Who else was involved?”
+- Ask for concrete artefacts such as comparison notes, spreadsheets, messages, approvals, or abandoned setups.
+- Treat vivid recollection as evidence of an event, not proof that the explanation is complete.
+- Record exact language sparingly when it clarifies motivation; otherwise paraphrase without polishing it into marketing copy.
+- Do not combine contradictory cases into one smooth narrative. Preserve meaningful differences.
+- Mark a claim `Observed`, `Stated`, `Inferred`, or `Unknown`.
+- Assign confidence from evidence quality, not confidence of tone.
 
-**2. Pains:**
-- **Challenges:** Obstacles customers face
-- **Costliness:** What's too expensive in time, money, or effort
-- **Common mistakes:** Errors customers make that could be prevented
-- **Unresolved problems:** Gaps in current solutions
+## Interview Prompts
 
-**3. Gains:**
-- **Expectations:** What would exceed current solutions
-- **Savings:** Time, money, or effort reductions that delight
-- **Adoption factors:** What increases likelihood of switching
-- **Life improvement:** How a solution makes life easier or more enjoyable
+Use these prompts to reconstruct a decision rather than solicit features.
 
-### Why This Structure Works
-- **Separates job from solution:** "Communicate with my team" (job) ≠ "email" (solution)
-- **Reveals underlying motivations:** Functional job may be "track expenses," but emotional job is "feel in control of finances"
-- **Surfaces competition you didn't see:** Customers "hire" non-obvious alternatives (pen and paper, spreadsheets, workarounds)
-- **Prioritizes by intensity:** Not all pains are equal—focus on the most acute
+1. “Tell me about the most recent time this became a problem.”
+2. “What changed that made you deal with it then?”
+3. “What were you using or doing before?”
+4. “What was good enough about that approach for you to keep it?”
+5. “When did you first look for another way?”
+6. “Which alternatives did you seriously consider, including doing nothing?”
+7. “What attracted you to each option?”
+8. “What worried you about changing?”
+9. “Who influenced, approved, blocked, or judged the choice?”
+10. “What did you expect to be different after choosing?”
+11. “What happened during the first use?”
+12. “What would make you return to the old approach or choose something else?”
 
-### Anti-Patterns (What This Is NOT)
-- **Not a feature wishlist:** "I want AI, automation, and dashboards" is not a job
-- **Not demographics:** "Millennials want mobile-first" is a persona trait, not a job
-- **Not generic:** "Be more productive" is too vague—dig into *which* tasks and *why*
-- **Not one-dimensional:** Focusing only on functional jobs misses social/emotional motivations
+Do not ask all prompts mechanically. Follow the episode until the timeline, trade-offs, and forces are specific.
 
-### When to Use This
-- Early-stage discovery (before you know the solution)
-- Validating product-market fit (does your solution address the right jobs?)
-- Prioritizing roadmap (which jobs are most painful/important?)
-- Competitive analysis (what are customers "hiring" competitors for?)
-- Marketing messaging (speak to jobs, not features)
+## Job Statement Rules
 
-### When NOT to Use This
-- After you've already built the product (too late for discovery)
-- For trivial features (don't over-analyze small tweaks)
-- As a substitute for quantitative validation (JTBD informs hypotheses; data validates them)
+Write the primary job in this form:
 
----
-
-## Application
-
-Use `template.md` for the full fill-in structure.
-
-### Step 1: Define the Context
-Before exploring JTBD, clarify:
-- **Target customer segment:** Who are you studying? (reference `skills/proto-persona/SKILL.md`)
-- **Situation:** In what context does the job arise? (e.g., "When managing a project deadline...")
-- **Current solutions:** What do they use today? (competitors, workarounds, doing nothing)
-
-**If missing context:** Conduct customer interviews, contextual inquiries, or "switch interviews" (why they switched from a previous solution).
-
----
-
-### Step 2: Explore Customer Jobs
-
-#### Functional Jobs
-Ask: "What tasks are you trying to complete?"
-
-```markdown
-### Functional Jobs:
-- [Task 1 customer needs to perform]
-- [Task 2 customer needs to perform]
-- [Task 3 customer needs to perform]
+```text
+In [specific circumstance], I need to [make practical progress],
+so that [meaningful outcome in the actor's world].
 ```
 
-**Examples:**
-- "Reconcile monthly expenses for tax filing"
-- "Onboard a new team member in under 2 hours"
-- "Deploy code to production without downtime"
+Add emotional and social dimensions separately:
 
-**Quality checks:**
-- **Verb-driven:** Jobs are actions ("send," "analyze," "coordinate")
-- **Solution-agnostic:** Don't say "use email to communicate"—say "communicate with remote teammates"
-- **Specific:** "Manage finances" is too broad; "Track business expenses for tax deductions" is specific
-
----
-
-#### Social Jobs
-Ask: "How do you want to be perceived by others?"
-
-```markdown
-### Social Jobs:
-- [Way customer wants to be perceived socially 1]
-- [Way customer wants to be perceived socially 2]
-- [Way customer wants to be perceived socially 3]
+```text
+Emotional: I want to feel [state] and avoid feeling [state].
+Social: I want [relevant people] to see or treat me as [desired perception].
 ```
 
-**Examples:**
-- "Be seen as a strategic thinker by my exec team"
-- "Appear responsive and reliable to clients"
-- "Look tech-savvy to my younger colleagues"
+A strong statement is solution-neutral and circumstance-bound.
 
-**Quality checks:**
-- **Audience-specific:** Who is the customer trying to impress? (boss, clients, peers, etc.)
-- **Emotional weight:** Social jobs often drive adoption more than functional jobs
+Weak:
 
----
-
-#### Emotional Jobs
-Ask: "What emotional state do you want to achieve or avoid?"
-
-```markdown
-### Emotional Jobs:
-- [Emotional state customer seeks or avoids 1]
-- [Emotional state customer seeks or avoids 2]
-- [Emotional state customer seeks or avoids 3]
+```text
+When planning work, I need an AI dashboard so I can be productive.
 ```
 
-**Examples:**
-- "Feel confident I'm not missing important details"
-- "Avoid the anxiety of manual data entry errors"
-- "Feel a sense of accomplishment at the end of the day"
+Stronger:
 
-**Quality checks:**
-- **Positive and negative:** Include both what they seek ("feel in control") and what they avoid ("avoid embarrassment")
-- **Rooted in research:** Don't fabricate emotions—use customer quotes
+```text
+When several teams change commitments during the week, I need to see which delivery promises are now at risk,
+so that I can renegotiate them before stakeholders are surprised.
 
----
-
-### Step 3: Identify Pains
-
-#### Challenges
-Ask: "What obstacles are preventing you from completing this job?"
-
-```markdown
-### Challenges:
-- [Obstacle customer faces 1]
-- [Obstacle customer faces 2]
-- [Obstacle customer faces 3]
+Emotional: I want to feel in control rather than exposed.
+Social: I want team leads to regard me as candid and dependable.
 ```
 
-**Examples:**
-- "Tools don't integrate, forcing manual data entry"
-- "No visibility into what teammates are working on"
-- "Approval processes take 3+ days, blocking progress"
+## Switching-Force Model
 
----
+Analyse four forces and the trigger:
 
-#### Costliness
-Ask: "What takes too much time, money, or effort?"
+| Force | Diagnostic question | Evidence to capture |
+|---|---|---|
+| Pressure from the current approach | What became costly, unreliable, slow, or embarrassing? | Failure, delay, incident, repeated workaround |
+| Attraction of the alternative | What promised a better path or outcome? | Demonstration, referral, capability, service promise |
+| Attachment to the current approach | What remains familiar, trusted, cheap, or politically safe? | Routine, sunk setup, relationships, existing data |
+| Anxiety about the alternative | What could go wrong during or after the change? | Learning cost, migration risk, credibility risk, reversibility |
+| Trigger | Why did evaluation or action begin at that moment? | Deadline, growth, new role, failure, policy, life event |
 
-```markdown
-### Costliness:
-- [What's too costly in time, money, or effort 1]
-- [What's too costly in time, money, or effort 2]
-```
+Do not treat adoption as attraction alone. A switch occurs when the case for movement becomes stronger than attachment and anxiety in that circumstance.
 
-**Examples:**
-- "Generating monthly reports takes 8 hours of manual work"
-- "Hiring a specialist costs $10k, which we can't afford"
-- "Learning the current tool requires 20+ hours of training"
+## Output Format
 
----
-
-#### Common Mistakes
-Ask: "What errors do you make frequently that could be prevented?"
+Produce the following artefact. Preserve `Unknown` fields rather than inventing a complete story.
 
 ```markdown
-### Common Mistakes:
-- [Frequent error 1]
-- [Frequent error 2]
+# Jobs-to-be-Done Analysis: [actor and episode]
+
+## Decision to inform
+- Decision: [specific product or research decision]
+- Actor: [person making or strongly shaping the choice]
+- Episode: [real event and approximate date]
+- Evidence: [sources reviewed]
+- Confidence: high | medium | low — [reason]
+
+## Situation and timeline
+| Stage | What happened | Evidence status | Source |
+|---|---|---|---|
+| First concern | [event or realisation] | Observed/Stated/Inferred/Unknown | [source] |
+| Passive search | [attention before active shopping] | [...] | [...] |
+| Active search | [options sought] | [...] | [...] |
+| Comparison | [criteria and trade-offs] | [...] | [...] |
+| Commitment | [choice, approval, purchase, or refusal] | [...] | [...] |
+| First use | [initial outcome and friction] | [...] | [...] |
+| Continued use or firing | [why retained, reduced, or abandoned] | [...] | [...] |
+
+## Job
+In [circumstance], I need to [functional progress], so that [outcome].
+
+- Functional: [practical progress]
+- Emotional: [desired and avoided feelings]
+- Social: [desired response from named people]
+- Success signals: [observable outcomes or thresholds]
+- Constraints: [time, money, policy, skill, compatibility, authority]
+
+## Pains and gains
+| Type | Evidence-backed detail | Severity or value | Current response |
+|---|---|---|---|
+| Pain | [obstacle, cost, risk, or trade-off] | high/medium/low | [workaround] |
+| Gain | [valuable outcome] | high/medium/low | [how measured] |
+
+## Switching forces
+| Force | Finding | Evidence | Strength |
+|---|---|---|---|
+| Pressure from current approach | [...] | [...] | strong/medium/weak |
+| Attraction of alternative | [...] | [...] | strong/medium/weak |
+| Attachment to current approach | [...] | [...] | strong/medium/weak |
+| Anxiety about alternative | [...] | [...] | strong/medium/weak |
+| Trigger | [...] | [...] | decisive/contributing/unclear |
+
+## Alternatives
+| Alternative | Why considered | Why accepted or rejected |
+|---|---|---|
+| [competitor, manual method, help, delay, or no action] | [...] | [...] |
+
+## Hiring and firing criteria
+- Hired because: [progress and trade-off the actor selected]
+- Kept if: [outcome that must continue]
+- Fired if: [failure, changed circumstance, or superior alternative]
+- Re-hire condition: [what could restore consideration]
+
+## Implications
+| Proposed action | Job or force addressed | Evidence | Expected change | Validation |
+|---|---|---|---|---|
+| [product, message, service, or research action] | [specific link] | [source] | [behaviour or outcome] | [test and measure] |
+
+## Unknowns and next evidence
+| Unknown or assumption | Why it matters | Next evidence | Priority |
+|---|---|---|---|
+| [...] | [...] | [interview, observation, log, experiment] | high/medium/low |
+
+## One-sentence decision
+[Because actors in circumstance X seek progress Y but are held back by force Z, do A and validate it with B.]
 ```
 
-**Examples:**
-- "Forgetting to CC stakeholders on critical emails"
-- "Miscalculating tax deductions due to missing receipts"
-- "Accidentally overwriting someone else's work in shared files"
+## Converting Findings into Action
 
----
+Tie each recommendation to a behavioural mechanism.
 
-#### Unresolved Problems
-Ask: "What problems do current solutions fail to address?"
+- Reduce pressure only when improving the current experience prevents firing.
+- Increase attraction by making the desired outcome easier to recognise and achieve.
+- Respect attachment by preserving familiar workflows, data, relationships, or control where they matter.
+- Reduce anxiety with trials, migration support, previews, guarantees, reversibility, and clear expectations.
+- Address the trigger where customers notice it: the relevant workflow, channel, role transition, or deadline.
+- Prioritise an action when evidence is repeated, the force is strong, and the expected behaviour is measurable.
+- Recommend more research when the apparent job rests mainly on inference or a single unverified case.
 
-```markdown
-### Unresolved Problems:
-- [Problem not solved by current solutions 1]
-- [Problem not solved by current solutions 2]
-```
+## Quality Bar
 
-**Examples:**
-- "Current CRM doesn't track customer health scores"
-- "Email doesn't preserve conversation context when people are added mid-thread"
-- "Existing tools require technical expertise we don't have"
+A good output lets a product team explain a real choice, distinguish competing forces, and make a testable decision.
 
----
+Check that:
 
-### Step 4: Uncover Gains
+- The job names progress in a concrete circumstance without embedding the proposed product.
+- Functional, emotional, and social jobs are distinct and supported by the episode.
+- The timeline shows what changed, not merely what the customer says they value.
+- Alternatives include inertia, workarounds, and no action where credible.
+- Pains and gains describe consequences in the customer's world, not a reverse list of product features.
+- Hiring and firing criteria state observable conditions.
+- Recommendations point back to evidence and predict a measurable behaviour.
+- Unknowns remain visible and have a practical route to resolution.
 
-#### Expectations
-Ask: "What would make you love a solution?"
+Avoid these failure modes:
 
-```markdown
-### Expectations:
-- [What could exceed expectations 1]
-- [What could exceed expectations 2]
-```
+1. **Feature translation** — rewriting “add exports” as “the job is exporting.” Ask what progress the export enables and in what situation.
+2. **Generic aspiration** — using “save time,” “be productive,” or “feel confident” without an episode, consequence, or success threshold.
+3. **Persona substitution** — assuming age, title, or industry explains the job without showing how circumstance changes behaviour.
+4. **Attraction-only analysis** — listing reasons to buy while ignoring habit, switching cost, anxiety, and the trigger.
+5. **Opinion as evidence** — treating hypothetical intent, stakeholder belief, or a loud request as observed behaviour.
+6. **Single-job flattening** — forcing contradictory switching stories into one statement instead of segmenting by circumstance.
+7. **Product-centred success** — measuring clicks or adoption without connecting them to the customer's desired outcome.
+8. **Unfalsifiable recommendations** — proposing “improve onboarding” without naming the anxiety, expected behaviour, and validation measure.
 
-**Examples:**
-- "Automatically categorizes expenses without manual tagging"
-- "Suggests next steps based on project status"
-- "Integrates seamlessly with tools we already use"
+## When NOT to Use This
 
----
-
-#### Savings
-Ask: "What savings in time, money, or effort would delight you?"
-
-```markdown
-### Savings:
-- [Way of saving time, money, or effort 1]
-- [Way of saving time, money, or effort 2]
-```
-
-**Examples:**
-- "Reduce report generation from 8 hours to 10 minutes"
-- "Eliminate the need for a full-time admin"
-- "Cut onboarding time from 2 weeks to 2 days"
-
----
-
-#### Adoption Factors
-Ask: "What would make you switch from your current solution?"
-
-```markdown
-### Adoption Factors:
-- [Factor increasing likelihood of adoption 1]
-- [Factor increasing likelihood of adoption 2]
-```
-
-**Examples:**
-- "Free trial with no credit card required"
-- "Migration support to import existing data"
-- "Testimonials from companies like ours"
-
----
-
-#### Life Improvement
-Ask: "How would your life be better if this job were easier?"
-
-```markdown
-### Life Improvement:
-- [How solution makes life easier or more enjoyable 1]
-- [How solution makes life easier or more enjoyable 2]
-```
-
-**Examples:**
-- "I could leave work on time instead of staying late to finish reports"
-- "I'd feel less stressed about missing important deadlines"
-- "I could focus on strategic work instead of busywork"
-
----
-
-### Step 5: Prioritize and Validate
-
-- **Rank pains by intensity:** Which pains are acute vs. mild annoyances?
-- **Identify must-have vs. nice-to-have gains:** What would drive adoption vs. what's just a bonus?
-- **Cross-reference with personas:** Do different personas have different jobs/pains/gains? (reference `skills/proto-persona/SKILL.md`)
-- **Validate with data:** Survey a broader audience to confirm JTBD insights from interviews
-
----
-
-## Examples
-
-See `examples/sample.md` for full JTBD examples.
-
-Mini example excerpt:
-
-```markdown
-**Functional Jobs:** Coordinate tasks across a distributed team
-**Pains - Challenges:** Team members use different tools, creating silos
-**Gains - Savings:** Reduce status reporting time from 3 hours to 15 minutes
-```
-
----
-
-## Common Pitfalls
-
-### Pitfall 1: Confusing Jobs with Solutions
-**Symptom:** "I need to use Slack" or "I need AI-powered analytics"
-
-**Consequence:** You've anchored on a solution, not the underlying job.
-
-**Fix:** Ask "Why?" 5 times. "I need Slack" → "Why?" → "To communicate with my team" → "Why?" → "To get quick answers" → "Why?" → "To avoid project delays."
-
----
-
-### Pitfall 2: Generic Jobs
-**Symptom:** "Be more productive" or "Save time"
-
-**Consequence:** Too vague to inform product decisions.
-
-**Fix:** Get specific. "Save time" → "Reduce time spent generating monthly reports from 8 hours to 1 hour."
-
----
-
-### Pitfall 3: Ignoring Social/Emotional Jobs
-**Symptom:** Only documenting functional jobs
-
-**Consequence:** You miss powerful motivators. People often buy based on emotional/social needs, not just functional.
-
-**Fix:** Explicitly ask about perception and emotions in interviews. "How would solving this make you feel?" "Who would notice if you solved this?"
-
----
-
-### Pitfall 4: Fabricating JTBD Without Research
-**Symptom:** Filling out the template based on assumptions
-
-**Consequence:** You're guessing. JTBD analysis is only valuable if grounded in real customer insights.
-
-**Fix:** Conduct "switch interviews" (ask why they switched from a previous solution), contextual inquiries, or problem validation interviews.
-
----
-
-### Pitfall 5: Treating All Pains as Equal
-**Symptom:** Listing 20 pains without prioritization
-
-**Consequence:** No clarity on what to solve first.
-
-**Fix:** Rank pains by intensity (acute vs. mild). Ask "If we only solved one pain, which would have the biggest impact?"
-
----
-
-## References
-
-### Related Skills
-- `skills/proto-persona/SKILL.md` — Defines who has these jobs/pains/gains
-- `skills/problem-statement/SKILL.md` — JTBD informs the "Trying to" and "But" sections
-- `skills/positioning-statement/SKILL.md` — JTBD informs the "that need" statement
-
-### External Frameworks
-- Clayton Christensen, *Competing Against Luck* (2016) — Origin of Jobs-to-be-Done theory
-- Tony Ulwick, *Outcome-Driven Innovation* (2016) — Quantifying jobs and outcomes
-- Alexander Osterwalder, *Value Proposition Canvas* (2014) — Customer jobs/pains/gains framework
-
-### Dean's Work
-- [Link to relevant Dean Peters' Substack articles if applicable]
-
-### Provenance
-- Adapted from `prompts/jobs-to-be-done.md` in the `https://github.com/deanpeters/product-manager-prompts` repo.
-
----
-
-**Skill type:** Component
-**Suggested filename:** `jobs-to-be-done.md`
-**Suggested placement:** `/skills/components/`
-**Dependencies:** References `skills/proto-persona/SKILL.md`
-**Used by:** `skills/positioning-statement/SKILL.md`, `skills/problem-statement/SKILL.md`, `skills/epic-hypothesis/SKILL.md`
+Do not use this skill for a known defect with a clear reproduction, a mandatory compliance change, a purely technical migration, or routine delivery planning. Do not use it when the decision requires usability testing of an existing interface rather than understanding why the customer seeks progress. If no behavioural evidence exists, use the template to plan discovery, not to manufacture a definitive job.

@@ -1,449 +1,216 @@
 ---
 name: prioritization-advisor
-description: Choose a prioritization framework based on stage, team context, and stakeholder needs. Use when deciding between RICE, ICE, value/effort, or another scoring approach.
+description: Select and apply RICE, ICE, value-effort, weighted scoring, or cost of delay when prioritizing product work without false precision.
 user-invocable: true
-intent: >-
-  Guide product managers in choosing the right prioritization framework by asking adaptive questions about product stage, team context, decision-making needs, and stakeholder dynamics. Use this to avoid "framework whiplash" (switching frameworks constantly) or applying the wrong framework (e.g., using RICE for strategic bets or ICE for data-driven decisions). Outputs a recommended framework with implementation guidance tailored to your context.
-type: interactive
-best_for:
-  - "Choosing the right prioritization framework for a team or stage"
-  - "Deciding between RICE, ICE, value/effort, and similar models"
-  - "Reducing debate about how to prioritize competing work"
-scenarios:
-  - "Which prioritization framework should my startup use right now?"
-  - "Help me choose between RICE and value/effort for roadmap planning"
-  - "We keep arguing about prioritization. Recommend a framework."
 ---
 
+# Prioritization Advisor
 
-## Purpose
-Guide product managers in choosing the right prioritization framework by asking adaptive questions about product stage, team context, decision-making needs, and stakeholder dynamics. Use this to avoid "framework whiplash" (switching frameworks constantly) or applying the wrong framework (e.g., using RICE for strategic bets or ICE for data-driven decisions). Outputs a recommended framework with implementation guidance tailored to your context.
+Choose a method that fits the decision, expose the assumptions behind the ranking, and produce a recommendation that survives discussion. Use this for comparing product opportunities, features, experiments, fixes, or initiatives when the team needs an explicit ordering.
 
-This is not a scoring calculator—it's a decision guide that matches prioritization frameworks to your specific situation.
+## Responsibilities
 
-## Key Concepts
+1. **Define the decision.** State the items being compared, the decision owner, the time horizon, and the scarce resource being allocated. Do not score items that compete for different budgets or teams unless the decision truly spans them.
+2. **Set eligibility gates.** Remove or separately label mandatory work, contractual commitments, security fixes, regulatory obligations, and hard dependencies. A formula must not make non-optional work appear optional.
+3. **Check comparability.** Confirm that every item is at a similar level of scope. Split a year-long platform program or combine tiny tasks before comparing either with a six-week feature.
+4. **Assess the evidence.** Record what is measured, estimated, assumed, or unknown. Ask for missing inputs only when they could change the decision; otherwise proceed with explicit assumptions.
+5. **Choose the lightest suitable method.** Use the selection rules below. Explain the choice in one or two sentences and name the method's main limitation for this decision.
+6. **Define scales before scoring.** Give each factor anchors with observable meanings. Keep scales short. Prefer ranges and confidence labels over invented decimals.
+7. **Score consistently.** Use the same horizon, unit, population, and interpretation for every item. Preserve the raw inputs so another person can reproduce the result.
+8. **Test sensitivity.** Vary uncertain inputs, weights, or estimates. Identify rankings that remain stable and rankings that reverse under plausible assumptions.
+9. **Apply judgment openly.** Recommend an order, then list any deliberate override and its reason. Never alter inputs merely to force the desired order.
+10. **Define the next action.** Name what to start, defer, validate, or re-estimate, plus the evidence that would trigger reconsideration.
 
-### The Prioritization Framework Landscape
-Common frameworks and when to use them:
+## Choose the method
 
-**Scoring frameworks:**
-- **RICE** (Reach, Impact, Confidence, Effort) — Data-driven, requires metrics
-- **ICE** (Impact, Confidence, Ease) — Lightweight, gut-check scoring
-- **Value vs. Effort** (2x2 matrix) — Quick wins vs. strategic bets
-- **Weighted Scoring** — Custom criteria with stakeholder input
+### Value versus effort
 
-**Strategic frameworks:**
-- **Kano Model** — Classify features by customer delight (basic, performance, delight)
-- **Opportunity Scoring** — Rate importance vs. satisfaction gap
-- **Buy-a-Feature** — Customer budget allocation exercise
-- **Moscow** (Must, Should, Could, Won't) — Forcing function for hard choices
+Use for a fast first pass when the item set is small, evidence is limited, and the goal is conversation or triage rather than a defensible numerical rank.
 
-**Contextual frameworks:**
-- **Cost of Delay** — Urgency-based (time-sensitive features)
-- **Impact Mapping** — Goal-driven (tie features to outcomes)
-- **Story Mapping** — User journey-based (narrative flow)
+Plot or classify each item using explicitly anchored value and effort. Treat quadrant boundaries as discussion aids, not natural laws.
 
-### Why This Works
-- **Context-aware:** Matches framework to product stage, team maturity, data availability
-- **Anti-dogmatic:** No single "best" framework—it depends on your situation
-- **Actionable:** Provides implementation steps, not just framework names
+Good fit: a team sorting twelve candidate improvements during quarterly planning.
 
-### Anti-Patterns (What This Is NOT)
-- **Not a universal ranking:** Frameworks aren't "better" or "worse"—they fit different contexts
-- **Not a replacement for strategy:** Frameworks execute strategy; they don't create it
-- **Not set-it-and-forget-it:** Reassess frameworks as your product matures
+Wrong tool: items differ materially in urgency, confidence, reach, or strategic constraints. A two-axis view hides those differences.
 
-### When to Use This
-- Choosing a prioritization framework for the first time
-- Switching frameworks (current one isn't working)
-- Aligning stakeholders on prioritization process
-- Onboarding new PMs to team practices
+### ICE
 
-### When NOT to Use This
-- When you already have a working framework (don't fix what isn't broken)
-- For one-off decisions (frameworks are for recurring prioritization)
-- As a substitute for strategic vision (frameworks can't tell you what to build)
+Use for rapid comparison of experiments or growth ideas when impact, confidence, and ease can be judged on common anchored scales.
 
----
+Calculate:
 
-### Facilitation Source of Truth
+`ICE = impact × confidence × ease`
 
-Use [`workshop-facilitation`](../workshop-facilitation/SKILL.md) as the default interaction protocol for this skill.
+Use integers such as 1–5 for impact and ease. Express confidence as a multiplier such as 0.5, 0.8, or 1.0, with evidence anchors. Define whether ease means low effort, short lead time, or low complexity; do not mix them.
 
-It defines:
-- session heads-up + entry mode (Guided, Context dump, Best guess)
-- one-question turns with plain-language prompts
-- progress labels (for example, Context Qx/8 and Scoring Qx/5)
-- interruption handling and pause/resume behavior
-- numbered recommendations at decision points
-- quick-select numbered response options for regular questions (include `Other (specify)` when useful)
+Good fit: choosing which onboarding experiments to test next week.
 
-This file defines the domain-specific assessment content. If there is a conflict, follow this file's domain logic.
+Wrong tool: reach varies widely, delay has substantial economic consequences, or effort estimates are available in real units. ICE can reward easy but unimportant work.
 
-## Application
+### RICE
 
-This interactive skill asks **up to 4 adaptive questions**, offering **3-4 enumerated options** at each step.
+Use when reach varies meaningfully across options and the team can estimate a common population and period.
 
----
+Calculate:
 
-### Question 1: Product Stage
+`RICE = reach × impact × confidence / effort`
 
-**Agent asks:**
-"What stage is your product in?"
+Define reach as a count in one fixed period, such as affected active accounts per quarter. Anchor impact to a specific outcome. Use effort in one unit, commonly person-weeks or person-months, and include all material functions.
 
-**Offer 4 enumerated options:**
+Good fit: comparing customer-facing features that affect different portions of the user base.
 
-1. **Pre-product/market fit** — "Searching for PMF; experimenting rapidly; unclear what customers want" (High uncertainty, need speed)
-2. **Early PMF, scaling** — "Found initial PMF; growing fast; adding features to retain/expand" (Moderate uncertainty, balancing speed + quality)
-3. **Mature product, optimization** — "Established market; incremental improvements; competing on quality/features" (Low uncertainty, data-driven decisions)
-4. **Multiple products/platform** — "Portfolio of products; cross-product dependencies; complex stakeholder needs" (Coordination complexity)
+Wrong tool: platform, compliance, reliability, or strategic work whose value is not proportional to directly reached users. It is also weak when reach numbers are speculative.
 
-**Or describe your product stage (new idea, growth mode, established, etc.).**
+### Weighted scoring
 
-**User response:** [Selection or custom]
+Use when the decision has several explicit objectives or constraints and stakeholders need to agree on their relative importance.
 
----
+Calculate:
 
-### Question 2: Team Context
+`weighted score = Σ(factor score × factor weight)`
 
-**Agent asks:**
-"What's your team and stakeholder environment like?"
+Make weights total 100%. Give every factor a 1–5 rubric with distinct anchors. Avoid duplicate factors such as “customer value” and “user impact” unless they measure separate things.
 
-**Offer 4 enumerated options:**
+Good fit: portfolio planning across retention, revenue, strategic alignment, risk reduction, and delivery cost.
 
-1. **Small team, limited resources** — "3-5 engineers, 1 PM, need to focus ruthlessly" (Need simple, fast framework)
-2. **Cross-functional team, aligned** — "Product, design, engineering aligned; clear goals; good collaboration" (Can use data-driven frameworks)
-3. **Multiple stakeholders, misaligned** — "Execs, sales, customers all have opinions; need transparent process" (Need consensus-building framework)
-4. **Large org, complex dependencies** — "Multiple teams, shared roadmap, cross-team dependencies" (Need coordination framework)
+Wrong tool: stakeholders cannot agree on objectives, factors overlap, or weights are being used to disguise a predetermined answer. Resolve the decision criteria first.
 
-**Or describe your team/stakeholder context.**
+### Cost of delay
 
-**User response:** [Selection or custom]
+Use when timing changes value and the main question is sequence: what should happen first, and what is lost by waiting?
 
----
+Estimate value lost per unit of delay in a common period. When duration matters, compare using:
 
-### Question 3: Decision-Making Needs
+`CD3 = cost of delay per period / estimated duration`
 
-**Agent asks:**
-"What's the primary challenge you're trying to solve with prioritization?"
+Include time-critical value, ongoing economic impact, risk reduction, or opportunity enablement only where evidence supports them. Show a range when the loss curve is uncertain.
 
-**Offer 4 enumerated options:**
+Good fit: sequencing launches around a market window or choosing between fixes with accumulating losses.
 
-1. **Too many ideas, unclear which to pursue** — "Backlog is 100+ items; need to narrow to top 10" (Need filtering framework)
-2. **Stakeholders disagree on priorities** — "Sales wants features, execs want strategic bets, engineering wants tech debt" (Need alignment framework)
-3. **Lack of data-driven decisions** — "Prioritizing by gut feel; want metrics-based process" (Need scoring framework)
-4. **Hard tradeoffs between strategic bets vs. quick wins** — "Balancing long-term vision vs. short-term customer needs" (Need value/effort framework)
+Wrong tool: delay cost is essentially flat, estimates cannot share a monetary or proxy unit, or dependencies dictate the order. Do not convert every benefit into fictional revenue.
 
-**Or describe your specific challenge.**
+## Scale rules
 
-**User response:** [Selection or custom]
+- Define the outcome before the score: “reduces failed checkout attempts,” not “high customer value.”
+- Tie low, middle, and high anchors to observable evidence. Example: impact 1 = no measured behavior change expected; 3 = likely movement in a secondary metric; 5 = likely material movement in the primary metric.
+- Map confidence to evidence. Example: 0.5 = opinion or analogy; 0.8 = relevant qualitative evidence or directional data; 1.0 = direct experiment or repeated production evidence.
+- Use one effort boundary. State whether estimates include discovery, design, engineering, rollout, migration, support, and coordination.
+- Use coarse values when knowledge is coarse. Do not report `7.43` when the inputs are guesses on five-point scales.
+- Mark unknowns as unknown. Do not silently replace missing information with a midpoint.
 
----
+## Required output format
 
-### Question 4: Data Availability
-
-**Agent asks:**
-"How much data do you have to inform prioritization?"
-
-**Offer 3 enumerated options:**
-
-1. **Minimal data** — "New product, no usage metrics, few customers to survey" (Gut-based frameworks)
-2. **Some data** — "Basic analytics, customer feedback, but no rigorous data collection" (Lightweight scoring frameworks)
-3. **Rich data** — "Usage metrics, A/B tests, customer surveys, clear success metrics" (Data-driven frameworks)
-
-**Or describe your data situation.**
-
-**User response:** [Selection or custom]
-
----
-
-### Output: Recommend Prioritization Framework
-
-After collecting responses, the agent recommends a framework:
+Produce this artifact and omit sections only when they genuinely do not apply:
 
 ```markdown
-# Prioritization Framework Recommendation
+# Prioritization: [decision]
 
-**Based on your context:**
-- **Product Stage:** [From Q1]
-- **Team Context:** [From Q2]
-- **Decision-Making Need:** [From Q3]
-- **Data Availability:** [From Q4]
+## Decision frame
+- Decision owner: [name or role]
+- Decision date: [date]
+- Horizon: [for example, next quarter]
+- Scarce resource: [team capacity, budget, launch window]
+- Items compared: [scope]
+- Excluded or mandatory items: [item — reason]
+- Hard dependencies: [item A before item B]
 
----
+## Method choice
+- Method: [value-effort | ICE | RICE | weighted scoring | cost of delay/CD3]
+- Why it fits: [decision property that makes it suitable]
+- Why the nearest alternative was rejected: [specific mismatch]
+- Main limitation here: [what the method may miss]
 
-## Recommended Framework: [Framework Name]
+## Scales and assumptions
+| Input | Definition and unit | Anchors or range | Evidence standard |
+|---|---|---|---|
+| [factor] | [meaning and period] | [1 / 3 / 5, or low–high] | [what earns each confidence level] |
 
-**Why this framework fits:**
-- [Rationale 1 based on Q1-Q4]
-- [Rationale 2]
-- [Rationale 3]
+## Scores
+| Rank | Item | Raw inputs | Score or quadrant | Confidence | Key evidence | Main uncertainty |
+|---:|---|---|---:|---|---|---|
+| 1 | [item] | [show calculation inputs] | [result] | [low/medium/high] | [source or observation] | [uncertain input] |
 
-**When to use it:**
-- [Context where this framework excels]
+## Sensitivity check
+| Assumption changed | Plausible change | Ranking effect | Interpretation |
+|---|---|---|---|
+| [input or weight] | [from X to Y] | [none / swaps A and B] | [stable or fragile] |
 
-**When NOT to use it:**
-- [Limitations or contexts where it fails]
+## Recommendation
+1. **Start:** [item] — [reason grounded in evidence].
+2. **Next:** [item] — [reason and dependency, if any].
+3. **Validate:** [item] — [cheapest evidence needed before commitment].
+4. **Defer:** [item] — [reason and reconsideration trigger].
 
----
+## Judgment and overrides
+- Formula order: [ordered list]
+- Recommended order: [ordered list]
+- Override: [difference, owner, and explicit reason; or none]
 
-## How to Implement
-
-### Step 1: [First implementation step]
-- [Detailed guidance]
-- [Example: "Define scoring criteria: Reach, Impact, Confidence, Effort"]
-
-### Step 2: [Second step]
-- [Detailed guidance]
-- [Example: "Score each feature on 1-10 scale"]
-
-### Step 3: [Third step]
-- [Detailed guidance]
-- [Example: "Calculate RICE score: (Reach × Impact × Confidence) / Effort"]
-
-### Step 4: [Fourth step]
-- [Detailed guidance]
-- [Example: "Rank by score; review top 10 with stakeholders"]
-
----
-
-## Example Scoring Template
-
-[Provide a concrete example of how to use the framework]
-
-**Example (if RICE):**
-
-| Feature | Reach (users/month) | Impact (1-3) | Confidence (%) | Effort (person-months) | RICE Score |
-|---------|---------------------|--------------|----------------|------------------------|------------|
-| Feature A | 10,000 | 3 (massive) | 80% | 2 | 12,000 |
-| Feature B | 5,000 | 2 (high) | 70% | 1 | 7,000 |
-| Feature C | 2,000 | 1 (medium) | 50% | 0.5 | 2,000 |
-
-**Priority:** Feature A > Feature B > Feature C
-
----
-
-## Alternative Framework (Second Choice)
-
-**If the recommended framework doesn't fit, consider:** [Alternative framework name]
-
-**Why this might work:**
-- [Rationale]
-
-**Tradeoffs:**
-- [What you gain vs. what you lose]
-
----
-
-## Common Pitfalls with This Framework
-
-1. **[Pitfall 1]** — [Description and how to avoid]
-2. **[Pitfall 2]** — [Description and how to avoid]
-3. **[Pitfall 3]** — [Description and how to avoid]
-
----
-
-## Reassess When
-
-- Product stage changes (e.g., PMF → scaling)
-- Team grows or reorganizes
-- Stakeholder dynamics shift
-- Current framework feels broken (e.g., too slow, ignoring important factors)
-
----
-
-**Would you like implementation templates or examples for this framework?**
+## Revisit triggers
+- Re-score when [reach, effort, deadline, evidence, or strategy changes].
+- Collect [specific evidence] by [date or decision point].
 ```
 
----
+## Worked example
 
-## Examples
+For three checkout improvements, choose RICE because affected users differ and the team has quarterly reach data. Define impact as expected reduction in failed checkouts, confidence from test quality, and effort in person-weeks.
 
-### Example 1: Good Framework Match (Early PMF, RICE)
+| Item | Reach/quarter | Impact | Confidence | Effort | RICE |
+|---|---:|---:|---:|---:|---:|
+| Better decline message | 8,000 | 1 | 0.8 | 2 | 3,200 |
+| New wallet option | 2,000 | 2 | 0.5 | 5 | 400 |
+| Retry failed payments | 5,000 | 2 | 0.8 | 4 | 2,000 |
 
-**Q1 Response:** "Early PMF, scaling — Found initial PMF; growing fast; adding features to retain/expand"
+Recommend the decline message first if the inputs survive review. Do not conclude that it is exactly eight times “better” than the wallet option. If wallet reach could plausibly be 10,000, mark its placement as fragile and validate adoption before committing.
 
-**Q2 Response:** "Cross-functional team, aligned — Product, design, engineering aligned; clear goals"
+## Handling special cases
 
-**Q3 Response:** "Lack of data-driven decisions — Prioritizing by gut feel; want metrics-based process"
+### Mandatory work
 
-**Q4 Response:** "Some data — Basic analytics, customer feedback, but no rigorous data collection"
+Place mandatory work in a separate capacity lane. State the minimum compliant or safe scope, deadline, and consequence of omission. Prioritize only among implementation options when useful.
 
----
+### Dependencies
 
-**Recommended Framework: RICE (Reach, Impact, Confidence, Effort)**
+Score the end-to-end outcome when a prerequisite has little standalone value. Alternatively, show the prerequisite as a constraint beneath the enabled item. Do not rank the dependency below the work it must precede and then ignore the contradiction.
 
-**Why this fits:**
-- You have some data (analytics, customer feedback) to estimate Reach and Impact
-- Cross-functional team alignment means you can agree on scoring criteria
-- Transitioning from gut feel to data-driven = RICE provides structure without overwhelming complexity
-- Early PMF stage = need speed, but also need to prioritize high-impact features for retention/expansion
+### Mixed horizons
 
-**When to use it:**
-- Quarterly or monthly roadmap planning
-- When backlog exceeds 20-30 items
-- When stakeholders debate priorities
+Normalize all inputs to one horizon or create separate near-term and long-term views. Do not compare annual reach for one item with monthly reach for another.
 
-**When NOT to use it:**
-- For strategic, multi-quarter bets (RICE favors incremental wins)
-- When you lack basic metrics (Reach requires usage data)
-- For single-feature decisions (overkill)
+### Insufficient evidence
 
----
+Recommend an evidence-gathering action rather than a delivery commitment. Example: interview five affected customers or run a painted-door test before assigning a high-confidence impact score.
 
-**Implementation:**
+### Tied or fragile rankings
 
-### Step 1: Define Scoring Criteria
-- **Reach:** How many users will this feature affect per month/quarter?
-- **Impact:** How much will it improve their experience? (1 = minimal, 2 = high, 3 = massive)
-- **Confidence:** How confident are you in your Reach/Impact estimates? (50% = low data, 80% = good data, 100% = certain)
-- **Effort:** How many person-months to build? (Include design, engineering, QA)
+Treat close scores as a decision band. Use strategic fit, sequencing, option value, or learning value as a stated tie-breaker. Never add decimal places to manufacture separation.
 
-### Step 2: Score Each Feature
-- Use a spreadsheet or Airtable
-- Involve PM, design, engineering in scoring (not just PM solo)
-- Be honest about Confidence (don't inflate scores)
+## Quality bar
 
-### Step 3: Calculate RICE Score
-- Formula: `(Reach × Impact × Confidence) / Effort`
-- Higher score = higher priority
+A good output lets a skeptical reader reconstruct the ranking, challenge one assumption without rebuilding the model, and see whether the recommendation changes.
 
-### Step 4: Review and Adjust
-- Sort by RICE score
-- Review top 10-20 with stakeholders
-- Adjust for strategic priorities (RICE doesn't capture everything)
+Check that:
 
----
+- The method follows from the decision shape, not team habit.
+- Every factor has a definition, unit, period, and evidence anchor.
+- Raw inputs and calculations are visible beside final scores.
+- Mandatory work and dependencies are handled before ranking.
+- At least one plausible sensitivity test targets the weakest assumption.
+- The recommendation distinguishes stable choices from fragile ones.
+- Any override is explicit and attributable to a decision owner.
+- Deferred items have a reason and a reconsideration trigger.
 
-**Example Scoring:**
+Avoid these failure modes:
 
-| Feature | Reach | Impact | Confidence | Effort | RICE Score |
-|---------|-------|--------|------------|--------|------------|
-| Email reminders | 5,000 | 2 | 70% | 1 | 7,000 |
-| Mobile app | 10,000 | 3 | 60% | 6 | 3,000 |
-| Dark mode | 8,000 | 1 | 90% | 0.5 | 14,400 |
+- Do not compare unlike scopes, populations, periods, or effort units in one table.
+- Do not use RICE reach as a proxy for importance when low-reach work protects the whole system.
+- Do not let ICE “ease” reward trivial work without checking absolute value.
+- Do not create weighted-scoring factors that count the same benefit twice.
+- Do not invent revenue to make cost of delay look quantitative.
+- Do not present estimated scores as measured facts or rank near-ties with false precision.
+- Do not hide strategic judgment inside weights, confidence, or effort estimates.
+- Do not allow a score to overrule safety, legal, contractual, or dependency constraints.
 
-**Priority:** Dark mode > Email reminders > Mobile app (despite mobile app having high Reach/Impact, Effort is too high)
+## When not to use this
 
----
-
-**Alternative Framework: ICE (Impact, Confidence, Ease)**
-
-**Why this might work:**
-- Simpler than RICE (no Reach calculation)
-- Faster to score (good if you need quick decisions)
-
-**Tradeoffs:**
-- Less data-driven (no Reach metric = can't compare features affecting different user bases)
-- More subjective (Impact/Ease are gut-feel, not metrics)
-
----
-
-**Common Pitfalls:**
-
-1. **Overweighting Effort** — Don't avoid hard problems just because they score low. Some strategic bets require high effort.
-2. **Inflating Confidence** — Be honest. 50% confidence is okay if data is scarce.
-3. **Ignoring strategy** — RICE doesn't capture strategic importance. Adjust for vision/goals.
-
----
-
-### Example 2: Bad Framework Match (Pre-PMF + RICE = Wrong Fit)
-
-**Q1 Response:** "Pre-product/market fit — Searching for PMF; experimenting rapidly"
-
-**Q2 Response:** "Small team, limited resources — 3 engineers, 1 PM"
-
-**Q3 Response:** "Too many ideas, unclear which to pursue"
-
-**Q4 Response:** "Minimal data — New product, no usage metrics"
-
----
-
-**Recommended Framework: ICE (Impact, Confidence, Ease) or Value/Effort Matrix**
-
-**Why NOT RICE:**
-- You don't have usage data to estimate Reach
-- Pre-PMF = you need speed, not rigorous scoring
-- Small team = overhead of RICE scoring is too heavy
-
-**Why ICE instead:**
-- Lightweight, gut-check framework
-- Can score 20 ideas in 30 minutes
-- Good for rapid experimentation phase
-
-**Or Value/Effort Matrix:**
-- Visual 2x2 matrix (high value/low effort = quick wins)
-- Even faster than ICE
-- Good for stakeholder alignment (visual, intuitive)
-
----
-
-## Common Pitfalls
-
-### Pitfall 1: Using the Wrong Framework for Your Stage
-**Symptom:** Pre-PMF startup using weighted scoring with 10 criteria
-
-**Consequence:** Overhead kills speed. You need experiments, not rigorous scoring.
-
-**Fix:** Match framework to stage. Pre-PMF = ICE or Value/Effort. Scaling = RICE. Mature = Opportunity Scoring or Kano.
-
----
-
-### Pitfall 2: Framework Whiplash
-**Symptom:** Switching frameworks every quarter
-
-**Consequence:** Team confusion, lost time, no consistency.
-
-**Fix:** Stick with one framework for 6-12 months. Reassess only when stage/context changes.
-
----
-
-### Pitfall 3: Treating Scores as Gospel
-**Symptom:** "Feature A scored 8,000, Feature B scored 7,999, so A wins"
-
-**Consequence:** Ignores strategic context, judgment, and vision.
-
-**Fix:** Use frameworks as input, not automation. PM judgment overrides scores when needed.
-
----
-
-### Pitfall 4: Solo PM Scoring
-**Symptom:** PM scores features alone, presents to team
-
-**Consequence:** Lack of buy-in, engineering/design don't trust scores.
-
-**Fix:** Collaborative scoring sessions. PM, design, engineering score together.
-
----
-
-### Pitfall 5: No Framework at All
-**Symptom:** "We prioritize by who shouts loudest"
-
-**Consequence:** HiPPO (Highest Paid Person's Opinion) wins, not data or strategy.
-
-**Fix:** Pick *any* framework. Even imperfect structure beats chaos.
-
----
-
-## References
-
-### Related Skills
-- `user-story.md` — Prioritized features become user stories
-- `epic-hypothesis.md` — Prioritized epics validated with experiments
-- `recommendation-canvas.md` — Business outcomes inform prioritization
-
-### External Frameworks
-- Intercom, *RICE Prioritization* (2016) — Origin of RICE framework
-- Sean McBride, *ICE Scoring* (2012) — Lightweight prioritization
-- Luke Hohmann, *Innovation Games* (2006) — Buy-a-Feature and other collaborative methods
-- Noriaki Kano, *Kano Model* (1984) — Customer satisfaction framework
-
-### Dean's Work
-- [If Dean has prioritization resources, link here]
-
----
-
-**Skill type:** Interactive
-**Suggested filename:** `prioritization-advisor.md`
-**Suggested placement:** `/skills/interactive/`
-**Dependencies:** None (standalone, but informs roadmap and backlog decisions)
+Do not use a prioritization framework when there is only one viable option, an incident requires immediate response, a legal or safety obligation dictates action, or the next step is already forced by a hard dependency. Do not score ideas when the real problem is unresolved strategy; define the objective and decision rights first.

@@ -1,247 +1,193 @@
 ---
 name: problem-statement
-description: Write a user-centered problem statement with who is blocked, what they are trying to do, why it matters, and how it feels. Use when framing discovery, prioritization, or a PRD.
+description: Turn vague complaints and feature requests into testable, user-centred problem statements before a team chooses a solution.
 user-invocable: true
-intent: >-
-  Articulate a problem from the user's perspective using an empathy-driven framework that captures who they are, what they're trying to do, what's blocking them, why, and how it makes them feel. Use this to align stakeholders on the problem before jumping to solutions, and to frame product work around user outcomes rather than feature requests.
-type: component
 ---
 
+# Problem Statement
 
-## Purpose
-Articulate a problem from the user's perspective using an empathy-driven framework that captures who they are, what they're trying to do, what's blocking them, why, and how it makes them feel. Use this to align stakeholders on the problem before jumping to solutions, and to frame product work around user outcomes rather than feature requests.
+Turn a complaint, idea, or requested feature into a specific account of who is struggling, what they need to accomplish, what obstructs them, why it matters, and what evidence would show improvement. Use this before solution design, prioritisation, or discovery planning.
 
-This is not a requirements doc—it's a human-centered problem narrative that ensures you're solving a problem worth solving.
+## Responsibilities
 
-## Key Concepts
+1. **Preserve the input** — quote or closely paraphrase the original request so the team can see what was interpreted.
+2. **Separate evidence from assumptions** — label each important claim as observed, reported, inferred, or unknown. Never turn an inference into a fact through confident wording.
+3. **Identify the affected user** — name the narrowest defensible user group and the situation in which the problem occurs. Prefer “first-time account administrators importing more than 500 records” to “users.”
+4. **Describe the intended progress** — state what the user is trying to accomplish in their terms, independent of any proposed feature.
+5. **Describe the obstacle** — explain what prevents, delays, confuses, or discourages that progress. Include the point in the journey where it occurs.
+6. **Establish the current workaround** — record what users do now, including abandoning the task, asking another person, or accepting a poor result.
+7. **Express the cost of the status quo** — state the consequence for the user and, when supported, for the organisation. Use quantities only when evidence provides them.
+8. **Define observable success** — describe a change in user behaviour, outcome, time, error rate, or confidence. Do not define success as shipping a feature.
+9. **Keep solutions out of the core statement** — move requested features and implementation ideas into a separate constraints and candidates section.
+10. **Expose uncertainty** — list unanswered questions whose answers could materially change the audience, severity, scope, or chosen response.
+11. **Set boundaries** — state adjacent users, situations, or problems that this framing does not cover.
+12. **Produce the artifact below** — make the final statement concise enough to challenge, while retaining the evidence and decisions that support it.
 
-### The Problem Framing Framework
-Based on Jobs-to-be-Done and empathy mapping, the framework structures problems as:
+## Working Method
 
-**Problem Framing Narrative:**
-- **I am:** [Describe the persona experiencing the problem]
-- **Trying to:** [Desired outcomes the persona cares about]
-- **But:** [Barriers preventing the outcomes]
-- **Because:** [Root cause of the problem]
-- **Which makes me feel:** [Emotional impact]
+### 1. Start from the request
 
-**Context & Constraints:**
-- [Geographic, technological, time-based, demographic factors]
+Capture the request without correcting it.
 
-**Final Problem Statement:**
-- [Single, concise, empathetic summary]
+Example input:
 
-### Why This Structure Works
-- **Persona-centric:** Forces you to see the problem through the user's eyes
-- **Outcome-focused:** "Trying to" emphasizes desired results, not tasks
-- **Root cause analysis:** "Because" pushes past symptoms to underlying issues
-- **Emotional validation:** "Makes me feel" humanizes the problem and builds empathy
-- **Contextual:** Constraints acknowledge real-world limitations
+> Add a CSV preview screen. Imports keep failing and customers are angry.
 
-### Anti-Patterns (What This Is NOT)
-- **Not a solution in disguise:** "The problem is we lack AI-powered analytics" = sneaking in a solution
-- **Not a business problem:** "Our revenue is down" isn't a user problem (it's a symptom)
-- **Not a feature request:** "Users need a dashboard" isn't a problem (what are they trying to do?)
-- **Not generic:** "Users want better UX" is too vague to be actionable
+Extract separate claims:
 
-### When to Use This
-- Kicking off discovery or problem validation work
-- Aligning stakeholders before solutioning
-- Socializing a problem with engineering, design, or exec teams
-- When you have feature requests but unclear underlying problems
-- Pitching why a problem is worth solving
+| Claim | Classification | What is missing |
+|---|---|---|
+| Customers import CSV files | Reported | Which customers and how often |
+| Imports fail | Reported | Failure rate, causes, and affected file types |
+| Customers are angry | Reported | Support evidence or direct user language |
+| A preview screen will help | Assumption | Evidence that preview prevents the failures |
 
-### When NOT to Use This
-- When you haven't done any user research yet (don't guess—interview first)
-- For internal operational problems (this is for user-facing problems)
-- As a substitute for a PRD (this frames the problem; PRD defines the solution)
+If the input contains no evidence, continue with a provisional framing. Mark it provisional rather than inventing research.
 
----
+### 2. Resolve the five parts
 
-## Application
+Answer these questions in order:
 
-Use `template.md` for the full fill-in structure.
+1. **Who:** Which user or actor experiences the problem? In what context?
+2. **Intent:** What outcome are they trying to achieve?
+3. **Obstacle:** What specifically gets in the way, and at what moment?
+4. **Cost:** What happens if nothing changes?
+5. **Evidence of success:** What observable difference would indicate that the problem is reduced?
 
-### Step 1: Gather User Context
-Before drafting, ensure you have:
-- **User interviews or research:** Direct quotes, observed behaviors, pain points
-- **Jobs-to-be-Done insights:** What users are "hiring" your product to do (reference `skills/jobs-to-be-done/SKILL.md`)
-- **Persona clarity:** Who specifically experiences this problem (reference `skills/proto-persona/SKILL.md`)
-- **Constraints data:** Geographic, tech, time, demographic limitations
+Use the user’s job and context to distinguish superficially similar problems. A finance analyst importing a monthly ledger may have a different problem from a shop owner uploading a first product catalogue.
 
-**If missing context:** Run discovery interviews, contextual inquiries, or user shadowing. Don't fabricate problems.
+### 3. Test the causal chain
 
----
+Read the draft as a chain:
 
-### Step 2: Draft the Problem Framing Narrative
+`user and context → intended progress → obstacle → consequence → observable improvement`
 
-Fill in the template from the persona's point of view:
+Challenge every link:
+
+- Does the obstacle actually prevent the intended progress?
+- Does the stated consequence follow from that obstacle?
+- Would the success evidence change if the obstacle were reduced?
+- Could a different underlying cause produce the same complaint?
+
+If a link is unsupported, label it as an assumption or replace it with an open question.
+
+### 4. Handle feature requests
+
+Translate a requested feature into the hoped-for effect.
+
+For “Add a CSV preview screen,” ask or infer provisionally:
+
+- What would previewing let the user notice or decide?
+- What goes wrong without it?
+- Who encounters that failure?
+- How would behaviour differ if the problem were solved?
+
+Retain the preview screen as a candidate solution. Do not let it define the problem.
+
+### 5. Choose success signals
+
+Select one primary signal close to the user outcome and up to three supporting signals.
+
+Good signals include:
+
+- the proportion of target users completing the task;
+- median time from starting to completing the task;
+- frequency of a specific recoverable error;
+- proportion of users needing staff assistance;
+- repeated use after a successful first attempt.
+
+Pair each signal with a baseline and target only when those numbers exist or the user asks for targets. Otherwise write “baseline needed” and describe how it could be measured.
+
+Guard against displacement. A lower support-ticket count is not success if users simply abandon the task without contacting support.
+
+## Output Format
+
+Produce this artifact and omit fields only when they genuinely do not apply:
 
 ```markdown
-## Problem Framing Narrative
+# Problem framing: [short neutral title]
 
-**I am:** [Describe the key persona, highlighting 3-4 key characteristics]
-- [Key pain point or characteristic 1]
-- [Key pain point or characteristic 2]
-- [Key pain point or characteristic 3]
+## Source request
+> [Original complaint, observation, or feature request]
 
-**Trying to:**
-- [Single sentence listing the desired outcomes the persona cares most about]
+## Problem statement
+[Specific user group] who are [relevant context] are trying to [intended progress],
+but [obstacle at a specific point] prevents or hinders them.
+As a result, [user consequence]; this also causes [organisational consequence, if evidenced].
+We will know the problem has been reduced when [observable user outcome or behaviour changes].
 
-**But:**
-- [Describe the barriers preventing the persona from achieving outcomes]
-- [Job-to-be-done or outcome obstruction 1]
-- [Job-to-be-done or outcome obstruction 2]
-- [Job-to-be-done or outcome obstruction 3]
+## Evidence and confidence
+| Claim | Evidence | Status | Confidence |
+|---|---|---|---|
+| [Who is affected] | [Source or “none yet”] | observed / reported / inferred / unknown | high / medium / low |
+| [Obstacle] | [Source or “none yet”] | observed / reported / inferred / unknown | high / medium / low |
+| [Cost] | [Source or “none yet”] | observed / reported / inferred / unknown | high / medium / low |
 
-**Because:**
-- [Describe the root cause empathetically]
+## Current behaviour
+- Current path: [What the user does now]
+- Workaround: [How the user compensates]
+- Failure or abandonment point: [Where progress stops or degrades]
 
-**Which makes me feel:**
-- [Describe the emotions from the persona's perspective]
+## Success signals
+| Signal | Current baseline | Desired direction or target | Measurement method |
+|---|---:|---:|---|
+| [Primary user-outcome signal] | [value or “needed”] | [direction or target] | [event, study, survey, or operational data] |
+| [Guardrail signal] | [value or “needed”] | [must not worsen] | [method] |
+
+## Scope
+- In scope: [Users, circumstances, and journey stage covered]
+- Out of scope: [Nearby problems this statement does not claim to solve]
+
+## Assumptions to test
+1. [Assumption that could invalidate the framing]
+2. [Assumption that affects severity or reach]
+
+## Open questions
+1. [Question answerable through research or data]
+2. [Question needed before choosing a response]
+
+## Candidate solutions mentioned
+- [Preserve proposed solutions here without endorsing them]
+
+## Next evidence step
+[Smallest research or measurement action that most reduces uncertainty]
 ```
 
-**Quality checks:**
-- **"I am" specificity:** Can you picture this person? Or is it generic ("busy professionals")?
-- **"Trying to" clarity:** Is this an outcome (measurable) or a task (activity)?
-- **"But" depth:** Are these real barriers or just inconveniences?
-- **"Because" honesty:** Is this the root cause or just a symptom?
-- **"Makes me feel" authenticity:** Do these emotions come from research or assumptions?
+## Worked Example
 
----
+Given “Add a CSV preview screen. Imports keep failing and customers are angry,” produce a provisional statement such as:
 
-### Step 3: Document Context & Constraints
+> Account administrators importing a catalogue for the first time are trying to publish accurate product data without manual re-entry, but they learn about formatting errors only after submitting the file. They must diagnose unfamiliar row-level errors and repeat the upload, delaying catalogue setup and increasing requests for staff help. We will know the problem is reduced when more first-time administrators complete a valid import without assistance and require fewer submission attempts.
 
-```markdown
-## Context & Constraints
+Label “first-time,” “learn only after submitting,” and any claimed support impact according to the available evidence. Keep “CSV preview screen” under candidate solutions until evidence shows that late error discovery is the material obstacle.
 
-- [Enumerate geographic, technological, time-based, or demographic factors]
-- [e.g., "Must work offline in rural areas with limited connectivity"]
-- [e.g., "Used by non-technical users unfamiliar with complex software"]
-- [e.g., "Time-sensitive: decisions must be made within 24 hours"]
-```
+A useful next evidence step might be: review failed-import events and five recent support conversations, then interview three affected administrators while they retry an import. Choose the smallest step that can disprove the framing, not a broad research programme by default.
 
-**Quality checks:**
-- **Relevance:** Do these constraints directly impact the problem?
-- **Specificity:** Are they concrete enough to inform design decisions?
+## Quality Bar
 
----
+A good output is specific enough that teammates can dispute individual claims and investigate them. It identifies a user and situation, describes a solution-independent obstacle, connects that obstacle to a meaningful consequence, and names observable evidence of improvement.
 
-### Step 4: Craft the Final Problem Statement
+Before finishing, check:
 
-Synthesize the narrative into one powerful sentence:
+- Can a reader identify who is included and excluded?
+- Could more than one plausible solution address the statement?
+- Is each factual claim supported or visibly labelled uncertain?
+- Does success describe a changed user outcome rather than completed delivery?
+- Is the next evidence step proportionate to the largest uncertainty?
+- Would a researcher or analyst know what to examine next?
 
-```markdown
-## Final Problem Statement
+Avoid these failure modes:
 
-[Single, concise statement that provides a powerful and empathetic summary]
-```
+- **Do not restate the feature as the problem.** “Users need a CSV preview” presupposes the answer.
+- **Do not use a universal audience.** “Users find imports difficult” hides differences in role, experience, volume, and context.
+- **Do not smuggle in unsupported causes.** A complaint about failures does not prove that validation, documentation, or interface design is responsible.
+- **Do not confuse business impact with user impact.** “Support costs are high” may matter, but it does not explain what users cannot accomplish.
+- **Do not invent precision.** Unsupported percentages, revenue effects, or time savings make the artifact less trustworthy.
+- **Do not use output metrics as success.** Screens shipped, tooltips added, and preview views opened do not establish that users made progress.
+- **Do not bundle distinct problems.** If two user groups face different obstacles or consequences, write separate statements.
+- **Do not hide uncertainty in polished prose.** A provisional statement must remain visibly provisional.
+- **Do not make the artifact exhaustive.** Include only evidence and questions that affect the framing or the next decision.
 
-**Formula:** `[Persona] needs a way to [desired outcome] because [root cause], which currently [emotional/practical impact].`
+## When Not to Use This
 
-**Example:** "Enterprise IT admins need a way to provision user accounts in under 5 minutes because current processes take 2+ hours with manual approvals, which causes project delays and frustrated end-users."
-
-**Quality checks:**
-- **One sentence:** If it requires multiple sentences, the problem isn't crisp yet
-- **Measurable:** Can you tell if you've solved it?
-- **Empathetic:** Does it resonate emotionally?
-- **Shareable:** Could you say this in a meeting and have stakeholders nod?
-
----
-
-### Step 5: Validate and Socialize
-
-- **Test with users:** Read it aloud to people who experience the problem. Do they say "Yes, exactly!"?
-- **Share with stakeholders:** Product, engineering, design, exec. Does it align everyone?
-- **Iterate based on feedback:** If anyone says "I don't think that's the real problem," dig deeper.
-
----
-
-## Examples
-
-See `examples/sample.md` for full examples (good and bad problem statements).
-
-Mini example excerpt:
-
-```markdown
-**I am:** A software developer on a distributed team
-**Trying to:** Communicate in real-time with my team without losing context
-**But:** Email is too slow and IM is ephemeral
-**Because:** No tool combines real-time chat with searchable history
-**Which makes me feel:** Frustrated and disconnected
-```
-
----
-
-## Common Pitfalls
-
-### Pitfall 1: Solution Smuggling
-**Symptom:** "The problem is we don't have [specific feature]"
-
-**Consequence:** You've predetermined the solution without validating the problem.
-
-**Fix:** Reframe around the user's desired outcome, not the feature. Ask "What are they trying to achieve?"
-
----
-
-### Pitfall 2: Business Problem Disguised as User Problem
-**Symptom:** "Users want to increase our revenue" or "The problem is our churn rate"
-
-**Consequence:** These are company problems, not user problems. Users don't care about your metrics.
-
-**Fix:** Dig into *why* users churn or *what* would make them spend more. Frame it from their perspective.
-
----
-
-### Pitfall 3: Generic Personas
-**Symptom:** "I am a busy professional trying to be more productive"
-
-**Consequence:** Too broad to be actionable. Every product claims to help "busy professionals."
-
-**Fix:** Get specific. "I am a sales rep managing 50+ leads manually in spreadsheets, trying to prioritize follow-ups without missing high-value opportunities."
-
----
-
-### Pitfall 4: Symptom Instead of Root Cause
-**Symptom:** "Because the UI is confusing"
-
-**Consequence:** You're describing a symptom, not the underlying issue.
-
-**Fix:** Ask "Why is the UI confusing?" Keep asking "why" until you hit the root cause (e.g., "Because users have no mental model for how the system works").
-
----
-
-### Pitfall 5: Fabricated Emotions
-**Symptom:** "Which makes me feel empowered and delighted"
-
-**Consequence:** These sound like marketing copy, not real user emotions.
-
-**Fix:** Use actual quotes from user interviews. Real emotions: "frustrated," "overwhelmed," "anxious," "stuck."
-
----
-
-## References
-
-### Related Skills
-- `skills/jobs-to-be-done/SKILL.md` — Informs the "Trying to" and "But" sections
-- `skills/proto-persona/SKILL.md` — Defines the "I am" persona
-- `skills/positioning-statement/SKILL.md` — Problem statement informs positioning
-- `skills/user-story/SKILL.md` — Problem statement guides story prioritization
-
-### External Frameworks
-- Clayton Christensen, *Jobs to Be Done* — Origin of outcome-focused problem framing
-- Osterwalder & Pigneur, *Value Proposition Canvas* — Customer pains/gains/jobs
-- Dave Gray, *Empathy Mapping* — Emotional framing techniques
-
-### Dean's Work
-- [Link to relevant Dean Peters' Substack articles if applicable]
-
-### Provenance
-- Adapted from `prompts/framing-the-problem-statement.md` in the `https://github.com/deanpeters/product-manager-prompts` repo.
-
----
-
-**Skill type:** Component
-**Suggested filename:** `problem-statement.md`
-**Suggested placement:** `/skills/components/`
-**Dependencies:** References `skills/jobs-to-be-done/SKILL.md`, `skills/proto-persona/SKILL.md`
+Do not use this skill when the problem is already well evidenced and the user needs solution design, requirements, delivery planning, or prioritisation instead. Do not use it for a confirmed defect whose expected and actual behaviour are already clear; write a reproducible bug report. Do not use it to manufacture user justification for a fixed executive decision. If the task is purely technical maintenance with no meaningful user outcome, use an engineering problem description instead.

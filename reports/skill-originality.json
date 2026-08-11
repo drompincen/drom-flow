@@ -1,0 +1,186 @@
+{
+  "ok": true,
+  "threshold": 0.5,
+  "skills_checked": 29,
+  "upstream_docs_compared": 1870,
+  "max_similarity_seen": 1.0,
+  "copies": [],
+  "close": [],
+  "findings": [
+    {
+      "skill": "accessibility",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/accessibility/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    },
+    {
+      "skill": "add-javaducker",
+      "max_similarity": 0.122,
+      "closest_upstream": "product-manager-skills/docs/Using PM Skills with Codex.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "api-expert",
+      "max_similarity": 0.037,
+      "closest_upstream": "skills/ddia-systems/references/data-models.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "architect",
+      "max_similarity": 0.078,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "ascii-architect",
+      "max_similarity": 0.072,
+      "closest_upstream": "product-manager-skills/docs/INSTALL-CLAUDE-CODE.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "best-practices",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/best-practices/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    },
+    {
+      "skill": "core-web-vitals",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/core-web-vitals/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    },
+    {
+      "skill": "customer-journey-map",
+      "max_similarity": 0.058,
+      "closest_upstream": "skills/plugins/metaskills/skills/remove-technical-debt/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "debugger",
+      "max_similarity": 0.077,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "df-research",
+      "max_similarity": 0.054,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "discovery-process",
+      "max_similarity": 0.044,
+      "closest_upstream": "skills/improve-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "epic-breakdown-advisor",
+      "max_similarity": 0.053,
+      "closest_upstream": "skills/improve-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "grok-fleet",
+      "max_similarity": 0.09,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "implementer",
+      "max_similarity": 0.048,
+      "closest_upstream": "skills/plugins/code-craftsmanship/skills/working-with-legacy-code/references/seams.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "jobs-to-be-done",
+      "max_similarity": 0.063,
+      "closest_upstream": "product-manager-skills/docs/Using PM Skills with Codex.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "orchestrator",
+      "max_similarity": 0.06,
+      "closest_upstream": "product-manager-skills/docs/Using PM Skills with ChatGPT.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "performance",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/performance/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    },
+    {
+      "skill": "planner",
+      "max_similarity": 0.062,
+      "closest_upstream": "product-manager-skills/docs/PM Skills Rule-of-Thumb Guide.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "prd-development",
+      "max_similarity": 0.062,
+      "closest_upstream": "skills/improve-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "prioritization-advisor",
+      "max_similarity": 0.044,
+      "closest_upstream": "skills/grow-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "problem-statement",
+      "max_similarity": 0.039,
+      "closest_upstream": "product-manager-skills/skills/stakeholder-mapping/template.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "refactorer",
+      "max_similarity": 0.043,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "reviewer",
+      "max_similarity": 0.078,
+      "closest_upstream": "web-quality-skills/docs/codex-setup.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "roadmap-planning",
+      "max_similarity": 0.053,
+      "closest_upstream": "product-manager-skills/skills/user-story-mapping/examples/sample-industrial.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "seo",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/seo/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    },
+    {
+      "skill": "user-story-mapping",
+      "max_similarity": 0.068,
+      "closest_upstream": "skills/grow-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "user-story-splitting",
+      "max_similarity": 0.028,
+      "closest_upstream": "skills/grow-business/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "user-story",
+      "max_similarity": 0.06,
+      "closest_upstream": "skills/grow-website/references/artifact-templates.md",
+      "verdict": "ORIGINAL"
+    },
+    {
+      "skill": "web-quality-audit",
+      "max_similarity": 1.0,
+      "closest_upstream": "web-quality-skills/codex/skills/web-quality-audit/SKILL.md",
+      "verdict": "ATTRIBUTED"
+    }
+  ],
+  "generated": "2026-08-11T08:41:50"
+}

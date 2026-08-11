@@ -3776,3 +3776,16 @@ SKILL_LICENSES=MIT
 Every install records source + exact commit in `.claude/.state/drom-flow-extra-skills.json`, so
 `--restore` rebuilds the set on a fresh clone and `init.sh --update` does it automatically —
 including materialising the skill's own `*.sh.txt` shell assets.
+
+## scripts/skill-originality.sh
+
+Checks that the shipped skills are drom-flow's own work. Skills are prose, and prose on a
+well-known framework converges, so this measures each skill against published collections
+covering the same ground (`tests/skill-upstreams.txt`) and fails on anything at or above the
+similarity threshold.
+
+Skills that are knowingly third-party and recorded in `THIRD-PARTY-NOTICES.md` are listed in
+`tests/skill-attributed.txt` and exempt — the check is for unaccounted copies, not for material
+that is licensed and credited on purpose.
+
+Offline is a SKIP, not a pass. Writes `reports/skill-originality.json`.

@@ -1,0 +1,10 @@
+# Skills knowingly sourced from a third party, with their licence recorded in
+# THIRD-PARTY-NOTICES.md. The originality check exempts these — its job is to catch an
+# UNACCOUNTED copy, not a properly attributed one. Removing a skill from this list without
+# removing the skill will make the check fail, which is the intent.
+accessibility
+best-practices
+core-web-vitals
+performance
+seo
+web-quality-audit

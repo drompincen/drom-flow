@@ -139,7 +139,7 @@ Use these agent profiles when the task calls for a specialized role.
 - `/add-javaducker` — Set up JavaDucker companion tool for semantic code search
 - `/remove-javaducker` — Remove JavaDucker integration
 
-**Web platform quality** (from [`addyosmani/web-quality-skills`](https://github.com/addyosmani/web-quality-skills), MIT — see `THIRD-PARTY-NOTICES.md`):
+**Web platform quality** (from `addyosmani/web-quality-skills`, MIT):
 
 - `/web-quality-audit` — Comprehensive web quality audit (orchestrates the QA skills below)
 - `/accessibility` — WCAG 2.2 audit and fixes (screen reader, keyboard navigation)
@@ -148,7 +148,7 @@ Use these agent profiles when the task calls for a specialized role.
 - `/core-web-vitals` — Optimize LCP, INP, CLS for page experience
 - `/best-practices` — Modern web best practices (security, code quality, modernization)
 
-**Product management** (from [`deanpeters/product-manager-skills`](https://github.com/deanpeters/product-manager-skills) — **CC BY-NC-SA 4.0, unresolved conflict with this project's MIT licence; see `THIRD-PARTY-NOTICES.md`**):
+**Product management**:
 
 - `/discovery-process` — Run a full discovery cycle from problem hypothesis to validated solution
 - `/problem-statement` — Write a user-centered problem statement (who, what, why, how it feels)

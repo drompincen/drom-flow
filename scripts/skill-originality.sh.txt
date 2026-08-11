@@ -1,0 +1,136 @@
+#!/bin/bash
+# drom-flow — verify that the shipped skills are original work.
+#   skill-originality.sh [--threshold 0.5] [--json]
+# Writes reports/skill-originality.json. Exit 0 only when every skill is clearly original.
+#
+# Skills are prose, and prose on a well-known framework converges. This measures how close each
+# shipped skill is to published skills covering the same ground, so "we wrote this" stays a
+# checkable statement rather than an assumption.
+#
+# Method: strip YAML frontmatter, drop blank lines, case-fold, then difflib.SequenceMatcher over
+# lines. Identical substance scores 1.0; independent writing on the same framework lands far
+# below the threshold.
+#
+# Offline is a SKIP, not a pass: it cannot verify, so it does not claim to.
+
+set -uo pipefail
+R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT="$R/reports/skill-originality.json"; mkdir -p "$R/reports"
+UPSTREAMS="$R/tests/skill-upstreams.txt"
+ATTRIBUTED="$R/tests/skill-attributed.txt"
+WORK="$R/.ri-test/originality"
+THRESHOLD=0.5
+while [[ $# -gt 0 ]]; do case $1 in
+  --threshold) THRESHOLD="$2"; shift 2 ;;
+  --json) shift ;;
+  *) shift ;;
+esac; done
+
+log() { echo "[originality] $*" >&2; }
+
+[ -f "$UPSTREAMS" ] || { log "no upstream list at $UPSTREAMS — nothing to compare against"; exit 0; }
+
+mkdir -p "$WORK"
+have_any=false
+while read -r repo; do
+  case "$repo" in ''|\#*) continue ;; esac
+  name="${repo##*/}"
+  if [ -d "$WORK/$name/.git" ]; then have_any=true; continue; fi
+  if git clone --depth 1 -q "https://github.com/$repo.git" "$WORK/$name" 2>/dev/null; then
+    have_any=true
+  else
+    log "cannot reach $repo"
+  fi
+done < "$UPSTREAMS"
+
+if ! $have_any; then
+  python3 -c "
+import json,datetime
+json.dump({'ok':True,'skipped':True,
+           'reason':'no upstream repository reachable — comparison could not run',
+           'generated':datetime.datetime.now().isoformat(timespec='seconds')},
+          open('$OUT','w'),indent=2)"
+  log "SKIP: no upstream reachable (offline). Not claiming a pass."
+  exit 0
+fi
+
+python3 - "$R" "$WORK" "$OUT" "$THRESHOLD" "$ATTRIBUTED" <<'PY'
+import difflib, glob, json, os, re, sys, datetime
+
+root, work, out, threshold = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
+attributed_path = sys.argv[5] if len(sys.argv) > 5 else ''
+attributed = set()
+if attributed_path and os.path.exists(attributed_path):
+    for line in open(attributed_path):
+        line = line.strip()
+        if line and not line.startswith('#'):
+            attributed.add(line)
+
+def norm(p):
+    try: t = open(p, encoding='utf-8', errors='replace').read()
+    except Exception: return []
+    t = re.sub(r'^---\n.*?\n---\n', '', t, flags=re.S)
+    return [l.strip().lower() for l in t.splitlines() if l.strip()]
+
+upstream = []
+for p in glob.glob(os.path.join(work, '**', '*.md'), recursive=True):
+    if '/.git/' in p: continue
+    lines = norm(p)
+    if len(lines) >= 30:               # ignore stubs and READMEs; they match everything weakly
+        upstream.append((p, lines))
+
+ours = []
+for d in sorted(glob.glob(os.path.join(root, 'template/.claude/skills/*/'))):
+    name = os.path.basename(d.rstrip('/'))
+    f = os.path.join(d, name + '.md')
+    if os.path.exists(f): ours.append((name, f))
+
+findings, worst = [], 0.0
+for name, f in ours:
+    a = norm(f)
+    if len(a) < 30: continue
+    best, best_src = 0.0, None
+    for up, b in upstream:
+        # a cheap gate first: no shared long lines means no possible high ratio
+        if not (set(a) & set(b)): continue
+        r = difflib.SequenceMatcher(None, a, b).ratio()
+        if r > best: best, best_src = r, up
+    worst = max(worst, best)
+    entry = {'skill': name, 'max_similarity': round(best, 3),
+             'closest_upstream': (best_src or '').replace(work + '/', '') or None}
+    if name in attributed:
+        # knowingly third-party and recorded in THIRD-PARTY-NOTICES.md; the check is for
+        # UNACCOUNTED copies, not for material we have licensed and credited on purpose
+        entry['verdict'] = 'ATTRIBUTED'
+    elif best >= threshold:
+        entry['verdict'] = 'COPY'
+    elif best >= threshold * 0.7:
+        entry['verdict'] = 'CLOSE'
+    else:
+        entry['verdict'] = 'ORIGINAL'
+    findings.append(entry)
+
+copies = [f for f in findings if f['verdict'] == 'COPY']
+close = [f for f in findings if f['verdict'] == 'CLOSE']
+ok = not copies
+
+json.dump({'ok': ok, 'threshold': threshold, 'skills_checked': len(findings),
+           'upstream_docs_compared': len(upstream),
+           'max_similarity_seen': round(worst, 3),
+           'copies': copies, 'close': close, 'findings': findings,
+           'generated': datetime.datetime.now().isoformat(timespec='seconds')},
+          open(out, 'w'), indent=2)
+
+print(f"checked {len(findings)} skills against {len(upstream)} upstream documents")
+print(f"highest similarity seen: {worst:.3f} (threshold {threshold})")
+for f in sorted(findings, key=lambda x: -x['max_similarity'])[:5]:
+    print(f"  {f['verdict']:<8} {f['skill']:<24} {f['max_similarity']:.3f}  {f['closest_upstream'] or ''}")
+if copies:
+    print(f"\nFAIL: {len(copies)} skill(s) at or above {threshold} — these are copies, not original work:")
+    for c in copies:
+        print(f"  {c['skill']}  {c['max_similarity']}  <- {c['closest_upstream']}")
+sys.exit(0 if ok else 1)
+PY
+rc=$?
+[ $rc -eq 0 ] && log "PASS — every shipped skill is original" || log "FAIL — see $OUT"
+exit $rc

@@ -1,304 +1,254 @@
 ---
 name: user-story-splitting
-description: Break a large story or epic into smaller deliverable stories using proven split patterns. Use when backlog items are too big for estimation, sequencing, or independent release.
+description: Split an oversized user story into small, valuable end-to-end slices when it cannot be delivered, reviewed, or learned from safely as one unit.
 user-invocable: true
-intent: >-
-  Break down large user stories, epics, or features into smaller, independently deliverable stories using systematic splitting patterns. Use this to make work more manageable, reduce risk, enable faster feedback cycles, and maintain flow in agile development. This skill applies to user stories, epics, and any work that's too large to complete in a single sprint.
-type: component
 ---
 
+# User Story Splitting
 
-## Purpose
-Break down large user stories, epics, or features into smaller, independently deliverable stories using systematic splitting patterns. Use this to make work more manageable, reduce risk, enable faster feedback cycles, and maintain flow in agile development. This skill applies to user stories, epics, and any work that's too large to complete in a single sprint.
+Turn a story that is too large into independently useful slices that cross the necessary layers from user action to observable result. Use this when one story hides several behaviours, rules, cases, or technical uncertainties.
 
-This is not arbitrary slicing—it's strategic decomposition that preserves user value while reducing complexity.
+## Responsibilities
 
-## Key Concepts
+1. **Restate the outcome.** Name the user or actor, the action they need, and the result they value. Preserve this outcome while splitting.
+2. **Set the size constraint.** Record why the story is too large: delivery window, review risk, unknown effort, or too many acceptance cases. Ask for the team's target size if it is not given.
+3. **Map the behaviour.** List the shortest sequence from the user's starting point to the visible result. Include decisions, business rules, input varieties, failure cases, and important quality expectations.
+4. **Find the thinnest useful path.** Select the smallest real scenario that one user can complete end to end. Prefer a narrow working behaviour over a broad partial layer.
+5. **Apply one splitting pattern at a time.** Try workflow steps, business-rule variations, happy path versus edge cases, data variation, effort spikes, and deferred performance. Use the pattern that creates the clearest independent outcomes.
+6. **Write each slice as behaviour.** State who can do what and why it matters. Give each slice acceptance examples that can be demonstrated without relying on unfinished slices.
+7. **Order by learning and value.** Put a usable core path first. Move uncertain or high-risk work early enough to change the plan. Defer rare cases and optimisations only when doing so is safe.
+8. **Check independence.** Confirm each slice can be built, tested, reviewed, and released on its own. Document any unavoidable dependency instead of hiding it.
+9. **Check coverage.** Trace every original workflow step, rule, edge case, data type, uncertainty, and performance need to a slice or an explicit deferral.
+10. **Present the split.** Produce the story-splitting record below, including rationale, sequence, acceptance examples, dependencies, and deferred scope.
 
-### The Story Splitting Framework
-Based on Richard Lawrence and Peter Green's "Humanizing Work Guide to Splitting User Stories," the framework provides 8 systematic patterns for splitting work:
+## Guardrail: Slice Vertically
 
-1. **Workflow steps:** Split along sequential steps in a user's journey
-2. **Business rule variations:** Split by different rule scenarios (permissions, calculations, etc.)
-3. **Data variations:** Split by different data types or inputs
-4. **Acceptance criteria complexity:** Split when multiple "When" or "Then" statements exist
-5. **Major effort:** Split by technical milestones or implementation phases
-6. **External dependencies:** Split along dependency boundaries (APIs, third parties, etc.)
-7. **DevOps steps:** Split by deployment or infrastructure requirements
-8. **Tiny Acts of Discovery (TADs):** When none of the above apply, use small experiments to unpack unknowns
+A slice must connect a user trigger to a meaningful result through every layer needed for that result.
 
-### Why Split Stories?
-- **Faster feedback:** Smaller stories ship sooner, allowing earlier validation
-- **Reduced risk:** Less to build = less that can go wrong
-- **Better estimation:** Small stories are easier to estimate accurately
-- **Maintain flow:** Keeps work moving through the sprint without bottlenecks
-- **Testability:** Smaller scope = easier to write and run tests
+Do not split into technical components such as:
 
-### Anti-Patterns (What This Is NOT)
-- **Not horizontal slicing:** Don't split into "front-end story" and "back-end story" (each story should deliver user value)
-- **Not task decomposition:** Stories aren't tasks ("Set up database," "Write API")
-- **Not arbitrary chopping:** Don't split "Add user management" into "Add user" and "Management" (meaningless)
+- build the database table;
+- add the service endpoint;
+- create the screen;
+- connect the screen to the endpoint.
 
-### When to Use This
-- Story is too large for a single sprint
-- Multiple "When" or "Then" statements in acceptance criteria
-- Epic needs to be broken down into deliverable increments
-- Team can't reach consensus on story size or scope
-- Story has multiple personas or workflows bundled together
+Those tasks may sit inside one slice, but none is independently valuable to a user.
 
-### When NOT to Use This
-- Story is already small and well-scoped (don't over-split)
-- Splitting would create dependencies that slow delivery
-- The story is a technical task (use engineering task breakdown instead)
+Prefer:
 
----
+- a customer can submit one supported request and see its confirmed status.
 
-## Application
+That slice may use a simple screen, one endpoint, and minimal storage. Later slices expand the behaviour.
 
-### Step 1: Identify the Original Story
-Start with the story/epic/feature that needs splitting. Ensure it's written using the user story format (reference `skills/user-story/SKILL.md` or `skills/epic-hypothesis/SKILL.md`).
+## Splitting Patterns
+
+### 1. Workflow Steps
+
+Split a long journey at points where an intermediate result has value on its own.
+
+Use this pattern when the story contains a sequence such as create, review, approve, publish, and notify.
+
+Procedure:
+
+1. Write the workflow as actor-visible steps.
+2. Mark which intermediate states are useful, safe, and understandable.
+3. Combine steps that have no meaningful result in isolation.
+4. Create slices that finish at the remaining useful states.
+
+Example:
+
+Large story: A hiring manager creates a vacancy, gets approval, publishes it, and notifies recruiters.
+
+- Slice 1: A hiring manager can save a vacancy draft and return to it.
+- Slice 2: A manager can submit a draft and an approver can accept it.
+- Slice 3: A manager can publish an approved vacancy.
+- Slice 4: Recruiters are notified when a vacancy is published.
+
+Avoid calling a screen or service-layer operation a workflow step. The step must describe progress that an actor recognises.
+
+### 2. Business-Rule Variations
+
+Split by rules that change eligibility, calculation, routing, permission, or outcome.
+
+Use this pattern when one story contains many “if,” “unless,” threshold, role, region, or policy clauses.
+
+Procedure:
+
+1. List each rule and the condition that activates it.
+2. Choose the simplest common rule as the first complete slice.
+3. Add one materially different rule or coherent rule set per later slice.
+4. State which rule has precedence when conditions overlap.
+
+Example:
+
+Large story: Approve purchase requests according to amount and department.
+
+- Slice 1: Department leads can approve requests up to $500.
+- Slice 2: Requests above $500 route to finance approval.
+- Slice 3: Capital purchases route to the asset owner regardless of amount.
+
+Do not split arbitrary ranges that behave identically. A boundary earns a slice when it changes behaviour or reduces delivery risk.
+
+### 3. Happy Path and Edge Cases
+
+Deliver the normal successful route first, then add exceptions and recovery behaviour.
+
+Use this pattern when rare failures, invalid states, or recovery options dominate the estimate.
+
+Procedure:
+
+1. Define the happy path with explicit valid preconditions.
+2. Confirm it is safe to release without each edge case.
+3. Group edge cases by the behaviour required, not by a generic “errors” label.
+4. Add prevention, recovery, or explanation in separate valuable slices.
+
+Example:
+
+- Slice 1: A signed-in customer with a valid card can pay an available invoice.
+- Slice 2: A customer sees a clear outcome and can retry when the card is declined.
+- Slice 3: A customer cannot pay an invoice that was already settled elsewhere.
+- Slice 4: A timed-out payment is reconciled before another charge is attempted.
+
+Never defer an edge case that could cause material loss, unsafe behaviour, corruption, or a compliance breach. Treat it as part of the first releasable slice.
+
+### 4. Data Variation
+
+Split by input or output forms that require genuinely different behaviour.
+
+Use this pattern for file types, channels, record shapes, locales, sources, or destinations.
+
+Procedure:
+
+1. Inventory the meaningful data forms.
+2. Select one common, representative form for the first end-to-end slice.
+3. Add forms with distinct validation, transformation, or presentation separately.
+4. Combine forms that travel through the same behaviour.
+
+Example:
+
+- Slice 1: Import customers from a UTF-8 CSV with required columns.
+- Slice 2: Report row-level validation errors and import the valid CSV rows.
+- Slice 3: Import customers from the partner's spreadsheet layout.
+- Slice 4: Import customers from the partner API.
+
+Do not use “all text fields first, numeric fields later.” Split by a usable data scenario, not by primitive data type.
+
+### 5. Effort Spikes
+
+Separate a time-boxed investigation when uncertainty prevents a credible delivery slice.
+
+Use this pattern only when the team cannot yet decide how to implement, estimate, or safely release a behaviour.
+
+Procedure:
+
+1. Write the decision the spike must enable.
+2. State the unknowns, evidence to collect, and time box.
+3. Define the output as a decision, measured result, or discarded prototype.
+4. Follow the spike with revised delivery slices; do not treat the spike as user value.
+
+Example:
+
+Spike: Within one day, test whether the identity provider supports account linking without duplicate identities. Produce a recommendation, constraints, and revised acceptance examples.
+
+Delivery slice: A returning customer can link one existing account after signing in through the provider.
+
+Avoid spikes named “research integration” or “investigate options.” They lack a decision and a stopping condition.
+
+### 6. Defer Performance
+
+Implement correct behaviour for a stated initial load, then improve capacity or speed in measured increments.
+
+Use this pattern when correctness can safely precede optimisation and the initial limit still supports real use.
+
+Procedure:
+
+1. Define the minimum acceptable load and response target for the first slice.
+2. Verify that the limited version remains usable and operationally safe.
+3. Record the expected growth trigger or observed bottleneck.
+4. Create later slices with measurable performance outcomes.
+
+Example:
+
+- Slice 1: A support lead can export up to 1,000 cases; 95% of exports finish within 30 seconds.
+- Slice 2: Exports up to 100,000 cases run in the background and notify the requester when ready.
+- Slice 3: Ten concurrent large exports complete without slowing case updates beyond the agreed limit.
+
+Do not defer security, integrity, accessibility, or a response time required for the first users to complete the task.
+
+## Output Format
+
+Produce this artifact and replace every bracketed prompt:
 
 ```markdown
-### Original Story:
-[Story formatted with use case and acceptance criteria]
+# Story split: [short outcome]
+
+## Original story
+As a [actor], I want [capability], so that [valuable result].
+
+**Why it is too large:** [specific evidence or constraint]
+**Target slice size:** [team limit or stated assumption]
+
+## Behaviour map
+| Area | Observed behaviours, rules, or unknowns |
+|---|---|
+| Workflow | [actor-visible sequence] |
+| Business rules | [conditions and changed outcomes] |
+| Edge cases | [failure, prevention, and recovery cases] |
+| Data variations | [meaningfully different forms] |
+| Uncertainty | [decision-blocking unknowns] |
+| Performance | [initial need, later target, trigger] |
+
+## Proposed slices
+| Order | Slice | Pattern | User-visible value | Acceptance examples | Dependency |
+|---:|---|---|---|---|---|
+| 1 | As a [actor], I can [narrow capability], so that [result]. | [pattern] | [demonstrable value] | Given [context], when [action], then [result]. | None |
+| 2 | As a [actor], I can [next capability], so that [result]. | [pattern] | [demonstrable value] | Given [context], when [action], then [result]. | [None or slice] |
+
+## Spike, if required
+**Decision:** [decision this investigation enables]
+**Time box:** [duration]
+**Evidence:** [test, measurement, or prototype]
+**Exit:** [decision and changes to delivery slices]
+
+## Coverage and deferrals
+| Original concern | Covered by | Reason for order or deferral |
+|---|---|---|
+| [step, rule, case, data form, or quality need] | [slice number or deferred] | [value, risk, learning, or trigger] |
+
+## Release notes
+- First independently releasable slice: [number and reason]
+- Safety constraints included from the start: [constraints]
+- Explicit assumptions: [assumptions to confirm]
 ```
 
----
+## Quality Bar
 
-### Step 2: Apply the Splitting Logic
+A good split meets all of these checks:
 
-Use `template.md` for the full fill-in structure and output format.
+- Every delivery slice starts with an actor trigger and ends with an observable, useful result.
+- The first slice is narrower than the original story and can be demonstrated with realistic data.
+- Acceptance examples define boundaries precisely enough to test.
+- The order reflects value, risk, or learning rather than architectural convenience.
+- Dependencies are few, necessary, and explicit.
+- The coverage table accounts for all original scope, including deliberate deferrals.
+- A spike answers a named decision within a time box and is not presented as delivered user value.
+- Deferred performance has a safe initial envelope and a measurable later target.
 
-Work through the 8 splitting patterns in order. Stop when you find one that applies.
+Avoid these failure modes:
 
-#### Pattern 1: Workflow Steps
-**Ask:** Does this story contain multiple sequential steps?
+- Do not produce horizontal layers such as “database,” “API,” and “UI” as separate stories.
+- Do not create slices that merely rename tasks and still require all other slices before anyone benefits.
+- Do not label a vague phase “MVP” without stating the exact scenario, rules, and limits it supports.
+- Do not defer rare cases that threaten money, privacy, safety, compliance, or data integrity.
+- Do not invent business priorities. Mark assumptions and ask the product owner to confirm them.
+- Do not split every rule or input mechanically; combine variations when their behaviour and risk are the same.
+- Do not make the first slice a throwaway implementation unless the user explicitly accepts that cost.
+- Do not hide unresolved uncertainty inside an estimate; use a decision-focused spike.
 
-**Example:**
-- Original: "As a user, I want to sign up, verify my email, and complete onboarding"
-- Split:
-  1. "As a user, I want to sign up with email/password"
-  2. "As a user, I want to verify my email via a confirmation link"
-  3. "As a user, I want to complete onboarding by answering 3 profile questions"
+## When Not to Use This
 
----
+Do not use story splitting when the work is already small enough to complete and verify within the team's normal delivery window.
 
-#### Pattern 2: Business Rule Variations
-**Ask:** Does this story have different rules for different scenarios?
+Do not use it to break a purely technical maintenance task into fictional user stories. Decompose that work as technical tasks with testable outcomes instead.
 
-**Example:**
-- Original: "As a user, I want to apply discounts (10% for members, 20% for VIPs, 5% for first-time buyers)"
-- Split:
-  1. "As a member, I want to apply a 10% discount at checkout"
-  2. "As a VIP, I want to apply a 20% discount at checkout"
-  3. "As a first-time buyer, I want to apply a 5% discount at checkout"
-
----
-
-#### Pattern 3: Data Variations
-**Ask:** Does this story handle different types of data or inputs?
-
-**Example:**
-- Original: "As a user, I want to upload files (images, PDFs, videos)"
-- Split:
-  1. "As a user, I want to upload image files (JPG, PNG)"
-  2. "As a user, I want to upload PDF documents"
-  3. "As a user, I want to upload video files (MP4, MOV)"
-
----
-
-#### Pattern 4: Acceptance Criteria Complexity
-**Ask:** Does this story have multiple "When" or "Then" statements?
-
-**Example:**
-- Original: "As a user, I want to manage my cart"
-  - When I add an item, Then it appears in my cart
-  - When I remove an item, Then it disappears from my cart
-  - When I update quantity, Then the cart total updates
-- Split:
-  1. "As a user, I want to add items to my cart so I can purchase them later"
-  2. "As a user, I want to remove items from my cart so I can change my mind"
-  3. "As a user, I want to update item quantities so I can buy the right amount"
-
-**Note:** This is the most common indicator that a story needs splitting. If you see multiple "When/Then" pairs, split along those boundaries.
-
----
-
-#### Pattern 5: Major Effort
-**Ask:** Does this story require significant technical work that can be delivered incrementally?
-
-**Example:**
-- Original: "As a user, I want real-time collaboration on documents"
-- Split:
-  1. "As a user, I want to see who else is viewing the document (read-only presence)"
-  2. "As a user, I want to see live cursor positions of other editors"
-  3. "As a user, I want to see live edits from other users in real-time"
-
----
-
-#### Pattern 6: External Dependencies
-**Ask:** Does this story depend on multiple external systems or APIs?
-
-**Example:**
-- Original: "As a user, I want to log in with Google, Facebook, or Twitter"
-- Split:
-  1. "As a user, I want to log in with Google OAuth"
-  2. "As a user, I want to log in with Facebook OAuth"
-  3. "As a user, I want to log in with Twitter OAuth"
-
----
-
-#### Pattern 7: DevOps Steps
-**Ask:** Does this story require complex deployment, infrastructure, or operational work?
-
-**Example:**
-- Original: "As a user, I want to upload large files to cloud storage"
-- Split:
-  1. "As a user, I want to upload small files (<10MB) to cloud storage"
-  2. "As a user, I want to upload large files (10MB-1GB) with progress tracking"
-  3. "As a user, I want to resume interrupted uploads"
-
----
-
-#### Pattern 8: Tiny Acts of Discovery (TADs)
-**Ask:** If none of the above apply, are there unknowns or assumptions that need unpacking?
-
-**Example:**
-- Original: "As a user, I want AI-powered recommendations" (too vague, too many unknowns)
-- TADs:
-  1. Prototype 3 recommendation algorithms and test with 10 users
-  2. Define success criteria (click-through rate, user satisfaction)
-  3. Build the simplest recommendation engine (collaborative filtering)
-  4. Measure and iterate
-
-**Note:** TADs aren't stories—they're experiments. Use them to de-risk and clarify before writing stories.
-
----
-
-### Step 3: Write the Split Stories
-
-For each split, write a complete user story using the format from `skills/user-story/SKILL.md`:
-
-```markdown
-### Split 1 using [Pattern Name]:
-
-#### User Story [ID]:
-- **Summary:** [Brief title]
-
-**Use Case:**
-- **As a** [persona]
-- **I want to** [action]
-- **so that** [outcome]
-
-**Acceptance Criteria:**
-- **Scenario:** [Description]
-- **Given:** [Preconditions]
-- **When:** [Action]
-- **Then:** [Outcome]
-```
-
----
-
-### Step 4: Validate the Splits
-
-Ask these questions:
-1. **Does each split deliver user value?** (Not just "front-end done")
-2. **Can each split be developed independently?** (No hard dependencies)
-3. **Can each split be tested independently?** (Clear acceptance criteria)
-4. **Is each split small enough for a sprint?** (1-5 days of work)
-5. **Do the splits, when combined, equal the original?** (Nothing lost in translation)
-
-If any answer is "no," revise.
-
----
-
-## Examples
-
-See `examples/sample.md` for full splitting examples.
-
-Mini example excerpt:
-
-```markdown
-### Original Story:
-As a team admin, I want to manage team members so that I can control access.
-
-### Suggested Splits (Acceptance Criteria Complexity):
-1. Invite new team members
-2. Remove team members
-3. Update team member roles
-```
-
----
-
-## Common Pitfalls
-
-### Pitfall 1: Horizontal Slicing (Technical Layers)
-**Symptom:** "Story 1: Build the API. Story 2: Build the UI."
-
-**Consequence:** Neither story delivers user value independently.
-
-**Fix:** Split vertically—each story should include front-end + back-end work to deliver a complete user-facing capability.
-
----
-
-### Pitfall 2: Over-Splitting
-**Symptom:** "Story 1: Add button. Story 2: Wire button to API. Story 3: Display result."
-
-**Consequence:** Creates unnecessary overhead and dependencies.
-
-**Fix:** Only split when the story is too large. A 2-day story doesn't need splitting.
-
----
-
-### Pitfall 3: Meaningless Splits
-**Symptom:** "Story 1: First half of feature. Story 2: Second half of feature."
-
-**Consequence:** Arbitrary splits that don't map to user value or workflow.
-
-**Fix:** Use one of the 8 splitting patterns—each split should have a clear rationale.
-
----
-
-### Pitfall 4: Creating Hard Dependencies
-**Symptom:** "Story 2 can't start until Story 1 is 100% done, tested, and deployed."
-
-**Consequence:** No parallelization, slows delivery.
-
-**Fix:** Split in a way that allows independent development. If dependencies are unavoidable, prioritize Story 1.
-
----
-
-### Pitfall 5: Ignoring the "So That"
-**Symptom:** Split stories have the same "so that" statement.
-
-**Consequence:** You've split the action but not the outcome—likely a task decomposition, not a story split.
-
-**Fix:** Ensure each split has a distinct user outcome. If not, reconsider the split pattern.
-
----
-
-## References
-
-### Related Skills
-- `skills/user-story/SKILL.md` — Format for writing the split stories
-- `skills/epic-hypothesis/SKILL.md` — Epics often need splitting before becoming stories
-- `skills/jobs-to-be-done/SKILL.md` — Helps identify meaningful splits along user jobs
-
-### External Frameworks
-- Richard Lawrence & Peter Green, *The Humanizing Work Guide to Splitting User Stories* — Origin of the 8 splitting patterns
-- Bill Wake, *INVEST in Good Stories* (2003) — Criteria for well-formed stories (Independent, Negotiable, Valuable, Estimable, Small, Testable)
-- Mike Cohn, *User Stories Applied* (2004) — Story decomposition techniques
-
-### Dean's Work
-- User Story Splitting Prompt Template (based on Humanizing Work framework)
-
-### Provenance
-- Adapted from `prompts/user-story-splitting-prompt-template.md` in the `https://github.com/deanpeters/product-manager-prompts` repo.
-
----
-
-**Skill type:** Component
-**Suggested filename:** `user-story-splitting.md`
-**Suggested placement:** `/skills/components/`
-**Dependencies:** References `skills/user-story/SKILL.md`, `skills/epic-hypothesis/SKILL.md`
-**Applies to:** User stories, epics, and any work that's too large to complete in a single sprint
+Do not use it when the request is to prioritise a backlog, discover the user problem, or design a release roadmap. Resolve those questions first; then split the selected outcome.

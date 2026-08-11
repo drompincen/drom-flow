@@ -106,6 +106,10 @@ drom-flow — measures what repository intelligence is FOR: discovery cost.
 
 drom-flow — release gates for repository intelligence.
 
+### `skill-originality.sh`
+
+drom-flow — verify that the shipped skills are original work.
+
 ### `test-resume.sh`
 
 drom-flow — gate 7: survive Claude token exhaustion.

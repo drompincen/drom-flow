@@ -1,0 +1,8 @@
+# Published skill collections to compare drom-flow's own skills against.
+# Add a repo here whenever drom-flow ships a skill on a topic another collection also covers —
+# the originality check is only as good as this list.
+addyosmani/web-quality-skills
+deanpeters/product-manager-skills
+wondelai/skills
+refoundai/lenny-skills
+owl-listener/designer-skills

@@ -12,7 +12,14 @@ now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
 R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$R/reports/repo-intel.json"; mkdir -p "$R/reports"
 WORK="$R/.ri-test"; mkdir -p "$WORK"
-RUN="$R/template/.claude/df/repo-intel/run"
+# The launcher ships as text and is materialised by init. Use the installed copy; materialise
+# it here if this is a fresh checkout that has not been installed yet.
+RUN="$R/.claude/df/repo-intel/run"
+if [ ! -x "$RUN" ]; then
+  mkdir -p "$(dirname "$RUN")"
+  cp "$R/template/.claude/df/repo-intel/run.txt" "$RUN" 2>/dev/null && chmod +x "$RUN"
+  for _j in "$R"/template/.claude/df/repo-intel/*.java; do cp -n "$_j" "$(dirname "$RUN")/" 2>/dev/null; done
+fi
 FIX="$R/tests/repo-intel/fixtures"
 ONLY="${2:-}"
 G=(); FAIL=0
@@ -33,6 +40,14 @@ mkfix() { # name dest
 build() { CLAUDE_PROJECT_DIR="$1" bash "$RUN" ensure >/dev/null 2>&1; }
 query() { local d="$1"; shift; CLAUDE_PROJECT_DIR="$d" bash "$RUN" "$@" 2>/dev/null; }
 statedir() { echo "$1/.claude/.state/repo-intel"; }
+# Hooks ship as text and are materialised by init. Take the materialised copy when it exists,
+# otherwise strip .txt from the source -- so the gates work in a fresh checkout too.
+copy_hook() { # name dest-dir
+  local n="$1" d="$2"
+  if [ -f "$R/.claude/hooks/$n" ]; then cp "$R/.claude/hooks/$n" "$d/$n"
+  else cp "$R/template/.claude/hooks/$n.txt" "$d/$n"; fi
+  chmod +x "$d/$n" 2>/dev/null
+}
 jget() { python3 -c "import json,sys;d=json.load(open(sys.argv[1]));print(d.get(sys.argv[2],''))" "$1" "$2" 2>/dev/null; }
 jq_field() { python3 -c "import json,sys;print(json.loads(sys.stdin.read()).get('graph',{}).get(sys.argv[1],''))" "$1" 2>/dev/null; }
 node_ids() { python3 -c "import json,sys;g=json.load(open(sys.argv[1]));print('\n'.join(sorted(n['id'] for n in g['nodes'])))" "$1" 2>/dev/null; }
@@ -212,7 +227,8 @@ fi
 # ------------------------------------------- G6 edit hook: fast, and no JVM on the hot path
 if ! skip_gate edit_hook; then
   H="$WORK/hook"; rm -rf "$H"; mkdir -p "$H/.claude/hooks" "$H/shim"
-  cp "$R/template/.claude/hooks/repo-intel-mark.sh" "$R/template/.claude/hooks/repo-intel-path.sh" "$H/.claude/hooks/"
+  copy_hook repo-intel-mark.sh "$H/.claude/hooks"
+  copy_hook repo-intel-path.sh "$H/.claude/hooks"
   mkdir -p "$H/.claude/.state/repo-intel"
   for b in java javac jbang; do
     printf '#!/bin/sh\ntouch "%s/jvm-was-launched"\nexit 0\n' "$H" > "$H/shim/$b"; chmod +x "$H/shim/$b"
@@ -355,7 +371,7 @@ if ! skip_gate state_location; then
   b=$([ -d "$WORK/loc/.claude/.state/repo-intel" ] && echo yes || echo no)
   mkdir -p "$WORK/loc/.claude/.state"
   printf 'REPO_INTEL_STATE=%s\n' "$WORK/loc-conf" >> "$WORK/loc/.claude/.state/drom-flow.conf"
-  mkdir -p "$WORK/loc/.claude/hooks"; cp "$R/template/.claude/hooks/repo-intel-path.sh" "$WORK/loc/.claude/hooks/"
+  mkdir -p "$WORK/loc/.claude/hooks"; copy_hook repo-intel-path.sh "$WORK/loc/.claude/hooks"
   CLAUDE_PROJECT_DIR="$WORK/loc" bash "$RUN" ensure >/dev/null 2>&1
   c=$([ -f "$WORK/loc-conf/graph.json" ] && echo yes || echo no)
   if [ "$a" = yes ] && [ "$b" = no ] && [ "$c" = yes ]; then

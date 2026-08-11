@@ -24,7 +24,14 @@ R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="${1:?usage: repo-intel-bench.sh <repo-dir> <task-key>}"
 KEY="${2:?usage: repo-intel-bench.sh <repo-dir> <task-key>}"
 OUT="$R/reports/repo-intel-bench.json"; mkdir -p "$R/reports"
-RUN="$R/template/.claude/df/repo-intel/run"
+# The launcher ships as text and is materialised by init. Use the installed copy; materialise
+# it here if this is a fresh checkout that has not been installed yet.
+RUN="$R/.claude/df/repo-intel/run"
+if [ ! -x "$RUN" ]; then
+  mkdir -p "$(dirname "$RUN")"
+  cp "$R/template/.claude/df/repo-intel/run.txt" "$RUN" 2>/dev/null && chmod +x "$RUN"
+  for _j in "$R"/template/.claude/df/repo-intel/*.java; do cp -n "$_j" "$(dirname "$RUN")/" 2>/dev/null; done
+fi
 TASKS="$R/tests/repo-intel/bench-tasks.json"
 REPO="$(cd "$REPO" && pwd)"
 

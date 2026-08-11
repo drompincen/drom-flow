@@ -18,6 +18,10 @@
 setup-backup/
 reports/grok-*.json
 reports/grok-*.md
+# per-run fleet reports are transient; the gate summaries (codex-fleet.json, codex-doctor.json)
+# stay tracked because they are the evidence behind the numbers in the docs
+reports/codex-fleet-*.json
+reports/codex-fleet-*.md
 .ri-test/
 .claude/docs/
 .ri-build/

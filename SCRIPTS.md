@@ -3728,3 +3728,26 @@ Optional by contract: with no codex installed (or `CODEX_DISABLE=1`), `doctor` e
 
 Gates for the codex runner; writes `reports/codex-fleet.json`. Maintainer tool, not shipped to
 host projects.
+
+## scripts/ddb-introspect.sh
+
+Reads an **existing** DynamoDB estate into the `dynamodb_data_model.json` that the AWS
+`amazon-dynamodb` skill consumes. That skill designs, reviews and refactors from a model you
+supply and has no live introspection of its own; this fills that gap, so "review my existing
+design" works against reality instead of a hand-written guess.
+
+**Read-only by construction** — describe/list/get-metric-statistics only. There is no mutating
+call anywhere in it and no flag that enables one.
+
+- item sizes come from `DescribeTable` (`TableSizeBytes / ItemCount`) — free and accurate enough
+  for costing, so no Scan is needed for the numbers that drive the bill
+- key attribute **types** come from `AttributeDefinitions`, because a numeric key left as `S`
+  is accepted at seed time and rejected on real writes
+- operation mix and rates come from CloudWatch `SuccessfulRequestLatency` SampleCount, which is a
+  real request count per operation — consumed-capacity metrics cannot tell a Query from a Scan
+- `--sample N` adds a bounded Scan for the attribute inventory. It consumes read capacity, so it
+  is opt-in, capped, and never implicit
+- also emits `dynamodb_observed.json`: billing mode, provisioned capacity, throttled requests,
+  GSI/LSI inventory, Streams, Global Table replicas, TTL and PITR status, with flags
+
+Feeds straight into the skill: `calculate_costs.py --model dynamodb_data_model.json`.

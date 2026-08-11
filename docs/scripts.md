@@ -26,6 +26,10 @@ Subcommands: `clean`, `collect`, `doctor`, `resume`, `spawn`, `status`, `stop`
 
 drom-flow — gates for the codex sub-agent runner.
 
+### `ddb-introspect.sh`
+
+drom-flow — read an EXISTING DynamoDB estate into the model the amazon-dynamodb skill consumes.
+
 ### `df-research-audit.sh`
 
 drom-flow — df-research quality audit (gate 3).

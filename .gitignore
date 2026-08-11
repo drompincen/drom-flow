@@ -25,3 +25,4 @@ reports/grok-*.md
 __pycache__/
 *.pyc
 .claude/df/
+.claude/.fleet/

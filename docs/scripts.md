@@ -16,6 +16,16 @@ drom-flow — encapsulated audit fan-out.
 
 drom-flow — parity check for the delegated audit benchmark.
 
+### `codex-fleet.sh`
+
+drom-flow — codex sub-agent fleet: filesystem-controlled fan-out to the codex CLI.
+
+Subcommands: `clean`, `collect`, `doctor`, `resume`, `spawn`, `status`, `stop`
+
+### `codex-verify.sh`
+
+drom-flow — gates for the codex sub-agent runner.
+
 ### `df-research-audit.sh`
 
 drom-flow — df-research quality audit (gate 3).

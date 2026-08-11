@@ -35,6 +35,10 @@ repo_intel_state_dir() {
   case "$configured" in
     /*|//*|\\\\*) printf '%s\n' "$configured" ;;
     [A-Za-z]:[/\\]*) printf '%s\n' "$configured" ;;
+    # A relative value is joined to the project and is NOT constrained to stay inside it:
+    # `../shared/repo-intel` is a legitimate way to share one graph directory between sibling
+    # checkouts. That is the same capability an absolute path already grants, and this value
+    # comes from the project's own config, never from indexed content.
     *)  printf '%s\n' "$root/$configured" ;;
   esac
 }

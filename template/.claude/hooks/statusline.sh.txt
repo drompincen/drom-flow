@@ -79,15 +79,19 @@ git_info="$branch +${staged}/-${unstaged}/?${untracked}"
 edits=0
 [ -f "$DIR/.claude/edit-log.jsonl" ] && edits=$(wc -l < "$DIR/.claude/edit-log.jsonl" | tr -d ' ')
 
-# --- Background agents: Claude and grok counted separately ---
-# Claude agents come from the track-agents hook; grok agents are counted live from
-# the fleet control plane, so the delegation split is visible while work is in flight.
+# --- Background agents: Claude, grok and codex counted separately ---
+# Claude agents come from the track-agents hook; the sub-agent runners are counted live from
+# their fleet control planes, so the delegation split is visible while work is in flight.
+# A runner that is not installed simply has no control plane and contributes nothing — no
+# probing of binaries here, and nothing shown for a runner that is not in use.
 agents=0
 [ -f "$STATE_DIR/agent-count" ] && agents=$(cat "$STATE_DIR/agent-count" | tr -d '[:space:]')
-grok_agents=0
-if [ -d "$DIR/.claude/.grok-fleet" ]; then
-  grok_agents=$(grep -l '"state":"RUNNING"' "$DIR"/.claude/.grok-fleet/*/agents/*/status.json 2>/dev/null | wc -l | tr -d ' ')
-fi
+running_in() {
+  [ -d "$1" ] || { echo 0; return; }
+  grep -l '"state":"RUNNING"' "$1"/*/agents/*/status.json 2>/dev/null | wc -l | tr -d ' '
+}
+grok_agents=$(running_in "$DIR/.claude/.grok-fleet")
+gpt_agents=$(running_in "$DIR/.claude/.fleet")
 
 # --- Usage-limit watcher ---
 limit_flag=""
@@ -112,7 +116,12 @@ if javaducker_available; then
   fi
 fi
 
-status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • C:$agents G:$grok_agents • mem:$mem"
+# G = grok, X = codex/GPT. Both are shown only when a run exists, so a project using neither
+# sees the same statusline it always had.
+runners="C:$agents"
+[ "${grok_agents:-0}" -gt 0 ] && runners="$runners G:$grok_agents"
+[ "${gpt_agents:-0}" -gt 0 ] && runners="$runners X:$gpt_agents"
+status="drom-flow v$DROMFLOW_VERSION • $PROJECT_ROOT • $git_info • ${elapsed:-0m0s} • edits:$edits • $runners • mem:$mem"
 [ -n "$jd_icon" ] && status="$status • $jd_icon"
 [ -n "$limit_flag" ] && status="$status$limit_flag"
 [ -n "$plan_info" ] && status="$status • $plan_info"

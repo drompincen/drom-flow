@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "generated": "2026-08-10T22:41:44",
+  "passed": 7,
+  "skipped": 0,
+  "total": 7,
+  "gates": [
+    {
+      "id": "doctor_absent",
+      "status": "PASS",
+      "detail": "no codex installed: exit 0, available=false \u2014 absence is a state, not an error"
+    },
+    {
+      "id": "spawn_refuses",
+      "status": "PASS",
+      "detail": "absent and CODEX_DISABLE=1 both refuse with structured JSON and exit 3"
+    },
+    {
+      "id": "silent_when_absent",
+      "status": "PASS",
+      "detail": "session start, memory sync and an edit produce no runner output at all"
+    },
+    {
+      "id": "text_at_rest",
+      "status": "PASS",
+      "detail": "ships as .sh.txt, install materialises an executable .sh, no .txt in the host"
+    },
+    {
+      "id": "live_fanout",
+      "status": "PASS",
+      "detail": "2 agents completed in 6s; collect --brief returned both verdicts"
+    },
+    {
+      "id": "sandbox",
+      "status": "PASS",
+      "detail": "a read-only agent could not write outside its directory (agent state DONE, run survived)"
+    },
+    {
+      "id": "write_repo_serialises",
+      "status": "PASS",
+      "detail": "--write-repo forces max_parallel 1 and a disabled runner refuses before launching"
+    }
+  ]
+}

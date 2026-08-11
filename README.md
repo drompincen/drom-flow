@@ -30,7 +30,7 @@ Out of the box, Claude Code is powerful but unstructured. Every session starts f
 | **Agent specialization** | Generic agents | 30 skill profiles (`/planner`, `/reviewer`, `/debugger`, `/grok-fleet`, etc.) with domain-specific instructions |
 | **Observability** | No visibility into what's happening | Statusline showing git state, session time, edit count, Claude/grok agent counts, memory status, and plan progress |
 | **Resumability** | Start over every session | Session-start hook detects in-progress plans and surfaces them with current chapter |
-| **Extra parallelism** | Limited to Claude's own sub-agents | Fan out to **grok CLI sub-agents** — 8 concurrent verified in 13s — with progress, stop control, and stall detection |
+| **Extra parallelism** | Limited to Claude's own sub-agents | Fan out to **grok or codex CLI sub-agents** — 8 concurrent verified in 13s — with progress, stop control, and stall detection. Both runners are optional and silent when absent |
 | **Token cost** | Every file read and draft burns Claude tokens | Delegate to grok: measured **−64% turns, −65% Claude output, −97% context bytes**, quality held |
 | **Repository discovery** | Every session re-greps and re-reads the same files to work out what connects to what | Deterministic structural map maintained automatically; measured **−86% to −92% exploratory tool calls** and **−89% to −98% source bytes** before the right files are found |
 | **Hitting the usage limit** | Session dies mid-task, work is stranded | Checkpoint, hand off to detached grok agents that keep running, arm an hourly ping, resume from a ~230-byte record |

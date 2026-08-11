@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generated": "2026-08-10T18:42:22",
+  "generated": "2026-08-10T22:33:01",
   "passed": 12,
   "total": 12,
   "gates": [
@@ -55,9 +55,9 @@
     {
       "id": "edit_hook",
       "status": "PASS",
-      "detail": "10 marks in 20.9ms average, no JVM process started",
+      "detail": "10 marks in 19.5ms average, no JVM process started",
       "metrics": {
-        "avg_ms": 20.9,
+        "avg_ms": 19.5,
         "marks": 10,
         "jvm_launched": "no"
       }
@@ -82,9 +82,9 @@
     {
       "id": "lifecycle",
       "status": "PASS",
-      "detail": "fresh install wires everything, automatic intake built 1019 nodes with no user command, schema downgrade self-rebuilt, uninstall left host source intact",
+      "detail": "fresh install wires everything, automatic intake built 1051 nodes with no user command, schema downgrade self-rebuilt, uninstall left host source intact",
       "metrics": {
-        "auto_intake_nodes": 1019,
+        "auto_intake_nodes": 1051,
         "upgrade_action": "full_intake"
       }
     },

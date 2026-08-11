@@ -60,7 +60,11 @@ if [ -d "$PLANS_DIR" ]; then
 fi
 
 # --- JavaDucker: auto-start and health check ---
+# Sourcing with 2>/dev/null hides a missing file but NOT the "command not found" that follows,
+# so a host without the guard script printed an error on every session start. An optional
+# companion that is absent must be silent, so define the guard as "no" when it is missing.
 . "$DIR/.claude/hooks/javaducker-check.sh" 2>/dev/null
+command -v javaducker_available >/dev/null 2>&1 || javaducker_available() { return 1; }
 if javaducker_available; then
   if javaducker_healthy; then
     if javaducker_is_shared; then

@@ -1,0 +1,2 @@
+{"ok":true,"available":true,"binary":"/home/drom/.local/bin/codex","version":"codex-cli 0.147.0",
+ "fleet_root":"/mnt/c/Users/drom/IdeaProjects/drom-flow/.claude/.fleet","checks":[{"name":"binary","ok":true,"detail":"/home/drom/.local/bin/codex"},{"name":"version","ok":true,"detail":"codex-cli 0.147.0"},{"name":"auth","ok":true,"detail":"auth.json present"}],"live_test":{"ran":false,"ok":false,"latency_ms":0}}

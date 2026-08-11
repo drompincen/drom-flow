@@ -97,3 +97,30 @@ per-agent cost is recorded in `status.json` and totalled by `status` and `collec
 control — and writes `reports/grok-verify.json`. The `combined` gate requires **you** (Claude) to read
 the grok outputs and write `reports/grok-claude-merge.md` citing each agent's marker; that is
 deliberate, since it proves both engines actually cooperated.
+
+## The codex backend
+
+`scripts/codex-fleet.sh` is the same fleet with a different runner, and takes the same
+subcommands: `doctor | spawn | status | stop | collect | resume | clean`. The on-disk protocol is
+identical, so `collect --run-id R --brief` reads the same either way.
+
+```bash
+bash scripts/codex-fleet.sh spawn --manifest <manifest.json>
+bash scripts/codex-fleet.sh collect --run-id R --brief
+```
+
+Pick by what the machine has and what the work needs:
+
+- **codex** — native binary, no Windows path translation, real activity events in `status`, and
+  the sandbox is *enforced*: an agent can read the repository and cannot write outside its own
+  directory. Accounting is in tokens.
+- **grok** — Windows process driven from WSL, so the control plane must stay on `/mnt/<drive>`.
+  Accounting is in USD, and there is a budget cap.
+
+**Both are optional.** If a runner is not installed, or is turned off with `CODEX_DISABLE=1` /
+`GROK_DISABLE=1`, `doctor` exits 0 reporting `available: false` and `spawn` refuses with
+structured JSON and exit 3. Say nothing about it and do the work yourself.
+
+Repository writes: codex agents write only inside their own directory by default. An agent that
+must edit the repository needs `--write-repo`, which forces parallelism to 1 — never fan out
+repository-writing agents.

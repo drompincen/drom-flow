@@ -3709,3 +3709,22 @@ Release gates for repository intelligence; writes `reports/repo-intel.json`.
 
 Discovery-cost benchmark: grep-then-read baseline versus one bounded graph query. Writes
 `reports/repo-intel-bench.json`.
+
+## scripts/codex-fleet.sh
+
+Codex sub-agent fleet: `doctor | spawn | status | stop | collect | resume | clean`, same on-disk
+protocol as the grok fleet so `collect --brief` reads identically whichever runner produced the
+work. Codex is a native binary, so there is no Windows path translation; `--json` gives real
+activity events and `-o` writes the final message straight to a file.
+
+Sandbox policy: agents run `workspace-write` scoped to their own directory — they can read the
+repository and write nothing outside their own output. Repository writes need an explicit
+`--write-repo`, which forces parallelism to 1.
+
+Optional by contract: with no codex installed (or `CODEX_DISABLE=1`), `doctor` exits 0 reporting
+`available: false` and `spawn` refuses with structured JSON and exit 3. Nothing else says a word.
+
+## scripts/codex-verify.sh
+
+Gates for the codex runner; writes `reports/codex-fleet.json`. Maintainer tool, not shipped to
+host projects.

@@ -214,3 +214,25 @@ Claude's share of that: dispatch it, read the audit verdict.
 
 See the host runbook (`.claude/docs/runbook.md`, installed into every project) for the
 copy-pasteable version.
+
+## Two runners, one control plane
+
+drom-flow can fan work out to **grok** or **codex**, whichever a machine actually has. Both are
+optional and both are silent when missing: a project with neither installed behaves exactly as it
+would if the feature did not exist — no warnings, no failed hooks, nothing in the statusline.
+
+|  | grok | codex |
+|---|---|---|
+| binary | `grok.exe`, a Windows process driven from WSL | native, runs anywhere |
+| paths | every path via `wslpath -w`; control plane must be Windows-visible | no translation |
+| progress | agent-written `PROGRESS.md` (the stream carries no tool events) | real `item.completed` events |
+| verdict | distilled from the terminal stream event | `-o` writes the final message to a file |
+| accounting | USD | tokens |
+| sandbox | prompt discipline | enforced: reads allowed, writes confined to the agent's directory |
+
+Codex agents run `workspace-write` scoped to their own directory, so they can read the repository
+and cannot write outside their own output. Writing into the repository itself takes an explicit
+`--write-repo`, and that forces parallelism to 1 — parallel agents sharing one working tree
+corrupt each other, and fan-out is the whole point.
+
+Turn either off with `CODEX_DISABLE=1` / `GROK_DISABLE=1` even when installed.

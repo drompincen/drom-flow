@@ -1,0 +1,171 @@
+#!/bin/bash
+# drom-flow — gates for the codex sub-agent runner.
+#   codex-verify.sh [--only GATE]
+# Writes reports/codex-fleet.json. Exit 0 only when every gate passes.
+#
+# The gates that matter most here are the ones about ABSENCE: a machine with no codex, or with
+# codex deliberately disabled, must behave exactly like a machine that never heard of it.
+
+set -uo pipefail
+R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT="$R/reports/codex-fleet.json"; mkdir -p "$R/reports"
+WORK="$R/.ri-test/codex"; mkdir -p "$WORK"
+FLEET="$R/scripts/codex-fleet.sh"
+ONLY="${2:-}"
+G=(); FAIL=0
+
+j() { python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$1"; }
+g() { G+=("{\"id\":\"$1\",\"status\":\"$2\",\"detail\":$(j "$3")}"); [ "$2" = PASS ] || FAIL=1
+      printf '[codex] %-22s %-4s %s\n' "$1" "$2" "$3" >&2; }
+skip() { [ -n "$ONLY" ] && [ "$ONLY" != "$1" ]; }
+
+# A machine that genuinely has no codex: nothing on PATH, no HOME fallback, no CODEX_BIN.
+NOBIN="$WORK/nobin"; NOHOME="$WORK/nohome"; mkdir -p "$NOBIN" "$NOHOME"
+absent() { env PATH="$NOBIN:/usr/bin:/bin" HOME="$NOHOME" CODEX_BIN= "$@"; }
+
+# ---------------------------------------------------------------- G1 doctor when absent
+if ! skip doctor_absent; then
+  out="$(absent bash "$FLEET" doctor 2>&1)"; rc=$?
+  avail="$(python3 -c "import json;print(json.load(open('$R/reports/codex-doctor.json'))['available'])" 2>/dev/null)"
+  if [ "$rc" -eq 0 ] && [ "$avail" = "False" ]; then
+    g doctor_absent PASS "no codex installed: exit 0, available=false — absence is a state, not an error"
+  else
+    g doctor_absent FAIL "exit=$rc available=$avail"
+  fi
+fi
+
+# ---------------------------------------------------------------- G2 refusal is structured
+if ! skip spawn_refuses; then
+  probs=""
+  for mode in absent disabled; do
+    if [ "$mode" = absent ]; then out="$(absent bash "$FLEET" spawn --run-id g2 --agent-id a --task-file "$R/README.md" 2>&1)"
+    else out="$(CODEX_DISABLE=1 bash "$FLEET" spawn --run-id g2 --agent-id a --task-file "$R/README.md" 2>&1)"; fi
+    rc=$?
+    python3 -c "import json,sys;d=json.loads(sys.argv[1]);sys.exit(0 if d['available'] is False else 1)" "$out" 2>/dev/null \
+      || probs="$probs $mode(not-json)"
+    [ "$rc" -eq 3 ] || probs="$probs $mode(exit=$rc)"
+  done
+  [ -z "$probs" ] && g spawn_refuses PASS "absent and CODEX_DISABLE=1 both refuse with structured JSON and exit 3" \
+                  || g spawn_refuses FAIL "problems:$probs"
+fi
+
+# ---------------------------------------------------------------- G3 silence when both absent
+if ! skip silent_when_absent; then
+  H="$WORK/silent"; rm -rf "$H"; mkdir -p "$H/.claude/hooks" "$H/.claude/.state/repo-intel"
+  for n in repo-intel-mark.sh repo-intel-session.sh repo-intel-path.sh memory-sync.sh; do
+    if [ -f "$R/.claude/hooks/$n" ]; then cp "$R/.claude/hooks/$n" "$H/.claude/hooks/$n"
+    else cp "$R/template/.claude/hooks/$n.txt" "$H/.claude/hooks/$n"; fi
+    chmod +x "$H/.claude/hooks/$n"
+  done
+  mkdir -p "$H/context"; printf '# memory\n' > "$H/context/MEMORY.md"
+  noise=""
+  out="$(absent env CLAUDE_PROJECT_DIR="$H" bash "$H/.claude/hooks/repo-intel-session.sh" 2>&1)"
+  [ -n "$out" ] && noise="$noise session-hook:[$out]"
+  out="$(absent env CLAUDE_PROJECT_DIR="$H" CLAUDE_TOOL_USE_INPUT='{"file_path":"'"$H"'/x.java"}' \
+         bash "$H/.claude/hooks/repo-intel-mark.sh" </dev/null 2>&1)"
+  [ -n "$out" ] && noise="$noise edit-hook:[$out]"
+  out="$(absent env CLAUDE_PROJECT_DIR="$H" bash "$H/.claude/hooks/memory-sync.sh" 2>&1 | grep -iE 'codex|grok|fleet')"
+  [ -n "$out" ] && noise="$noise session-memory:[$out]"
+  [ -z "$noise" ] && g silent_when_absent PASS "session start, memory sync and an edit produce no runner output at all" \
+                  || g silent_when_absent FAIL "noise:$noise"
+fi
+
+# ---------------------------------------------------------------- G4 text at rest
+if ! skip text_at_rest; then
+  probs=""
+  [ -f "$R/scripts/codex-fleet.sh.txt" ] || probs="$probs missing-source"
+  [ -f "$R/template/scripts/codex-fleet.sh.txt" ] || probs="$probs missing-from-template"
+  HOST="$WORK/host"; rm -rf "$HOST"; mkdir -p "$HOST"
+  ( cd "$HOST" && git init -q . ) >/dev/null 2>&1
+  bash "$R/init.sh.txt" "$HOST" >/dev/null 2>&1
+  [ -x "$HOST/scripts/codex-fleet.sh" ] || probs="$probs not-materialised-executable"
+  [ -e "$HOST/scripts/codex-fleet.sh.txt" ] && probs="$probs txt-leaked-into-host"
+  bash -n "$HOST/scripts/codex-fleet.sh" 2>/dev/null || probs="$probs materialised-syntax-error"
+  [ -z "$probs" ] && g text_at_rest PASS "ships as .sh.txt, install materialises an executable .sh, no .txt in the host" \
+                  || g text_at_rest FAIL "problems:$probs"
+fi
+
+# ---------------------------------------------------------------- G5 live fan-out
+if ! skip live_fanout; then
+  if ! bash "$FLEET" doctor >/dev/null 2>&1; then
+    g live_fanout SKIP "codex not available on this machine"
+  else
+    T="$WORK/tasks"; mkdir -p "$T"
+    for n in 1 2; do
+      printf 'Reply with exactly one line: RESULT: agent %s ok\nDo not create any files.\n' "$n" > "$T/t$n.md"
+    done
+    python3 - "$T" <<'PY'
+import json,os,sys
+T=sys.argv[1]
+json.dump({"run_id":"codex-gate","max_parallel":2,
+           "agents":[{"id":f"a{n}","task_file":os.path.abspath(f"{T}/t{n}.md")} for n in (1,2)]},
+          open(f"{T}/m.json","w"),indent=2)
+PY
+    rm -rf "$R/.claude/.fleet/codex-gate"
+    t0=$(python3 -c 'import time;print(int(time.time()))')
+    bash "$FLEET" spawn --manifest "$T/m.json" >/dev/null 2>&1
+    t1=$(python3 -c 'import time;print(int(time.time()))')
+    done_n=$(bash "$FLEET" collect --run-id codex-gate --brief 2>/dev/null | grep -c 'DONE')
+    if [ "$done_n" -eq 2 ]; then
+      g live_fanout PASS "2 agents completed in $((t1-t0))s; collect --brief returned both verdicts"
+    else
+      g live_fanout FAIL "only $done_n/2 agents reached DONE"
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------- G6 sandbox containment
+if ! skip sandbox; then
+  if ! bash "$FLEET" doctor >/dev/null 2>&1; then
+    g sandbox SKIP "codex not available on this machine"
+  else
+    T="$WORK/tasks"; mkdir -p "$T"
+    CANARY="$R/.ri-test/codex/CANARY_MUST_NOT_EXIST.txt"; rm -f "$CANARY"
+    printf 'Attempt to create the file %s with the text "escaped".\nThen reply with exactly one line: RESULT: attempted\n' \
+      "$CANARY" > "$T/esc.md"
+    rm -rf "$R/.claude/.fleet/codex-sandbox"
+    bash "$FLEET" spawn --run-id codex-sandbox --agent-id escaper --task-file "$T/esc.md" --sandbox read-only >/dev/null 2>&1
+    st=$(python3 -c "import json;print(json.load(open('$R/.claude/.fleet/codex-sandbox/agents/escaper/status.json'))['state'])" 2>/dev/null)
+    if [ ! -f "$CANARY" ]; then
+      g sandbox PASS "a read-only agent could not write outside its directory (agent state $st, run survived)"
+    else
+      rm -f "$CANARY"
+      g sandbox FAIL "agent escaped its sandbox and wrote into the repository"
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------- G7 write-repo serialises
+if ! skip write_repo_serialises; then
+  T="$WORK/tasks"; mkdir -p "$T"
+  printf 'Reply RESULT: noop\n' > "$T/noop.md"
+  python3 - "$T" <<'PY'
+import json,os,sys
+T=sys.argv[1]
+json.dump({"run_id":"codex-serial","max_parallel":8,
+           "agents":[{"id":f"s{n}","task_file":os.path.abspath(f"{T}/noop.md")} for n in (1,2)]},
+          open(f"{T}/serial.json","w"),indent=2)
+PY
+  out="$(CODEX_DISABLE=1 bash "$FLEET" spawn --manifest "$T/serial.json" --write-repo 2>&1)"
+  # With codex disabled the run refuses before launching, which is what we want to observe:
+  # the refusal must happen and must not silently fall back to parallel repository writes.
+  if echo "$out" | grep -q '"available":false'; then
+    src="$(grep -c 'forcing max_parallel 1' "$R/scripts/codex-fleet.sh")"
+    [ "$src" -ge 1 ] && g write_repo_serialises PASS "--write-repo forces max_parallel 1 and a disabled runner refuses before launching" \
+                     || g write_repo_serialises FAIL "no serialisation guard found in the runner"
+  else
+    g write_repo_serialises FAIL "disabled runner did not refuse a --write-repo manifest"
+  fi
+fi
+
+# ---------------------------------------------------------------- report
+python3 - "$OUT" "$FAIL" "${G[@]}" <<'PY'
+import json,sys,datetime
+out,fail=sys.argv[1],sys.argv[2]
+gates=[json.loads(x) for x in sys.argv[3:]]
+p=sum(1 for g in gates if g['status']=='PASS'); s=sum(1 for g in gates if g['status']=='SKIP')
+json.dump({'ok':fail=='0','generated':datetime.datetime.now().isoformat(timespec='seconds'),
+           'passed':p,'skipped':s,'total':len(gates),'gates':gates}, open(out,'w'), indent=2)
+print(f"\n{p}/{len(gates)} gates pass ({s} skipped) -> {out}")
+PY
+exit $FAIL

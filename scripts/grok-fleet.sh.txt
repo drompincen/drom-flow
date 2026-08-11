@@ -23,10 +23,19 @@ AGENT_TIMEOUT="${GROK_AGENT_TIMEOUT:-600}"
 GRACE_SECS="${GROK_GRACE_SECS:-10}"
 
 log() { echo "[grok-fleet] $*" >&2; }
+# Same refusal shape as the codex runner, so a caller can treat either runner's "not here"
+# identically: structured JSON on stdout, exit 3, nothing alarming on stderr.
+unavailable() {
+  printf '{"ok":false,"available":false,"reason":"grok CLI not available here (not installed, or GROK_DISABLE=1)","results":[]}\n'
+  exit 3
+}
 die() { echo "[grok-fleet] ERROR: $*" >&2; exit 2; }
 
 # --- binary resolution -------------------------------------------------------
 resolve_grok() {
+  # Opt-out for machines that have grok but should not use it. Treated as "not installed":
+  # a supported state of the world, never an error.
+  [[ "${GROK_DISABLE:-0}" == "1" ]] && return 1
   if [[ -n "${GROK_BIN:-}" && -x "$GROK_BIN" ]]; then echo "$GROK_BIN"; return 0; fi
   local c; c="$(command -v grok 2>/dev/null)"; [[ -n "$c" ]] && { echo "$c"; return 0; }
   local p="/mnt/c/Users/$USER/.grok/bin/grok.exe"; [[ -x "$p" ]] && { echo "$p"; return 0; }
@@ -55,7 +64,16 @@ cmd_doctor() {
 
   add() { checks+=("{\"name\":\"$1\",\"ok\":$2,\"detail\":$(json_escape "$3")}"); [[ "$2" == "true" ]] || ok=false; }
 
-  if bin="$(resolve_grok)"; then add binary true "$bin"; else add binary false "grok.exe not found (set GROK_BIN)"; fi
+  if ! bin="$(resolve_grok)"; then
+    # Not installed is a fact. Exit 0 so every optional caller can ask without treating the
+    # answer as a failure; `spawn` still refuses properly when something actually needs grok.
+    cat > "$REPORT_DIR/grok-doctor.json" <<EOF
+{"ok":true,"available":false,"reason":"grok CLI not found on PATH, \$GROK_BIN or known locations"}
+EOF
+    log "doctor: grok not installed (this is fine)"
+    return 0
+  fi
+  add binary true "$bin"
 
   if [[ -n "$bin" ]]; then
     ver="$(timeout 60 "$bin" --version 2>/dev/null | head -1)"
@@ -279,7 +297,7 @@ cmd_spawn() {
   esac; done
   [[ -n "$run_id" && -n "$agent_id" && -n "$task_file" ]] || die "spawn needs --run-id --agent-id --task-file"
   [[ -f "$task_file" ]] || die "task file not found: $task_file"
-  bin="$(resolve_grok)" || die "grok binary not found"
+  bin="$(resolve_grok)" || unavailable
   assert_win_visible "$FLEET_ROOT" || die "fleet root $FLEET_ROOT is not Windows-visible"
 
   local d; d="$(agent_dir "$run_id" "$agent_id")"

@@ -12,6 +12,9 @@
 *.sh
 *.bat
 .claude/df/repo-intel/run
+# ...except the bash test corpus, which is data: the extractor is being tested precisely on its
+# ability to recognise .sh files, so these must exist with that extension.
+!tests/repo-intel/fixtures/**/*.sh
 setup-backup/
 reports/grok-*.json
 reports/grok-*.md

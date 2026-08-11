@@ -616,6 +616,16 @@ for _t in "$SCRIPT_DIR"/scripts/*.sh.txt; do
   cp "$_t" "$_d" 2>/dev/null && chmod +x "$_d" 2>/dev/null
 done
 
+# Third-party skills a host installed live in the project, not in ~/.claude. Their shell assets
+# are gitignored like every other, so a fresh clone needs them materialised — and anything the
+# manifest names but the tree lacks re-fetched.
+if [ -f "$TARGET_DIR/scripts/add-skill.sh" ] || [ -f "$TARGET_DIR/scripts/add-skill.sh.txt" ]; then
+  [ -f "$TARGET_DIR/scripts/add-skill.sh" ] || {
+    cp "$TARGET_DIR/scripts/add-skill.sh.txt" "$TARGET_DIR/scripts/add-skill.sh" 2>/dev/null
+    chmod +x "$TARGET_DIR/scripts/add-skill.sh" 2>/dev/null; }
+  bash "$TARGET_DIR/scripts/add-skill.sh" --restore "$TARGET_DIR" 2>/dev/null | grep -E 'materialised|restoring' || true
+fi
+
 chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
 chmod +x "$TARGET_DIR/scripts/"*.sh 2>/dev/null || true
 # The repo-intel launcher has no .sh suffix, so the globs above miss it. Without +x the

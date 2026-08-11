@@ -8,6 +8,10 @@ nav_order: 5
 Every script and subcommand, read out of the `case` dispatch blocks. Sources live in
 Shell assets ship as text (`*.sh.txt`) and are materialised into runnable `*.sh` by init; the generated `*.sh` is gitignored.
 
+### `add-skill.sh`
+
+drom-flow — install a third-party skill into a HOST PROJECT, reproducibly.
+
 ### `bench-audit.sh`
 
 drom-flow — encapsulated audit fan-out.

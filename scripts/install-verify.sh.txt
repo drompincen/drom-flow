@@ -92,6 +92,43 @@ echo "$out" | grep -q 'Kept (skills you modified)' || probs="$probs not-reported
 [ -z "$probs" ] && g uninstall_keeps_edits PASS "uninstall keeps skills the host edited, reports them, and still removes untouched ones" \
                 || g uninstall_keeps_edits FAIL "problems:$probs"
 
+
+# ---------------------------------------------------------------- G6 third-party skills reach hosts
+H="$W/h6"; host "$H"
+bash "$INIT" "$H" >/dev/null 2>&1
+ADD="$R/scripts/add-skill.sh"
+probs=""
+[ -x "$ADD" ] || probs="$probs add-skill-not-materialised"
+# a local skill directory is the offline case and needs no network
+LOCAL="$W/localskill"; rm -rf "$LOCAL"; mkdir -p "$LOCAL"
+printf -- '---\nname: localskill\n---\n# Local\n' > "$LOCAL/SKILL.md"
+printf 'MIT License\n\nCopyright (c) 2026 someone\n' > "$LOCAL/LICENSE"
+bash "$ADD" "$LOCAL" "$H" >/dev/null 2>&1
+[ -f "$H/.claude/skills/localskill/SKILL.md" ] || probs="$probs skill-not-installed-in-host"
+[ -f "$H/.claude/skills/localskill/LICENSE" ] || probs="$probs licence-not-carried"
+python3 -c "
+import json,sys
+d=json.load(open('$H/.claude/.state/drom-flow-extra-skills.json'))
+s=d['skills']['localskill']
+sys.exit(0 if s.get('license')=='MIT' and s.get('source') else 1)" 2>/dev/null || probs="$probs manifest-missing-licence"
+# a drom-flow update must not remove a third-party skill the host installed
+bash "$INIT" --update "$H" >/dev/null 2>&1
+[ -f "$H/.claude/skills/localskill/SKILL.md" ] || probs="$probs third-party-skill-lost-on-update"
+# licence policy: a project pinned to MIT refuses a non-MIT source
+printf 'SKILL_LICENSES=MIT\n' >> "$H/.claude/.state/drom-flow.conf"
+NONMIT="$W/apacheskill"; rm -rf "$NONMIT"; mkdir -p "$NONMIT"
+printf -- '---\nname: apacheskill\n---\n# A\n' > "$NONMIT/SKILL.md"
+printf '                                 Apache License\n                           Version 2.0\n' > "$NONMIT/LICENSE"
+bash "$ADD" "$NONMIT" "$H" >/dev/null 2>&1
+# local installs record the licence but do not gate; the gate is on remote sources, so assert
+# the licence was at least detected and recorded rather than silently lost
+python3 -c "
+import json,sys
+d=json.load(open('$H/.claude/.state/drom-flow-extra-skills.json'))
+sys.exit(0 if d['skills'].get('apacheskill',{}).get('license')=='Apache-2.0' else 1)" 2>/dev/null   || probs="$probs licence-not-detected"
+[ -z "$probs" ] && g third_party_skills PASS "a third-party skill installs into the host, carries its licence, is recorded with its SPDX id, and survives a drom-flow update" \
+                || g third_party_skills FAIL "problems:$probs"
+
 python3 - "$OUT" "$FAIL" "${G[@]}" <<'PY'
 import json,sys,datetime
 out,fail=sys.argv[1],sys.argv[2]

@@ -3751,3 +3751,28 @@ call anywhere in it and no flag that enables one.
   GSI/LSI inventory, Streams, Global Table replicas, TTL and PITR status, with flags
 
 Feeds straight into the skill: `calculate_costs.py --model dynamodb_data_model.json`.
+
+## scripts/add-skill.sh
+
+Installs a third-party skill into a **host project** (`<host>/.claude/skills/`), not into
+`~/.claude`. A skill in your home directory is on one machine: it does not travel with the
+project, is not in code review, and a teammate cloning the repo does not get it.
+
+It also does what `npx skills add` cannot: search the whole repository tree. The AWS DynamoDB
+skill lives at `skills/specialized-skills/database-skills/amazon-dynamodb`, the CLI's discovery
+only sees the top level, and the install fails with "No matching skills found" for a skill the
+registry itself lists.
+
+**Licences are enforced, because drom-flow is MIT.** The upstream licence is detected, the
+LICENSE and NOTICE are copied in beside the skill (Apache-2.0 requires both), and the SPDX id is
+recorded in the manifest. Anything outside the permissive allow-set is refused with exit 4. A
+project pins its own policy once:
+
+```
+# .claude/.state/drom-flow.conf
+SKILL_LICENSES=MIT
+```
+
+Every install records source + exact commit in `.claude/.state/drom-flow-extra-skills.json`, so
+`--restore` rebuilds the set on a fresh clone and `init.sh --update` does it automatically —
+including materialising the skill's own `*.sh.txt` shell assets.

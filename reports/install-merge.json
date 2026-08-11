@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "generated": "2026-08-11T07:56:57",
-  "passed": 5,
-  "total": 5,
+  "generated": "2026-08-11T08:21:16",
+  "passed": 6,
+  "total": 6,
   "gates": [
     {
       "id": "host_content_survives",
@@ -28,6 +28,11 @@
       "id": "uninstall_keeps_edits",
       "status": "PASS",
       "detail": "uninstall keeps skills the host edited, reports them, and still removes untouched ones"
+    },
+    {
+      "id": "third_party_skills",
+      "status": "PASS",
+      "detail": "a third-party skill installs into the host, carries its licence, is recorded with its SPDX id, and survives a drom-flow update"
     }
   ]
 }

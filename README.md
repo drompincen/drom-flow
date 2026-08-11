@@ -71,6 +71,17 @@ Files that already exist won't be overwritten. Safe to re-run.
 
 ### Updating an existing installation
 
+### Third-party skills live in your project
+
+`scripts/add-skill.sh <owner/repo@skill>` installs a skill into **the project**, not your home
+directory — so it travels with the repo, appears in review, and a teammate who clones gets it.
+Source and exact commit are recorded, so `--restore` (and `init --update`) rebuild the set on a
+fresh clone.
+
+Licences are enforced: drom-flow is MIT, so the upstream licence is detected, its LICENSE and
+NOTICE are carried in beside the skill, and anything outside the permissive allow-set is refused.
+Pin a stricter policy per project with `SKILL_LICENSES=MIT` in `.claude/.state/drom-flow.conf`.
+
 ### Your skills are yours
 
 drom-flow ships skills, and teams tune them. On update, a skill file you have edited is **kept** —

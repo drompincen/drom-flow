@@ -7,16 +7,11 @@
 *.jpg
 *.jpeg
 *.gif
+# Every shell asset is stored as text (*.sh.txt) and materialised by init. The generated *.sh
+# files are therefore build output and never belong in git.
 *.sh
 *.bat
-# ...but drom-flow's own shell assets ARE the product. Without these negations a fresh clone
-# contains no init.sh, no hooks and no scripts, and nothing can be installed from it.
-!init.sh
-!scripts/*.sh
-!.claude/hooks/*.sh
-!template/scripts/*.sh
-!template/.claude/hooks/*.sh
-!tests/**/*.sh
+.claude/df/repo-intel/run
 setup-backup/
 reports/grok-*.json
 reports/grok-*.md
@@ -26,3 +21,4 @@ reports/grok-*.md
 .ri-build-t/
 __pycache__/
 *.pyc
+.claude/df/

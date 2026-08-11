@@ -41,6 +41,8 @@ In a QA pipeline for BPMN process diagrams, drom-flow's closed-loop workflow too
 
 ## Install
 
+Shell assets ship as **text** (`*.sh.txt`) so ZIP downloads and corporate mail/proxy filters cannot strip them; `init` materialises runnable `*.sh` on install and update.
+
 ### Step 1: Generate scripts (required once after download)
 
 Scripts are distributed as text in `SCRIPTS.md` to keep ZIP downloads firewall-friendly. Generate them first:
@@ -56,13 +58,13 @@ Or copy them manually -- see `start-here.md` for details.
 Run from your project root:
 
 ```bash
-bash /path/to/drom-flow/init.sh
+bash /path/to/drom-flow/init.sh.txt
 ```
 
 Or specify a target directory:
 
 ```bash
-bash /path/to/drom-flow/init.sh /path/to/my-project
+bash /path/to/drom-flow/init.sh.txt /path/to/my-project
 ```
 
 Files that already exist won't be overwritten. Safe to re-run.
@@ -75,10 +77,10 @@ If you downloaded a new ZIP, generate scripts first (see Step 1 above), then:
 
 ```bash
 # Check what would change (dry run)
-bash /path/to/drom-flow/init.sh --check /path/to/my-project
+bash /path/to/drom-flow/init.sh.txt --check /path/to/my-project
 
 # Apply the update
-bash /path/to/drom-flow/init.sh --update /path/to/my-project
+bash /path/to/drom-flow/init.sh.txt --update /path/to/my-project
 ```
 
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** your project-specific files:

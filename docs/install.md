@@ -20,11 +20,13 @@ reaches anyone.
 
 ## Install / update / uninstall
 
+Shell assets ship as **text** (`*.sh.txt`) so ZIP downloads and corporate mail/proxy filters cannot strip them; `init` materialises runnable `*.sh` on install and update.
+
 ```bash
-bash /path/to/drom-flow/init.sh              # install into the current project
-bash /path/to/drom-flow/init.sh --check .    # dry run
-bash /path/to/drom-flow/init.sh --update .   # upgrade
-bash /path/to/drom-flow/init.sh --uninstall .
+bash /path/to/drom-flow/init.sh.txt              # install into the current project
+bash /path/to/drom-flow/init.sh.txt --check .    # dry run
+bash /path/to/drom-flow/init.sh.txt --update .   # upgrade
+bash /path/to/drom-flow/init.sh.txt --uninstall .
 ```
 
 **Never overwritten:** `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`,

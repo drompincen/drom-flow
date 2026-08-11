@@ -18,7 +18,7 @@ No MCP servers. No npm packages. No Node.js. Markdown and bash.
 claude "Read start-here.md and follow the setup instructions"
 
 # then, from your project root
-bash /path/to/drom-flow/init.sh
+bash /path/to/drom-flow/init.sh.txt
 ```
 
 Update later with `init.sh --update .`, remove with `init.sh --uninstall .`. Your `CLAUDE.md`,

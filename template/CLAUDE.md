@@ -216,8 +216,8 @@ When the user asks to update drom-flow (e.g., "update to latest drom-flow", "upd
 
 1. **Find the drom-flow source** — read `.claude/.state/drom-flow.conf` to get `DROM_FLOW_HOME`
 2. **Pull latest** — run `git -C "$DROM_FLOW_HOME" pull` to fetch the newest version
-3. **Preview changes** — run `bash "$DROM_FLOW_HOME/init.sh" --check .` and show the user what would change
-4. **Apply the update** — run `bash "$DROM_FLOW_HOME/init.sh" --update .`
+3. **Preview changes** — run `bash "$DROM_FLOW_HOME/init.sh.txt" --check .` and show the user what would change
+4. **Apply the update** — run `bash "$DROM_FLOW_HOME/init.sh.txt" --update .`
 
 ```bash
 # Read the saved drom-flow location
@@ -227,10 +227,10 @@ source .claude/.state/drom-flow.conf
 git -C "$DROM_FLOW_HOME" pull
 
 # Check what would change (dry run)
-bash "$DROM_FLOW_HOME/init.sh" --check .
+bash "$DROM_FLOW_HOME/init.sh.txt" --check .
 
 # Apply the update
-bash "$DROM_FLOW_HOME/init.sh" --update .
+bash "$DROM_FLOW_HOME/init.sh.txt" --update .
 ```
 
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.
@@ -242,7 +242,7 @@ bash "$DROM_FLOW_HOME/init.sh" --update .
 When the user asks to uninstall drom-flow:
 
 1. **Find the drom-flow source** — read `.claude/.state/drom-flow.conf` to get `DROM_FLOW_HOME`
-2. **Preview** — run `bash "$DROM_FLOW_HOME/init.sh" --uninstall-check .`
-3. **Uninstall** — run `bash "$DROM_FLOW_HOME/init.sh" --uninstall .`
+2. **Preview** — run `bash "$DROM_FLOW_HOME/init.sh.txt" --uninstall-check .`
+3. **Uninstall** — run `bash "$DROM_FLOW_HOME/init.sh.txt" --uninstall .`
 
 `--uninstall` removes all drom-flow managed files (hooks, skills, workflows, settings, VERSION) and cleans up empty directories and gitignore entries. It **never removes** user-owned files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`, or any plans in `drom-plans/`.

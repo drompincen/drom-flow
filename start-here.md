@@ -10,14 +10,14 @@ Run this in the drom-flow directory:
 claude "Read start-here.md and follow the setup instructions"
 ```
 
-Claude will generate all scripts automatically. Then use `init.sh` to install drom-flow into your projects.
+Claude will generate all scripts automatically. Then use `init.sh.txt` to install drom-flow into your projects.
 
 ## Setup instructions (for Claude to follow)
 
 When Claude reads this file, it must execute these steps in order:
 
 1. Read `SCRIPTS.md` in this same directory.
-2. For each section heading that specifies a file path (e.g., `## .claude/hooks/edit-log.sh`, `## init.sh`, `## scripts/orchestrate.sh`), extract the bash code block content and write it to that exact path relative to this directory.
+2. For each section heading that specifies a file path (e.g., `## .claude/hooks/edit-log.sh`, `## init.sh.txt`, `## scripts/orchestrate.sh`), extract the bash code block content and write it to that exact path relative to this directory.
 3. Run `chmod +x` on every `.sh` file that was generated.
 4. Copy each file from `.claude/hooks/` to `template/.claude/hooks/` (same filename).
 5. Copy `scripts/orchestrate.sh` to `template/scripts/orchestrate.sh`.

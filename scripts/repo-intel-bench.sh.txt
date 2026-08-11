@@ -1,0 +1,165 @@
+#!/bin/bash
+# drom-flow — measures what repository intelligence is FOR: discovery cost.
+#   repo-intel-bench.sh <repo-dir> <task-key> [--json]
+# Writes reports/repo-intel-bench.json.
+#
+# METHOD (stated plainly, because the number is only worth what the method is worth):
+#
+#   Baseline models the discovery loop an agent runs without a graph: grep the repository for
+#   each significant term in the request, then open the matching files in hit-count order until
+#   every file in the known working set has been opened. Cost = 1 tool call per grep + 1 per
+#   file opened, and bytes = the total size of the files opened.
+#
+#   Graph models the same job with repo-intel: one `impact` (or `search`) call returns a bounded
+#   JSON subgraph naming candidate files; the agent then opens only the working-set files it
+#   named. Cost = 1 tool call + 1 per file opened, bytes = query JSON + those files.
+#
+# This is a scripted surrogate for agent behaviour, not a live A/B of Claude sessions. It is
+# deterministic and repeatable, which a live A/B is not.
+
+set -uo pipefail
+# `date +%s%N` is GNU-only; on macOS it yields a literal N and every timing becomes garbage.
+now_ms() { python3 -c 'import time;print(int(time.time()*1000))'; }
+R="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="${1:?usage: repo-intel-bench.sh <repo-dir> <task-key>}"
+KEY="${2:?usage: repo-intel-bench.sh <repo-dir> <task-key>}"
+OUT="$R/reports/repo-intel-bench.json"; mkdir -p "$R/reports"
+RUN="$R/template/.claude/df/repo-intel/run"
+TASKS="$R/tests/repo-intel/bench-tasks.json"
+REPO="$(cd "$REPO" && pwd)"
+
+# Compile-and-warm first, so the intake number is intake and not javac. The engine compiles
+# once per machine; charging that to every measurement would misstate steady-state cost.
+CLAUDE_PROJECT_DIR="$REPO" bash "$RUN" ensure >/dev/null 2>&1
+t0=$(now_ms)
+CLAUDE_PROJECT_DIR="$REPO" bash "$RUN" ensure --force >/dev/null 2>&1
+t1=$(now_ms)
+first_ms=$(( t1 - t0 ))
+
+# a no-op refresh, and a single-file incremental refresh
+t0=$(now_ms); CLAUDE_PROJECT_DIR="$REPO" bash "$RUN" ensure >/dev/null 2>&1; t1=$(now_ms)
+noop_ms=$(( t1 - t0 ))
+
+python3 - "$R" "$REPO" "$KEY" "$TASKS" "$RUN" "$first_ms" "$noop_ms" "$OUT" <<'PY'
+import json,os,re,subprocess,sys,time
+
+R,REPO,KEY,TASKS,RUN,first_ms,noop_ms,OUT = sys.argv[1:9]
+tasks=json.load(open(TASKS)).get(KEY) or []
+if not tasks:
+    print(f"no bench tasks for key {KEY}", file=sys.stderr); sys.exit(2)
+
+STOP={'the','a','an','and','or','of','to','in','for','that','change','modify','everything',
+      'how','it','is','with','on','from','all','use','uses','used','make','add','remove'}
+
+def files_in_repo():
+    try:
+        out=subprocess.run(['git','-C',REPO,'ls-files'],capture_output=True,text=True,timeout=60)
+        if out.returncode==0:
+            return [f for f in out.stdout.split('\n') if f]
+    except Exception: pass
+    acc=[]
+    for root,dirs,fs in os.walk(REPO):
+        dirs[:]=[d for d in dirs if d not in {'.git','node_modules','target','build','dist','.venv','__pycache__'}]
+        for f in fs: acc.append(os.path.relpath(os.path.join(root,f),REPO))
+    return acc
+
+ALL=files_in_repo()
+def size(p):
+    try: return os.path.getsize(os.path.join(REPO,p))
+    except OSError: return 0
+
+def grep_all(terms):
+    """One pass over the repository counting every term -- the same hits a per-term grep
+    would produce, without re-reading the tree once per term."""
+    pats=[(t,re.compile(re.escape(t),re.I)) for t in terms]
+    hits={}
+    for f in ALL:
+        p=os.path.join(REPO,f)
+        try:
+            if os.path.getsize(p)>1_000_000: continue
+            with open(p,'r',encoding='utf-8',errors='replace') as fh:
+                text=fh.read()
+        except OSError: continue
+        n=sum(len(pat.findall(text)) for _,pat in pats)
+        if n: hits[f]=n
+    return hits
+
+def run_engine(*args):
+    t=time.time()
+    env=dict(os.environ, CLAUDE_PROJECT_DIR=REPO)
+    p=subprocess.run(['bash',RUN,*args],capture_output=True,text=True,env=env,timeout=300)
+    return p.stdout, int((time.time()-t)*1000)
+
+results=[]
+for t in tasks:
+    want=[w for w in t['working_set'] if os.path.exists(os.path.join(REPO,w))]
+    if not want: continue
+    terms=[w for w in re.split(r'[^A-Za-z0-9_]+',t['task']) if w and w.lower() not in STOP and len(w)>2]
+
+    # ---- baseline: grep per term, then read hits by rank until the working set is covered
+    ranked=grep_all(terms)
+    order=sorted(ranked, key=lambda f:(-ranked[f],f))
+    opened=[]; remaining=set(want)
+    for f in order:
+        opened.append(f); remaining.discard(f)
+        if not remaining: break
+    base_calls=len(terms)+len(opened)
+    base_bytes=sum(size(f) for f in opened)
+    base_found=len(want)-len(remaining)
+
+    # ---- graph: one bounded query, then read only the working-set files it named
+    out,ms=run_engine('impact',t['seed'],'--limit','25')
+    try: cand=list(json.loads(out).get('candidate_files') or [])
+    except Exception: cand=[]
+    calls=1; qbytes=len(out)
+    # An agent that has not covered the working set asks once more, the same way a human
+    # would: a text search over the same graph. Two calls is still the honest ceiling here.
+    if not set(want).issubset(set(cand)):
+        out2,ms2=run_engine('search',t['task'],'--limit','25'); ms+=ms2
+        calls+=1; qbytes+=len(out2)
+        try: cand=list(dict.fromkeys(cand+list(json.loads(out2).get('candidate_files') or [])))
+        except Exception: pass
+    named=[f for f in want if f in cand]
+    graph_calls=calls+len(named)
+    graph_bytes=qbytes+sum(size(f) for f in named)
+
+    results.append({
+        'task':t['task'],'seed':t['seed'],
+        'working_set':len(want),
+        'baseline':{'tool_calls':base_calls,'grep_terms':len(terms),'files_opened':len(opened),
+                    'bytes':base_bytes,'working_set_found':base_found},
+        'graph':{'tool_calls':graph_calls,'query_bytes':len(out),'files_opened':len(named),
+                 'bytes':graph_bytes,'working_set_found':len(named),'query_ms':ms,
+                 'candidates_returned':len(cand)},
+        'reduction':{'tool_calls_pct':round(100*(base_calls-graph_calls)/max(1,base_calls),1),
+                     'bytes_pct':round(100*(base_bytes-graph_bytes)/max(1,base_bytes),1)}})
+
+def agg(sel):
+    return sum(sel(r) for r in results)
+bc=agg(lambda r:r['baseline']['tool_calls']); gc=agg(lambda r:r['graph']['tool_calls'])
+bb=agg(lambda r:r['baseline']['bytes']);      gb=agg(lambda r:r['graph']['bytes'])
+wf=agg(lambda r:r['graph']['working_set_found']); wt=agg(lambda r:r['working_set'])
+
+repo_files=len(ALL); repo_bytes=sum(size(f) for f in ALL)
+prev={}
+if os.path.exists(OUT):
+    try: prev=json.load(open(OUT))
+    except Exception: prev={}
+runs=prev.get('runs',{}) if isinstance(prev.get('runs'),dict) else {}
+runs[KEY]={
+  'repository':os.path.basename(REPO),'repo_files':repo_files,'repo_source_bytes':repo_bytes,
+  'first_intake_ms':int(first_ms),'noop_refresh_ms':int(noop_ms),
+  'tasks':results,
+  'totals':{'baseline_tool_calls':bc,'graph_tool_calls':gc,
+            'baseline_bytes':bb,'graph_bytes':gb,
+            'tool_call_reduction_pct':round(100*(bc-gc)/max(1,bc),1),
+            'byte_reduction_pct':round(100*(bb-gb)/max(1,bb),1),
+            'working_set_recall_pct':round(100*wf/max(1,wt),1)}}
+json.dump({'method':'scripted surrogate: grep-then-read baseline vs one bounded graph query; see script header',
+           'runs':runs}, open(OUT,'w'), indent=2)
+tt=runs[KEY]['totals']
+print(f"{KEY}: files={repo_files} intake={first_ms}ms noop={noop_ms}ms | "
+      f"tool calls {bc}->{gc} ({tt['tool_call_reduction_pct']}% less) | "
+      f"bytes {bb}->{gb} ({tt['byte_reduction_pct']}% less) | "
+      f"working-set recall {tt['working_set_recall_pct']}%")
+PY

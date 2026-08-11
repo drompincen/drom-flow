@@ -172,10 +172,10 @@ To update drom-flow to a newer version without losing project customizations:
 
 ```bash
 # Check what would change (dry run)
-bash /path/to/drom-flow/init.sh --check .
+bash /path/to/drom-flow/init.sh.txt --check .
 
 # Apply the update
-bash /path/to/drom-flow/init.sh --update .
+bash /path/to/drom-flow/init.sh.txt --update .
 ```
 
 `--update` overwrites drom-flow managed files (hooks, skills, workflows, settings) but **never touches** project-specific files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`. Plans in `drom-plans/` and reports are also preserved.
@@ -186,10 +186,10 @@ To remove drom-flow from a project while preserving your customizations:
 
 ```bash
 # Check what would be removed (dry run)
-bash /path/to/drom-flow/init.sh --uninstall-check .
+bash /path/to/drom-flow/init.sh.txt --uninstall-check .
 
 # Remove drom-flow
-bash /path/to/drom-flow/init.sh --uninstall .
+bash /path/to/drom-flow/init.sh.txt --uninstall .
 ```
 
 `--uninstall` removes all drom-flow managed files (hooks, skills, workflows, settings, VERSION) and cleans up empty directories and gitignore entries. It **never removes** user-owned files: `CLAUDE.md`, `context/MEMORY.md`, `context/DECISIONS.md`, `context/CONVENTIONS.md`, `scripts/orchestrate.sh`, or any plans in `drom-plans/`.

@@ -6,7 +6,7 @@ nav_order: 5
 # Scripts
 
 Every script and subcommand, read out of the `case` dispatch blocks. Sources live in
-[`SCRIPTS.md`](https://github.com/drompincen/drom-flow/blob/main/SCRIPTS.md) (`*.sh` is gitignored).
+Shell assets ship as text (`*.sh.txt`) and are materialised into runnable `*.sh` by init; the generated `*.sh` is gitignored.
 
 ### `bench-audit.sh`
 

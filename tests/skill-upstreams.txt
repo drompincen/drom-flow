@@ -6,3 +6,4 @@ deanpeters/product-manager-skills
 wondelai/skills
 refoundai/lenny-skills
 owl-listener/designer-skills
+pproenca/dot-skills

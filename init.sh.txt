@@ -186,6 +186,8 @@ MANAGED_DIRS=(
   ".claude/skills/core-web-vitals"
   ".claude/skills/customer-journey-map"
   ".claude/skills/debugger"
+  ".claude/skills/dynamodb-architect"
+  ".claude/skills/enterprise-form-architect"
   ".claude/skills/discovery-process"
   ".claude/skills/epic-breakdown-advisor"
   ".claude/skills/implementer"

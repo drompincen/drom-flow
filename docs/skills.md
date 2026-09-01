@@ -67,3 +67,4 @@ nav_order: 4
 | Skill | Ships | What it does |
 |---|---|---|
 | `/dynamodb-architect` | yes | Design, review, refactor and debug DynamoDB data layers — access patterns first, key and index design, capacity and cost, and the migration paths for changes that cannot be made in place. Use whenever work touches a DynamoDB table, schema, GSI, or a throttling or cost problem. |
+| `/enterprise-form-architect` | yes | Design, build, review and debug long corporate data-entry forms in React — section architecture, render isolation at 100+ fields, validation timing, draft autosave and resume, server error mapping, and the accessibility a compliance review will ask for. Use whenever work touches a multi-section form, an intake or application form, a form that is slow to type in, or a form losing user data. |

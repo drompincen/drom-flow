@@ -1,21 +1,51 @@
 ---
 name: writing-style
-description: "Extract an evidence-based writing style profile from text samples, then use it to rewrite AI drafts or compose new text in that voice while preserving meaning. Use for requests such as write like me, match this writer, learn my tone, save my writing style, or apply this voice to a draft. Requires reference writing or an existing profile for style matching; ordinary proofreading alone does not need this skill."
+description: "Remove AI slop from drafts: empty filler, canned rhetoric, inflated wording, repetitive structure, and fake warmth, while preserving substantive meaning. Use for remove AI slop, de-AI this, make this sound natural, humanize this draft, or write like me. Optionally extract a reusable writer-style profile from samples and apply it during cleanup. No samples are needed for slop removal; style matching needs samples or a profile."
 ---
 
 # Writing Style
 
-Capture the writer's repeatable choices as a portable profile and apply that profile as a final editorial pass. Preserve the content supplied by the user or produced by another task workflow. This skill does not train a model or establish who authored a text.
+The primary job is to remove AI slop: language that adds bulk, artificial polish, or performance without adding meaning. Make the writing direct, specific, and natural. When reference writing is available, use its supported habits to give the cleaned text the writer's voice. Preserve the content supplied by the user or produced by another task workflow. This skill does not train a model or establish who authored a text.
 
 ## Choose the operation
 
-- **Extract:** Given reference writing, produce a reusable profile.
-- **Apply:** Given a profile and a draft, rewrite the draft in that voice.
+- **Clean (default for slop-removal requests):** Given a draft, remove AI slop immediately. No style profile or writing samples are required.
+- **Extract:** Given reference writing, produce a reusable profile for future cleanup and rewriting.
+- **Apply:** Given a profile and a draft, remove slop and rewrite the draft in that voice.
 - **Extract and apply:** Given reference writing and a draft, do both in one turn.
 - **Compose:** Given a profile and a brief, draft from the brief, then apply the profile.
 - **Refine:** Update a profile from user corrections or additional reference samples.
 
-Infer the operation from the request. Ask only for missing inputs that affect the result. If no reference writing or profile is available, ask for some; do not infer a writer's voice from their name, a short task instruction, or the AI draft being edited. A preference-only guide is possible if requested, but label it as user-specified rather than extracted.
+Infer the operation from the request. For cleanup, use the supplied draft or the clearly identified previous response; ask for text only if neither is available. Do not make a sample-gathering interview a prerequisite for cleanup. For writer matching, use available references or an existing profile. If these are missing, clean the draft now and briefly state that matching a specific writer needs reference writing. Do not infer a writer's voice from their name, a short task instruction, or the AI draft being edited. A preference-only guide is possible if requested, but label it as user-specified rather than extracted.
+
+## Protect meaning before any rewrite
+
+Identify the content that must survive: assertions, negations, names, numbers, dates, units, citations, links, quotations, conditions, uncertainty, responsibilities, requests, and commitments. Preserve exact quotations, code, identifiers, and user-designated fixed text. In particular, keep distinctions such as may/will, can/must, estimate/guarantee, allegation/fact, and request/admission.
+
+Delete empty framing and duplicate statements freely. Preserve substantive points and necessary explanations; cleanup is not permission to summarize away detail or weaken the argument. When a vague phrase carries a real claim, restate the claim plainly. Do not delete it as filler or invent supporting details to make it sound concrete.
+
+## Remove AI slop
+
+For cleanup alone, use this section and the final checks; skip profile extraction and saving. Apply this pass to styled rewrites and new drafts as well.
+
+Edit the actual defects in the text, not a presumed author. These are editorial symptoms, not proof that AI wrote something:
+
+- **Empty wrappers:** Cut throat-clearing, announcing what the text will do, unsolicited praise, and closing offers. Start with the answer, request, or event. Remove "Great question," "Let's dive in," and "I hope this helps" when they only frame the content.
+- **Inflated language:** Replace abstract nouns and fashionable verbs with the concrete action already supported by the draft. Phrases such as "leverage synergies," "robust and seamless," "transformative journey," and "ever-evolving landscape" need a specific meaning to earn their place. Delete empty modifiers rather than swapping them for fresh buzzwords. Keep legitimate technical terminology.
+- **Canned rhetoric:** Remove automatic "not X, but Y" contrasts, staged question-and-answer fragments, "here's the thing," "the real magic," and declarations of importance that do not explain anything. State the point directly. Retain a contrast or question when it makes a real distinction or serves the user's purpose.
+- **Repetition and scaffolding:** Collapse restated conclusions, repeated setup, synonymous lists, mechanical three-part lists, and headings attached to every short paragraph. Use lists where they help comparison or action; otherwise let the argument progress in prose. Retain requested structure and necessary recaps in long documents.
+- **Fake warmth and authority:** Remove flattery, forced enthusiasm, generic empathy, sales language, and unsupported claims of importance. Preserve actual emotions, opinions, and qualifications in the source. Keep genuine uncertainty; "may" is not filler just because it softens a claim.
+- **Manufactured human texture:** Do not add anecdotes, personal experience, profanity, deliberate errors, random fragments, or quirky punctuation to make a text appear human. Use ordinary vocabulary and sentence rhythms suited to the content. Do not force every sentence to be short or turn the result into terse notes.
+
+Phrase examples are diagnostic prompts, not a global blacklist. No punctuation mark or word automatically makes a sentence slop. Judge whether the language contributes meaning and fits the requested voice. Explicit cleanup preferences outrank inferred style tendencies; do not reintroduce filler just because it appeared in a reference sample.
+
+Examples of cleanup with meaning intact:
+
+- "It's important to note that delivery may take up to 10 days after approval." → "Delivery may take up to 10 days after approval."
+- "We can leverage the existing report to facilitate the review." → "We can use the existing report to help with the review."
+- "To summarize, the deadline is Friday. Please send the signed form by Friday." → "Please send the signed form by Friday."
+
+Finish with a second read for surviving filler and repeated ideas. Do not add an explanation of how natural the result now sounds.
 
 ## Establish the evidence
 
@@ -51,25 +81,24 @@ When extraction is requested, return the profile and a short labeled demonstrati
 
 Load the selected profile. Match its language and context rules to the current audience and format. A request for a legal letter, technical note, or casual message can impose different constraints on the same voice. Explicit task requirements take precedence over inferred stylistic preferences.
 
-Before rewriting, identify the content that must survive: assertions, negations, names, numbers, dates, units, citations, links, quotations, conditions, uncertainty, responsibilities, requests, and commitments. Preserve exact quotations, code, identifiers, and user-designated fixed text. In particular, keep distinctions such as may/will, can/must, estimate/guarantee, allegation/fact, and request/admission.
-
 Rewrite sentence structure, word choice, cadence, transitions, and presentation according to the supported profile. Preserve all substantive points by default; style matching is not permission to summarize. Reorder material only when doing so preserves meaning, chronology, and emphasis required by the task. For new composition, use the brief as the factual source; voice samples supply style, not extra facts.
 
 Apply a natural match by default. If requested, a light pass changes wording and rhythm with little restructuring; a close match also adjusts larger patterns where supported. Stronger matching never permits factual changes. Avoid turning tendencies into quotas, caricature, or a forced catchphrase in every paragraph.
 
-When working alongside another skill, complete its substantive analysis or drafting first, apply this editorial pass, then recheck that the rewrite still satisfies the original task's requirements. Do not change global instructions or unrelated writing preferences to make the profile apply everywhere.
+When working alongside another skill, complete its substantive analysis or drafting first, apply the cleanup and any selected profile, then recheck that the rewrite still satisfies the original task's requirements. Do not change global instructions or unrelated writing preferences to make this skill apply everywhere.
 
 ## Check the result
 
-Compare the rewrite with the draft or brief separately from comparing it with the profile:
+Compare the rewrite with the draft or brief, and with the profile when one is used:
 
 1. **Meaning:** Are all substantive points retained? Check dates, quantities, negation, conditions, attribution, claim strength, and obligations. Remove added claims or anecdotes.
-2. **Voice:** Are the strongest supported traits visible where appropriate? Fix generic phrasing that conflicts with the profile without exaggerating the writer's habits.
-3. **Context:** Does the result meet the requested audience, length, format, and purpose?
+2. **Slop:** Does each sentence add a fact, useful explanation, necessary qualification, or intentional expression? Remove remaining empty framing, inflated wording, canned rhetoric, and repetition. Check that cleanup has not created robotic brevity.
+3. **Voice, when supplied:** Are the strongest supported traits visible where appropriate? Fix generic phrasing that conflicts with the profile without exaggerating the writer's habits or restoring slop.
+4. **Context:** Does the result meet the requested audience, length, format, and purpose?
 
 If style and meaning conflict, preserve meaning and briefly explain only material limitations. Never claim an objective similarity score, human indistinguishability, or AI-detector evasion based on a self-review.
 
-For an apply-only request, return the rewritten text by default. Include a change explanation or side-by-side comparison only if requested or needed to explain a material constraint. Do not wrap every finished draft in an unsolicited style analysis.
+For cleanup and apply-only requests, return only the rewritten text by default. Include a change explanation or side-by-side comparison only if requested or needed to explain a material constraint. Do not wrap a finished draft in "Here is a more human version," a style analysis, or an offer to keep editing.
 
 ## Save and refine
 

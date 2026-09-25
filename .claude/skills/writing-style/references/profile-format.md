@@ -42,7 +42,9 @@ Use this structure as a starting point, omitting unsupported sections. The profi
 
 ## Application instructions
 
-Apply the supported rules to the supplied draft. Preserve substantive content, facts,
+Remove empty framing, inflated wording, canned rhetoric, and unnecessary repetition,
+then apply the supported voice rules. Do not restore filler to imitate a sample.
+Keep useful detail and natural sentence variation. Preserve substantive content, facts,
 conditions, uncertainty, requests, and commitments. Keep quotations, code, identifiers,
 and fixed text intact. Do not borrow the samples' facts, opinions, or experiences.
 Honor the current task's audience and format. Return the rewritten text unless asked

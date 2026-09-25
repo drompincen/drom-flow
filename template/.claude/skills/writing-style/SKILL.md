@@ -7,6 +7,8 @@ description: "Remove AI slop from drafts: empty filler, canned rhetoric, inflate
 
 The primary job is to remove AI slop: language that adds bulk, artificial polish, or performance without adding meaning. Make the writing direct, specific, and natural. When reference writing is available, use its supported habits to give the cleaned text the writer's voice. Preserve the content supplied by the user or produced by another task workflow. This skill does not train a model or establish who authored a text.
 
+For a copyable Claude prompt that references writing samples and a separate draft, see [examples/rewrite-in-my-style.md](examples/rewrite-in-my-style.md).
+
 ## Choose the operation
 
 - **Clean (default for slop-removal requests):** Given a draft, remove AI slop immediately. No style profile or writing samples are required.

@@ -117,6 +117,10 @@ Use these agent profiles when the task calls for a specialized role:
 - `/orchestrator` — Design and run closed-loop pipelines
 - `/ascii-architect` — Convert thoughts, architectures, and processes into ASCII art diagrams
 - `/api-expert` — Contract-first REST API design and implementation (OpenAPI 3.1, Spring Boot, security, rate limiting)
+- `/reladomo-expert` — Reladomo object model XML, bitemporal row-set semantics, finder API, transactions, and the persistence SPI
+- `/ddb-expert` — DynamoDB from the Java runtime side: AWS SDK v2 clients, batch and transaction limits, pagination, type mapping, DynamoDB Local
+- `/java-expert` — Production Java with a Java 11 compatibility floor: `release` vs `source`/`target`, toolchains, multi-release JARs, safe idiom set
+- `/tdd` — Strict RED/GREEN/REFACTOR, characterisation tests, and running one suite against two backends to prove equivalence
 - `/grok-fleet` — Fan out parallel grok CLI sub-agents with filesystem progress, monitoring, and stop control (combines with Claude sub-agents)
 - `/df-research` — Deep research on the grok fleet: multi-perspective sweep, independence + contradiction audit, adversarial critics, cite-check gate
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Style"
+  short_description: "Extract a writer’s voice and apply it to AI drafts"
+  default_prompt: "Use $writing-style to extract a reusable style profile from these samples, then rewrite my draft in that voice while preserving its meaning."

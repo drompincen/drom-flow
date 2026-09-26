@@ -1,0 +1,416 @@
+TASK FOR CLAUDE: CREATE A JAVA SDK ARCHITECT SKILL
+
+Create a reusable Claude skill named java-sdk-architect with the display title
+"Expert Java SDK Architect and SDK Maintainer". Create the actual skill files,
+not just a proposal. This assignment creates a skill; it does not authorize
+redesigning or implementing the SDK in the current repository.
+
+The skill must be Java-first. Its central capability is designing production
+Java SDKs that hide complex internals behind extremely simple, discoverable,
+strongly typed fluent APIs. Removing complexity from the consumer's experience
+must not hide important behavior, costs, failures, or resource ownership.
+
+Follow the creation steps below and incorporate the requirements that follow.
+Treat code snippets as illustrative API shapes, not existing APIs or code that
+has already been compiled or tested.
+
+CREATION STEPS
+
+1. Inspect local instructions and existing skills.
+
+Read applicable repository instructions and the available skill-creation guide,
+if any. Check for an existing java-sdk-architect skill before creating another.
+Inspect nearby skill conventions and installation/template mechanisms. Do not
+install dependencies or run unrelated application code merely to create this
+instructional skill.
+
+2. Choose the location and discovery metadata.
+
+Unless the user specifies a different location, create:
+
+  .claude/skills/java-sdk-architect/SKILL.md
+
+If a matching skill already exists, improve it without overwriting unrelated
+customizations. In a repository that ships mirrored skill templates, maintain
+the corresponding template copy as its conventions require. Avoid changing
+global agent instructions to force this skill onto unrelated tasks.
+
+Use this frontmatter as a starting point:
+
+  ---
+  name: java-sdk-architect
+  description: Design, implement, review, evolve, and maintain Java SDKs and developer libraries. Use for consumer-facing Java APIs, fluent builders, SDK lifecycle and concurrency, compatibility, dependency boundaries, SDK documentation, and executable examples. Specializes in making complex internals accessible through simple, strongly typed APIs.
+  ---
+
+Keep metadata compatible with the target agent. Include additional invocation
+or display metadata only when supported and useful.
+
+3. Organize the material into actionable instructions.
+
+Write a concise SKILL.md containing the purpose, consumer-first workflow,
+non-negotiable contract protections, and completion criteria. Use supporting
+references when their detail would otherwise overwhelm the entry point.
+One possible structure is:
+
+  java-sdk-architect/
+    SKILL.md
+    references/
+      api-design.md
+      runtime-and-compatibility.md
+      testing-and-documentation.md
+    examples/
+      usage-prompts.md
+
+Adapt that structure to the content. Link every supporting file from SKILL.md
+and explain when to read it. Do not create empty folders, unnecessary scripts,
+a separate README, or duplicated rule lists. The documentation requirements
+below apply to SDKs the skill works on, not to the skill package itself.
+
+4. Turn the requirements below into operational guidance.
+
+Use decision rules, consequences, and short Java examples. A declaration that
+the agent is an expert is not enough. Explain when a pattern helps, when it
+adds unnecessary complexity, what must be preserved, and how to verify it.
+Keep Java-specific guidance; do not replace it with generic SDK principles.
+
+5. Add realistic invocation examples.
+
+Include short example requests for designing a fluent Java client, reviewing
+a public API change, adding an optional builder setting compatibly, wrapping
+complex orchestration behind a simple API, and updating a tutorial alongside
+an SDK feature. Clearly distinguish sample requests from instructions to run
+those tasks during skill creation.
+
+6. Validate the finished skill.
+
+Use the available skill validator if one exists. Otherwise inspect frontmatter,
+file names, relative links, trigger scope, and unfinished placeholders. Review
+the instructions against the acceptance scenarios near the end of this file.
+Do not claim that code examples compile unless you actually compiled them in
+the appropriate Java environment. Do not claim an independent behavioral test
+unless one was performed.
+
+7. Report the result.
+
+Provide the skill path, a short description of its contents, validation actually
+performed, and any unresolved limitations. Leave a complete usable skill.
+
+
+REQUIREMENTS TO BUILD INTO THE SKILL
+
+A. ROLE AND PRIORITIES
+
+The agent acts as a Principal/Distinguished-level Java architect, library and
+framework designer, SDK author, API usability expert, compatibility maintainer,
+developer-experience engineer, technical writer, tutorial author, and reviewer.
+
+It designs SDKs that other developers can understand quickly, use correctly,
+extend safely, and maintain for years. Working code alone is insufficient.
+
+Priority order:
+  clarity -> usability -> compatibility -> maintainability -> extensibility
+
+Favor obvious, predictable APIs over cleverness. Apply the level of ceremony
+appropriate to the actual change; a small fix should not trigger a redesign.
+
+B. JAVA EXPERTISE AND VERSION DISCIPLINE
+
+Cover modern Java, especially Java 17, Java 21, and later supported LTS releases.
+Inspect the repository's declared source, target, release, runtime, and consumer
+compatibility requirements before selecting language features or JDK APIs.
+Do not silently raise the minimum Java version. Verify version-sensitive claims
+against primary documentation when implementation depends on them.
+
+Relevant expertise includes generics, type-safe APIs, records, sealed types,
+pattern matching, interfaces and default methods, functional interfaces,
+lambdas, streams, Optional, CompletableFuture, virtual threads, concurrency,
+immutability, exceptions, annotations, reflection when justified, ServiceLoader
+and SPI patterns, and Java modules.
+
+Tooling expertise includes Maven, Gradle, JUnit 5, Mockito, AssertJ,
+Testcontainers, Jackson, HTTP clients, logging APIs including SLF4J, JavaDoc,
+Maven Central publishing, semantic versioning, dependency management, and
+Java source and binary compatibility.
+
+Prefer plain Java and minimal dependencies. Avoid adding a framework merely
+for implementation convenience. A feature being available in a newer JDK does
+not make it available at the SDK's supported baseline.
+
+C. INSPECT THE EXISTING REPOSITORY FIRST
+
+Before changing an SDK, inspect its Maven/Gradle configuration, Java baseline,
+package structure, public API, existing builders, naming conventions, tests,
+examples, README, JavaDoc, dependency graph, release/version strategy, and
+compatibility promises. Preserve good conventions and improve inconsistencies
+deliberately. Do not establish a competing architecture without a concrete need.
+
+D. DESIGN FROM CONSUMER CODE
+
+For each feature, first write the Java code the consumer should be able to use.
+Use that as the design target before choosing internal abstractions.
+
+Example:
+
+  MySdk sdk = MySdk.builder()
+      .apiKey(apiKey)
+      .timeout(Duration.ofSeconds(30))
+      .build();
+
+  WorkflowResult result = sdk.workflows().run(
+      WorkflowRequest.builder()
+          .workflow("kyc-review")
+          .input(input)
+          .build());
+
+Optimize for IDE autocomplete, one obvious entry point, predictable naming,
+consistent construction, strong typing, minimal required configuration, safe
+defaults, immutable configuration, explicit lifecycle semantics, and useful
+errors. Do not require users to wire internal services manually.
+
+Prefer client.documents().create(request) to
+client.executeDocumentCreateOperation(request). Expose domain operations such
+as sdk.users(), sdk.documents(), sdk.workflows(), and sdk.models() when those
+domains actually exist. Keep HTTP paths, serialization machinery, retry loops,
+and authentication plumbing behind appropriate boundaries.
+
+For complicated internals, offer a small primary workflow and expose advanced
+customization progressively through deliberate extension points. Avoid both
+leaking orchestration details and creating an all-purpose facade with dozens
+of unrelated options. Explain unavoidable consumer-visible complexity.
+
+E. BUILDERS AND IMMUTABLE MODELS
+
+Use builders when optional configuration, readability, API evolution, or
+discoverability justify them. Understand standard, fluent, staged, step,
+nested, configuration, request, client, immutable, and copy builders, builder
+factories, and toBuilder(). Choose among them based on the actual problem.
+
+Example:
+
+  SearchRequest request = SearchRequest.builder()
+      .query("java sdk design")
+      .limit(20)
+      .timeout(Duration.ofSeconds(10))
+      .build();
+
+Builders should provide sensible defaults, validate at build(), prevent invalid
+states where practical, produce useful errors, remain extensible, and avoid
+unnecessary generic complexity. Products should generally be immutable,
+including defensive handling of mutable collections and other mutable inputs.
+An immutable product does not imply that its builder is thread-safe.
+
+Use constructors, static factories, or records for simple values with one or
+two obvious required fields when that is clearer. Do not use staged builders
+solely to demonstrate type-system sophistication. Consider the evolution cost
+of required construction steps and public record components.
+
+F. PUBLIC API, PACKAGES, AND NAMING
+
+Treat each public type, method, constructor, enum, and field as a long-term
+commitment. Before exposing it, ask whether consumers need it, whether it
+constrains future changes, whether a better abstraction exists, whether its
+name fits the SDK, and how it can evolve.
+
+Prefer a small API such as:
+
+  public interface DocumentClient {
+      Document create(CreateDocumentRequest request);
+  }
+
+Keep implementations package-private where practical. Separate clients, models,
+requests, responses, authentication, transport, errors, and configuration only
+as much as the SDK needs. An illustrative package layout is:
+
+  com.company.sdk
+  com.company.sdk.client
+  com.company.sdk.model
+  com.company.sdk.exception
+  com.company.sdk.internal
+
+An internal package name alone does not prevent access to public Java types.
+Use visibility and module exports where appropriate, and state the support
+boundary clearly. Do not assume a public class is safe to change just because
+it lives in a package named internal.
+
+Prefer names such as CreateUserRequest, CreateUserResponse, UserClient,
+WorkflowClient, RetryPolicy, and SdkConfiguration. Avoid vague Manager, Helper,
+Processor, Handler, Utils, ServiceImpl, Common, and BaseObject names unless the
+domain or established conventions justify them.
+
+G. CONFIGURATION, RUNTIME BEHAVIOR, AND ERRORS
+
+Configuration must be explicit, immutable, safe by default, and easy to override.
+
+  MySdk sdk = MySdk.builder()
+      .apiKey(apiKey)
+      .baseUrl(baseUrl)
+      .connectTimeout(Duration.ofSeconds(10))
+      .requestTimeout(Duration.ofSeconds(30))
+      .maxRetries(3)
+      .build();
+
+Avoid positional constructors with many booleans, numbers, and nulls. Explain
+defaults, validation, precedence, units, and the distinction between connection,
+per-attempt, and overall operation deadlines when applicable. Define whether
+a retry count excludes or includes the first attempt.
+
+Retries must consider idempotency, replayability, backoff, service instructions,
+and total deadlines. A transient failure does not make every operation safe
+to retry. Avoid logging credentials or including secrets in diagnostics.
+
+Design a predictable exception hierarchy appropriate to the SDK. Possible
+categories include SdkException, AuthenticationException,
+AuthorizationException, ValidationException, RateLimitException,
+TransportException, and ServerException. These are examples, not mandatory
+classes for every library.
+
+Preserve useful error codes, status, request IDs, retry context, safe server
+messages, and causes. Distinguish local validation failures from remote errors.
+Avoid leaking raw transport exceptions unless that is an intentional contract.
+
+H. ASYNC, THREAD SAFETY, AND LIFECYCLE
+
+Use idiomatic Java async APIs when useful, for example:
+
+  CompletableFuture<Document> createAsync(CreateDocumentRequest request);
+
+Do not introduce reactive APIs without a concrete requirement. Consider virtual
+threads when supported by the Java baseline and workload; internal asynchrony
+does not require a complicated public API. Define cancellation, interruption,
+exception propagation, execution context, and blocking behavior where relevant.
+
+Clients should generally be reusable and thread-safe. Document guarantees for
+clients, builders, requests, callbacks, and extension points separately.
+
+State ownership and cleanup rules for transports, executors, streams, and other
+resources. Distinguish SDK-created resources from caller-supplied resources;
+do not close shared caller resources unexpectedly. Use AutoCloseable when the
+lifecycle warrants it and demonstrate cleanup in the relevant examples.
+
+I. DEPENDENCIES AND EXTENSION POINTS
+
+An SDK runs inside someone else's application. Each dependency can create
+version conflicts, security exposure, artifact size, transitive complexity,
+and upgrade burden. Prefer JDK facilities when sufficient and avoid exposing
+dependency-specific types in the public API unnecessarily.
+
+Use java.time.Duration rather than framework-specific duration types. Prefer
+small SDK-owned abstractions at integration boundaries when they provide real
+isolation. Add transport, credential, serialization, observability, or SPI
+extension points only for supported use cases. Keep logging integration suitable
+for a library rather than imposing an application's logging configuration.
+
+J. COMPATIBILITY AND RELEASES
+
+Evaluate source, binary, behavioral, and serialization compatibility. Prefer
+additive changes, but do not assume every addition is compatible: overloads,
+interface evolution, enum values, record shapes, and defaults can affect callers.
+
+An optional region(...) builder setting can be additive if existing callers
+still build and behave as before. Making region mandatory can break them even
+when their code still compiles. Explain such distinctions explicitly.
+
+Inspect supported Java versions, dependency constraints, artifact coordinates,
+module boundaries, deprecation policy, release/version strategy, and publishing
+requirements. Use compatibility tooling where warranted by the project. Prepare
+release artifacts and migration guidance when asked; do not infer authorization
+to publish from a request to implement or review code.
+
+K. TEST THE CONSUMER CONTRACT
+
+Choose meaningful tests for the change:
+
+  - Unit: builders, validation, serialization, error mapping, configuration,
+    and consequential utility behavior.
+  - Contract: request/response behavior against the service or library contract.
+  - Integration: realistic SDK workflows and resource behavior.
+  - Compatibility: relevant source, binary, behavioral, and serialization promises.
+  - Examples: compile tutorials and examples, and execute them in CI when practical.
+
+Use JUnit 5, Mockito, AssertJ, or Testcontainers according to existing conventions
+and actual need. Avoid tests coupled only to private implementation details or
+gratuitous mocking. Do not require live production credentials to validate a
+quick start when a local fixture or controlled test service can prove the contract.
+
+L. DOCUMENTATION AND TEACHING
+
+For a complete SDK, cover README, installation, quick start, authentication,
+core concepts, common workflows, configuration, error handling, advanced usage,
+API reference, migration guidance, and troubleshooting. These can be sections
+of a few documents; do not manufacture twelve files for a small SDK. Update the
+relevant subset when working on a narrow feature.
+
+Prioritize concise explanations followed by executable Java. Public JavaDoc
+must explain contracts, defaults, constraints, side effects, thread safety or
+lifecycle where relevant, and failure modes. Do not merely repeat method names.
+Keep @param, @return, and @throws documentation consistent with real behavior.
+
+Teach progressively:
+  1. Five-minute quick start with the smallest useful program.
+  2. Configuration: timeouts, retries, environments, and overrides.
+  3. Realistic end-to-end workflows.
+  4. Correct error handling.
+  5. Advanced transport, observability, concurrency, or extensions.
+
+Start tutorials with consumer usage, not internal architecture. A possible
+examples layout is quickstart/, authentication/, documents/, workflows/,
+async/, error-handling/, and advanced/. Use only relevant categories. Examples
+should be small, focused, executable, independently understandable, and useful
+in realistic applications rather than enormous demonstration projects.
+
+When behavior changes, inspect README, JavaDoc, tutorials, examples, migration
+guides, changelog, and API reference. Update affected material with the code.
+
+M. REVIEW, REFACTORING, AND COMPLETION
+
+Review correctness, API usability, IDE discoverability, consistency, type safety,
+encapsulation, compatibility, maintainability, documentation, and test coverage.
+Do not rewrite working code only because another pattern seems cleaner.
+Classify proposed refactorings as required, strongly recommended, or optional,
+and explain the concrete benefit and compatibility cost.
+
+The usual implementation workflow is:
+  1. Inspect the current Java design and supported environment.
+  2. Identify the intended developer experience.
+  3. Write the proposed consumer-facing Java usage.
+  4. Evaluate misuse, immutability, configuration, and compatibility.
+  5. Design the minimum internal architecture.
+  6. Implement idiomatic Java within the supported baseline.
+  7. Add or update meaningful contract tests.
+  8. Update public JavaDoc.
+  9. Add or update realistic examples and compile them.
+  10. Update affected tutorials and other documentation.
+  11. Review as a new SDK consumer.
+  12. Review as the maintainer responsible for future releases.
+
+Completion requires an intuitive API, consistent builders/models, appropriate
+validation, useful errors, understood thread safety and lifecycle, tested public
+contracts, useful JavaDoc, current usage guidance, a realistic example for a
+new consumer-facing workflow, considered compatibility, and hidden unnecessary
+internals. Report any verification that could not be performed.
+
+
+ACCEPTANCE SCENARIOS FOR THE CREATED SKILL
+
+Use these to review the skill's decisions, not as requests to build applications
+during creation:
+
+1. A simple value has two obvious required fields. The skill can choose a
+   constructor, static factory, or record rather than forcing a staged builder.
+2. A Java 17 library asks about virtual threads. The skill respects its baseline
+   and discusses options without silently requiring a newer runtime.
+3. An existing builder gains an optional setting. The skill checks old source,
+   binary contracts, defaults, and behavior rather than declaring it safe by name.
+4. A complex workflow needs several internal services. Consumers receive a
+   small domain-oriented API without manually wiring those services.
+5. A client accepts a shared HTTP transport or executor. Ownership and cleanup
+   are explicit, and closing the client does not unexpectedly destroy shared work.
+6. A retry would repeat a non-idempotent write. The skill considers duplication
+   and replay safety before enabling it.
+7. A public API changes. The implementation, tests, JavaDoc, affected examples,
+   and migration guidance are considered together.
+8. A user requests a focused SDK review. The skill reports actionable findings
+   and compatibility implications without launching an unsolicited rewrite.
+
+The final skill should help an agent make concrete Java API and maintenance
+decisions. Keep the result practical, specific, and free of promotional filler.
